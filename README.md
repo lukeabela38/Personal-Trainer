@@ -2,9 +2,16 @@
 
 This repository documents and builds the personal performance system used to combine training, nutrition, strength, recovery, and sport-readiness data.
 
-## Implementation
+## What Exists
 
 - [Python recommendation POC](personal_trainer/README.md): dependency-light analysis engine that accepts a normalized snapshot JSON and emits the daily recommendation contract output.
+- [Static snapshot viewer](site/index.html): local browser UI for importing a snapshot JSON and inspecting the assembled data.
+
+## How It Fits Together
+
+- `personal_trainer/src/personal_trainer/` contains the normalization, recommendation, and live-data seam code.
+- `site/` contains the static browser UI.
+- `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
 
 ## Documentation
 

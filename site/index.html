@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Trainer Snapshot Viewer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Personal Trainer</p>
+          <h1>Snapshot Viewer</h1>
+          <p class="lede">
+            Import a snapshot JSON file or load the sample data to inspect the assembled training picture in one place.
+          </p>
+        </div>
+        <div class="controls">
+          <label class="button">
+            <input id="file-input" type="file" accept="application/json,.json" />
+            Import snapshot
+          </label>
+          <button id="load-sample" class="button secondary" type="button">Load sample</button>
+          <button id="load-example" class="button secondary" type="button">Load deployed snapshot</button>
+        </div>
+      </header>
+
+      <section class="summary card">
+        <div>
+          <p class="label">Recommendation</p>
+          <h2 id="priority">Waiting for snapshot</h2>
+          <p id="reason" class="muted">Choose a JSON file to render the full snapshot and recommendation.</p>
+        </div>
+        <dl class="stats">
+          <div>
+            <dt>Confidence</dt>
+            <dd id="confidence">-</dd>
+          </div>
+          <div>
+            <dt>Check-in</dt>
+            <dd id="check-in">-</dd>
+          </div>
+          <div>
+            <dt>Data quality</dt>
+            <dd id="data-quality">-</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="sections" class="grid"></section>
+
+      <section class="card">
+        <div class="row">
+          <div>
+            <p class="label">Raw JSON</p>
+            <p class="muted">Inspect the normalized snapshot directly.</p>
+          </div>
+          <button id="toggle-raw" class="button secondary" type="button">Show raw JSON</button>
+        </div>
+        <pre id="raw-json" class="raw hidden">{}</pre>
+      </section>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
