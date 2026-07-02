@@ -63,6 +63,15 @@ class RecommendationTests(unittest.TestCase):
         self.assertEqual(recommendation["Priority"], "table_tennis_readiness")
         self.assertIn("coordination", recommendation["Guardrail"])
 
+    def test_table_tennis_training_takes_priority(self):
+        snapshot = base_snapshot()
+        snapshot["manual_context"]["table_tennis_today"] = "training"
+
+        recommendation = build_daily_recommendation(snapshot)
+
+        self.assertEqual(recommendation["Priority"], "table_tennis_readiness")
+        self.assertIn("coordination", recommendation["Guardrail"])
+
     def test_strength_progression_when_aerobic_quality_blocked_and_strength_available(self):
         snapshot = base_snapshot()
         snapshot["derived"]["hard_session_allowed"] = "no"

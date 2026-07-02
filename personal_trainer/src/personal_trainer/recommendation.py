@@ -186,7 +186,7 @@ def _manual_context_missing(manual: dict[str, Any]) -> bool:
 
 
 def _table_tennis_is_important(manual: dict[str, Any]) -> bool:
-    return manual.get("table_tennis_today") == "match"
+    return manual.get("table_tennis_today") in {"training", "match"}
 
 
 def _strength_available(flags: set[str], hevy: dict[str, Any]) -> bool:
