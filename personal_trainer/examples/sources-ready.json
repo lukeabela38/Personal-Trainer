@@ -1,0 +1,53 @@
+{
+  "snapshot_date": "2026-07-02",
+  "timezone": "Europe/Malta",
+  "athlete": {
+    "body_weight_kg": 83.5
+  },
+  "garmin": {
+    "freshness": "fresh",
+    "current_vo2max": 51,
+    "vo2max_trend": "flat_or_rising",
+    "flags": []
+  },
+  "hevy": {
+    "freshness": "fresh",
+    "strength_trend": "unknown",
+    "muscle_group_fatigue": {
+      "legs": "low",
+      "posterior_chain": "low",
+      "push": "low",
+      "pull": "low",
+      "shoulders_arms": "low",
+      "core": "low"
+    },
+    "flags": []
+  },
+  "cronometer": {
+    "freshness": "fresh",
+    "fueling_status": "adequate",
+    "protein_status": "adequate",
+    "carb_availability": "adequate",
+    "today": {
+      "calories_consumed": 1600,
+      "calories_target": 2600,
+      "protein_g": 130,
+      "carbs_g": 180,
+      "fat_g": 50,
+      "fiber_g": 25,
+      "remaining_kcal": 1000,
+      "log_completeness": "complete"
+    },
+    "flags": []
+  },
+  "manual_context": {
+    "freshness": "fresh",
+    "sleep_quality": "good",
+    "soreness": [],
+    "pain": [],
+    "motivation": "normal",
+    "mental_fatigue": "low",
+    "table_tennis_today": "none",
+    "constraints": []
+  }
+}
