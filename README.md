@@ -6,4 +6,5 @@ This repository documents and builds the personal performance system used to com
 
 - [Performance OS charter](docs/performance-os-charter.md): operating principles, current training block, tradeoff rules, and first build scope.
 - [Daily recommendation contract](docs/daily-recommendation-contract.md): input/output boundary for the first recommendation feature.
+- [Data snapshot contract](docs/data-snapshot-contract.md): normalized Garmin, Hevy, Cronometer, and manual context object used before recommendation logic runs.
 - [MCP integrations](docs/mcp-integrations.md): Garmin, Cronometer, Hevy, and GitHub setup details, credential handling, and verification notes.
