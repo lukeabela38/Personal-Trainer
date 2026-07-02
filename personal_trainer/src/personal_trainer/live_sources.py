@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
+import subprocess
 from pathlib import Path
 from typing import Any
-
 
 SourcePayload = dict[str, Any]
 
@@ -34,6 +35,10 @@ def _load_source_payload(source_name: str) -> SourcePayload:
 
 
 def _load_sources_export() -> dict[str, Any]:
+    command = os.environ.get("PERSONAL_TRAINER_SOURCES_COMMAND")
+    if command:
+        return _load_sources_from_command(command)
+
     export_path = Path(
         os.environ.get(
             "PERSONAL_TRAINER_SOURCES_FILE",
@@ -41,3 +46,16 @@ def _load_sources_export() -> dict[str, Any]:
         )
     )
     return json.loads(export_path.read_text(encoding="utf-8"))
+
+
+def _load_sources_from_command(command: str) -> dict[str, Any]:
+    completed = subprocess.run(
+        shlex.split(command),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    data = json.loads(completed.stdout)
+    if not isinstance(data, dict):
+        raise ValueError("live sources command must emit a JSON object")
+    return data
