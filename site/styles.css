@@ -110,6 +110,7 @@ h1 {
   padding: 20px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
+  min-width: 0;
 }
 
 .summary {
@@ -118,6 +119,7 @@ h1 {
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 20px;
+  overflow: hidden;
 }
 
 .stats {
@@ -144,6 +146,7 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
+  align-items: start;
 }
 
 .section-list {
@@ -153,13 +156,22 @@ h1 {
 }
 
 .section-list .item {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   padding: 12px 14px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
+  min-width: 0;
+}
+
+.section-list .item span,
+.section-list .item strong,
+.section-list .item pre {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .section-list .item strong {
