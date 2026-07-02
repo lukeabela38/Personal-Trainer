@@ -12,3 +12,4 @@ dependencies = []
 
 [project.scripts]
 personal-trainer = "personal_trainer.cli:main"
+personal-trainer-snapshot = "personal_trainer.snapshot_cli:main"
