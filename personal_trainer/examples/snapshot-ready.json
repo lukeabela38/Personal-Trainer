@@ -1,0 +1,46 @@
+{
+  "snapshot_date": "2026-07-02",
+  "timezone": "Europe/Malta",
+  "athlete": {
+    "age": 28,
+    "height_cm": 188,
+    "body_weight_kg": 83.5,
+    "current_block": "hybrid_aggressive",
+    "current_vo2max_waypoint": 52
+  },
+  "garmin": {
+    "freshness": "fresh",
+    "current_vo2max": 51,
+    "vo2max_trend": "flat_or_rising",
+    "flags": []
+  },
+  "hevy": {
+    "freshness": "fresh",
+    "recent_workouts": [],
+    "strength_trend": "unknown",
+    "flags": []
+  },
+  "cronometer": {
+    "freshness": "fresh",
+    "fueling_status": "adequate",
+    "protein_status": "adequate",
+    "carb_availability": "adequate",
+    "flags": []
+  },
+  "manual_context": {
+    "freshness": "fresh",
+    "sleep_quality": "good",
+    "motivation": "normal",
+    "mental_fatigue": "low",
+    "table_tennis_today": "none",
+    "constraints": []
+  },
+  "derived": {
+    "data_quality": "high",
+    "hard_session_allowed": "yes",
+    "primary_constraints": [],
+    "likely_conflicts": [],
+    "check_in_required": false,
+    "check_in_questions": []
+  }
+}

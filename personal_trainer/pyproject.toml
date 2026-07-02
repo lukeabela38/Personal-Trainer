@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "personal-trainer"
+version = "0.1.0"
+description = "Personal performance recommendation proof of concept"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+personal-trainer = "personal_trainer.cli:main"

@@ -2,6 +2,10 @@
 
 This repository documents and builds the personal performance system used to combine training, nutrition, strength, recovery, and sport-readiness data.
 
+## Implementation
+
+- [Python recommendation POC](personal_trainer/README.md): dependency-light analysis engine that accepts a normalized snapshot JSON and emits the daily recommendation contract output.
+
 ## Documentation
 
 - [Performance OS charter](docs/performance-os-charter.md): operating principles, current training block, tradeoff rules, and first build scope.
