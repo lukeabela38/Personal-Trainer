@@ -19,3 +19,9 @@ class HevyLiveAdapter:
         if self.fetch_hevy_payload is None:
             raise ValueError("fetch_hevy_payload is required for HevyLiveAdapter")
         return self.fetch_hevy_payload()
+
+
+def build_hevy_live_adapter(fetch_hevy_payload: FetchHevyPayload) -> HevyLiveAdapter:
+    """Factory for the live Hevy adapter."""
+
+    return HevyLiveAdapter(fetch_hevy_payload=fetch_hevy_payload)

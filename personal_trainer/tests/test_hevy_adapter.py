@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from personal_trainer.hevy_adapter import HevyLiveAdapter
+from personal_trainer.hevy_adapter import HevyLiveAdapter, build_hevy_live_adapter
 
 
 class HevyAdapterTests(unittest.TestCase):
@@ -19,6 +19,12 @@ class HevyAdapterTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             adapter.fetch()
+
+    def test_factory_builds_adapter(self):
+        adapter = build_hevy_live_adapter(lambda: {"freshness": "fresh", "flags": []})
+
+        self.assertIsInstance(adapter, HevyLiveAdapter)
+        self.assertEqual(adapter.fetch()["freshness"], "fresh")
 
 
 if __name__ == "__main__":
