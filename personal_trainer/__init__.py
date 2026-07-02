@@ -1,11 +1,4 @@
-"""Package path shim for the nested Python POC.
-
-This repository keeps the actual Python sources under
-`personal_trainer/src/personal_trainer` so the docs and top-level repo
-structure stay separate. Adding that directory to the package search path lets
-`python -m personal_trainer.*` work from the repository root without needing
-`PYTHONPATH`.
-"""
+"""Package path shim for the nested Python POC."""
 
 from __future__ import annotations
 
