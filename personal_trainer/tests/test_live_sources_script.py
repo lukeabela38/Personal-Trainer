@@ -22,7 +22,10 @@ class LiveSourcesScriptTests(unittest.TestCase):
                 "manual": {"freshness": "fresh", "motivation": "normal"},
             }.items():
                 script = tmp / f"{name}.py"
-                script.write_text(f"import json\nprint(json.dumps({json.dumps(payload)}))\n", encoding="utf-8")
+                script.write_text(
+                    f"import json\nprint(json.dumps({json.dumps(payload)}))\n",
+                    encoding="utf-8",
+                )
                 commands[name] = f"python3 {script}"
 
             completed = subprocess.run(
