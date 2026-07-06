@@ -1,4 +1,4 @@
-import { loadLastDays, extractVo2, extractBodyWeight, weeklySummary } from "./history.js";
+import { loadLastDays, extractVo2, extractBodyWeight, weeklySummary, loadIndex, loadSnapshot } from "./history.js";
 import { renderSparkline, fmtNum } from "./goals.js";
 
 const snapshotUrl = new URL("./data/snapshot.json", import.meta.url);
@@ -6,6 +6,8 @@ const grid = document.getElementById("progress-grid");
 const trendEl = document.getElementById("progress-trend");
 const sourceLabel = document.getElementById("source-label");
 const statusBanner = document.getElementById("status-banner");
+const dateFrom = document.getElementById("date-from");
+const dateTo = document.getElementById("date-to");
 
 const state = {
   previous: readStoredSnapshot(),
@@ -13,6 +15,7 @@ const state = {
 
 loadProgress();
 loadHistoryTrends();
+setupDatePickers();
 
 async function loadProgress() {
   try {
@@ -184,6 +187,53 @@ function shouldRenderValue(value) {
 function formatValue(value) {
   if (!shouldRenderValue(value)) return "-";
   return String(value);
+}
+
+async function setupDatePickers() {
+  try {
+    const index = await loadIndex();
+    if (!index?.dates?.length || !dateFrom || !dateTo) return;
+    const dates = index.dates;
+    dateFrom.innerHTML = dates.map((d) => `<option value="${d}">${d}</option>`).join("");
+    dateTo.innerHTML = [...dates].reverse().map((d) => `<option value="${d}">${d}</option>`).join("");
+    dateFrom.value = dates[0];
+    dateTo.value = dates[dates.length - 1];
+    document.getElementById("compare-btn")?.addEventListener("click", compareDates);
+  } catch {}
+}
+
+async function compareDates() {
+  const from = dateFrom?.value;
+  const to = dateTo?.value;
+  if (!from || !to || from === to) return;
+  try {
+    const a = await loadSnapshot(from);
+    const b = await loadSnapshot(to);
+    renderComparison(from, a, to, b);
+  } catch {}
+}
+
+function renderComparison(fromDate, snapA, toDate, snapB) {
+  const prev = snapA ?? {};
+  const current = snapB ?? {};
+  sourceLabel.textContent = `${fromDate} → ${toDate}`;
+  const rows = [
+    deltaRow("VO2 max", readNumber(prev, ["garmin", "current_vo2max"]), readNumber(current, ["garmin", "current_vo2max"])),
+    deltaRow("Body weight", readNumber(prev, ["athlete", "body_weight_kg"]), readNumber(current, ["athlete", "body_weight_kg"])),
+    deltaRow("Fueling", readText(prev, ["cronometer", "fueling_status"]), readText(current, ["cronometer", "fueling_status"])),
+    deltaRow("Sleep", readText(prev, ["manual_context", "sleep_quality"]), readText(current, ["manual_context", "sleep_quality"])),
+    deltaRow("Remaining kcal", readNumber(prev, ["cronometer", "today", "remaining_kcal"]), readNumber(current, ["cronometer", "today", "remaining_kcal"])),
+    deltaRow("Strength trend", readText(prev, ["hevy", "strength_trend"]), readText(current, ["hevy", "strength_trend"])),
+  ].filter(Boolean);
+  statusBanner.textContent = rows.length ? `${rows.length} changes` : "No changes";
+  grid.innerHTML = rows.length
+    ? rows.map((row) => `
+      <article class="item">
+        <span>${escapeHtml(row.label)}</span>
+        <strong class="${row.deltaClass}">${escapeHtml(row.value)}</strong>
+      </article>
+    `).join("")
+    : `<div class="item"><span>Progress</span><strong>No change between these dates</strong></div>`;
 }
 
 function escapeHtml(value) {

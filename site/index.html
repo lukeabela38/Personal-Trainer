@@ -48,7 +48,22 @@
       <input id="file-input" type="file" accept="application/json" />
       <input id="live-input" type="file" accept="application/json" />
 
-      <div id="freshness-bar"></div>
+      <div id="welcome-overlay" class="welcome-overlay" hidden>
+        <div class="welcome-card card">
+          <h2>Welcome</h2>
+          <p class="lede">Track your training, nutrition, and progress in one place.</p>
+          <div class="welcome-grid">
+            <div><span class="label">Dashboard</span><span>Today's recommendation, weekly summary, goals, and trends</span></div>
+            <div><span class="label">Strength</span><span>All PBs with history, trends, and insights</span></div>
+            <div><span class="label">Speed</span><span>Running records at a glance</span></div>
+            <div><span class="label">Progress</span><span>Compare any two dates and view long-term trends</span></div>
+          </div>
+          <div class="welcome-footer">
+            <span class="muted">Load a snapshot via <strong>Actions → Load deployed snapshot</strong> or generate history data with the pipeline script.</span>
+            <button id="welcome-dismiss" class="button" type="button">Get started</button>
+          </div>
+        </div>
+      </div>
 
       <div class="rec-card" id="rec-card">
         <div class="rec-header">
@@ -78,6 +93,11 @@
       </div>
     </section>
   </main>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
   <script type="module" src="./app.js?v=5"></script>
 </body>
 </html>

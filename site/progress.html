@@ -44,11 +44,28 @@
         <span class="status-banner skeleton" id="status-banner" style="width:100px;height:28px">Waiting</span>
       </div>
 
+      <div class="progress-pickers" id="progress-pickers">
+        <div class="progress-picker">
+          <span class="label">From</span>
+          <select id="date-from" class="search-input"></select>
+        </div>
+        <div class="progress-picker">
+          <span class="label">To</span>
+          <select id="date-to" class="search-input"></select>
+        </div>
+        <button id="compare-btn" class="button small secondary" type="button">Compare</button>
+      </div>
+
       <div id="progress-trend" class="progress-trend"></div>
 
       <div id="progress-grid" class="progress-grid"></div>
     </section>
   </main>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
   <script type="module" src="./progress.js?v=3"></script>
 </body>
 </html>

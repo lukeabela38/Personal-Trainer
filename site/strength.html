@@ -66,6 +66,11 @@
       <div id="insights" class="stat-groups" hidden></div>
     </section>
   </main>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
   <script type="module" src="./strength.js?v=6"></script>
 </body>
 </html>

@@ -41,6 +41,7 @@ function renderHistory(snapshots) {
   const bw = extractBodyWeight(snapshots);
 
   historySections.innerHTML = [
+    snapshots.length >= 2 ? renderDailyDiff(snapshots) : "",
     summary ? renderWeekSummary(summary) : "",
     goals.length ? renderGoalsCard(goals) : "",
     bw.length > 1 ? renderSparklineCard(bw) : "",
@@ -263,6 +264,20 @@ function renderSessionLog(priority) {
   const history = recent.length ? `<div class="session-history">${tags}</div>` : "";
   return `${btn}${history}`;
 }
+
+/* ── First-run welcome ── */
+(function showWelcome() {
+  const overlay = document.getElementById("welcome-overlay");
+  if (!overlay) return;
+  try {
+    if (localStorage.getItem("personal-trainer:welcome-dismissed")) return;
+  } catch { return; }
+  overlay.removeAttribute("hidden");
+  document.getElementById("welcome-dismiss")?.addEventListener("click", () => {
+    overlay.setAttribute("hidden", "");
+    try { localStorage.setItem("personal-trainer:welcome-dismissed", "1"); } catch {}
+  });
+})();
 
 document.addEventListener("click", (e) => {
   if (e.target.id === "log-session") {
@@ -513,6 +528,37 @@ function setText(id, value) {
 }
 
 /* ── History features ── */
+
+function renderDailyDiff(snapshots) {
+  const prev = snapshots[snapshots.length - 2];
+  const curr = snapshots[snapshots.length - 1];
+  const pRec = prev.recommendation ?? {};
+  const cRec = curr.recommendation ?? {};
+  const pPriority = pRec.Priority ?? "none";
+  const cPriority = cRec.Priority ?? "none";
+  const pVo2 = prev.garmin?.current_vo2max;
+  const cVo2 = curr.garmin?.current_vo2max;
+  const pBw = prev.athlete?.body_weight_kg;
+  const cBw = curr.athlete?.body_weight_kg;
+  const pSleep = prev.manual_context?.sleep_quality;
+  const cSleep = curr.manual_context?.sleep_quality;
+
+  const diffs = [];
+  if (pPriority !== cPriority) diffs.push(`priority: ${pPriority} → ${cPriority}`);
+  if (pVo2 !== cVo2 && pVo2 != null && cVo2 != null) diffs.push(`VO2: ${fmtNum(pVo2)} → ${fmtNum(cVo2)}`);
+  if (pBw !== cBw && pBw != null && cBw != null) diffs.push(`weight: ${fmtNum(pBw)} → ${fmtNum(cBw)} kg`);
+  if (pSleep !== cSleep && pSleep != null && cSleep != null) diffs.push(`sleep: ${pSleep} → ${cSleep}`);
+
+  if (!diffs.length) return "";
+  return `
+    <div class="stat-group">
+      <div class="stat-group-title">Since yesterday</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px 16px;font-size:0.85rem">
+        ${diffs.map((d) => `<span>${d}</span>`).join("")}
+      </div>
+    </div>
+  `;
+}
 
 function renderWeekSummary(summary) {
   const bwDelta = summary.bwDelta != null ? (summary.bwDelta > 0 ? `<span class="delta-up">+${summary.bwDelta}</span>` : `<span class="delta-down">${summary.bwDelta}</span>`) : "";

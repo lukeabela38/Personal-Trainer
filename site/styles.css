@@ -265,6 +265,31 @@ input[type="file"] { display: none; }
 .bottom-nav-item.is-active { color: var(--accent); }
 .bottom-nav-icon { font-size: 1.2rem; line-height: 1; }
 
+/* Welcome overlay */
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+.welcome-card {
+  width: min(520px, calc(100vw - 40px));
+  padding: 28px;
+  display: grid;
+  gap: 18px;
+}
+.welcome-card h2 { font-size: 1.4rem; font-weight: 700; }
+.welcome-grid { display: grid; gap: 12px; }
+.welcome-grid div { display: grid; gap: 2px; }
+.welcome-grid .label { margin: 0; }
+.welcome-footer { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.welcome-footer .muted { font-size: 0.8rem; }
+
 /* Responsive */
 @media (max-width: 768px) {
   body { padding-bottom: 64px; }

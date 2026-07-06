@@ -62,6 +62,7 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
         "index.html",
         "styles.css",
         "app.js",
+        "sw.js",
         "progress.html",
         "progress.js",
         "progress.css",

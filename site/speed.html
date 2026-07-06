@@ -52,6 +52,11 @@
       </div>
     </section>
   </main>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
   <script type="module" src="./speed.js?v=5"></script>
 </body>
 </html>
