@@ -5,9 +5,13 @@ import asyncio
 import json
 import os
 import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from scripts.mcp_client import McpError, call_tool
-
 
 HEVY_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_HEVY_MCP_COMMAND",
@@ -24,7 +28,6 @@ _TRACKED_EXERCISES = [
     ("Sumo Squat (Kettlebell)", "5E10D0E6"),
     ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
 ]
-
 
 async def fetch() -> list[dict]:
     all_rows: list[dict] = []
@@ -46,7 +49,6 @@ async def fetch() -> list[dict]:
 
     return all_rows
 
-
 def main() -> int:
     try:
         payload = asyncio.run(fetch())
@@ -56,7 +58,6 @@ def main() -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

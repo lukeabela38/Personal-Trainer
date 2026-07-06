@@ -43,8 +43,6 @@ def main():
     start = date(2026, 4, 7)
     all_snapshots = []
 
-    base_payloads = _load_base_payloads()
-
     vo2 = 48.0
     bw = 84.5
 
@@ -70,7 +68,6 @@ def main():
         sleep = _pick_weighted(SLEEP_STATES, [0.10, 0.20, 0.50, 0.20])
         motivation = _pick_weighted(MOTIVATION_STATES, [0.10, 0.60, 0.30])
         mental_fatigue = _pick_weighted(FATIGUE_STATES, [0.60, 0.30, 0.10])
-        sleep_score = {"poor": 0.4, "okay": 0.6, "good": 0.8, "great": 0.95}[sleep]
 
         freshness = "fresh" if random.random() > 0.15 else "stale"
 
@@ -348,7 +345,7 @@ def _merge_into_dist(snapshots: list[dict], days: int) -> None:
         snapshot_path = dist / "history" / f"{d}.json"
         snapshot_path.write_text(json.dumps(processed, indent=2))
 
-    print(f"Updated dist/data/snapshot.json with latest day")
+    print("Updated dist/data/snapshot.json with latest day")
     print(f"Updated {days} history snapshots")
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .contracts import Macros, Priority
 
+
 # Mifflin-St Jeor BMR for males
 def _bmr(weight_kg: float, height_cm: float, age: int) -> float:
     return 10 * weight_kg + 6.25 * height_cm - 5 * age + 5

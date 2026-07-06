@@ -2,7 +2,6 @@ import unittest
 
 from personal_trainer.macros import build_macros
 
-
 _DEFAULT = {"weight_kg": 83.5, "height_cm": 188, "age": 28}
 
 

@@ -7,23 +7,26 @@ import os
 import sys
 from datetime import UTC, datetime
 
-from scripts.mcp_client import McpError, call_tool
 
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.mcp_client import McpError, call_tool
 
 CRONOMETER_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_CRONOMETER_MCP_COMMAND",
     "/opt/homebrew/bin/uvx cronometer-api-mcp",
 )
 
-
 _CALORIES_PER_G_PROTEIN = 4
 _CALORIES_PER_G_CARBS = 4
 _CALORIES_PER_G_FAT = 9
 
-
 def _is_error(result) -> bool:
     return isinstance(result, dict) and result.get("status") == "error"
-
 
 async def fetch() -> dict:
     today = datetime.now(UTC).strftime("%Y-%m-%d")
@@ -94,7 +97,6 @@ async def fetch() -> dict:
 
     return payload
 
-
 def _fueling_status(calories: float | None, target: float | None) -> str:
     if calories is None or target is None:
         return "unknown"
@@ -104,7 +106,6 @@ def _fueling_status(calories: float | None, target: float | None) -> str:
     if ratio < 0.85:
         return "moderate"
     return "adequate"
-
 
 def _protein_status(protein_g: float | None, target_cal: float | None) -> str:
     if protein_g is None or target_cal is None:
@@ -119,7 +120,6 @@ def _protein_status(protein_g: float | None, target_cal: float | None) -> str:
         return "moderate"
     return "adequate"
 
-
 def _carb_status(carbs_g: float | None) -> str:
     if carbs_g is None:
         return "unknown"
@@ -129,7 +129,6 @@ def _carb_status(carbs_g: float | None) -> str:
         return "moderate"
     return "adequate"
 
-
 def _safe_float(v) -> float | None:
     if v is None:
         return None
@@ -137,7 +136,6 @@ def _safe_float(v) -> float | None:
         return float(v)
     except (ValueError, TypeError):
         return None
-
 
 def main() -> int:
     try:
@@ -148,7 +146,6 @@ def main() -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
