@@ -24,12 +24,34 @@ document.getElementById("load-history").addEventListener("click", loadHistory);
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
 
 async function loadHistory() {
+  if (!historySections) return;
   try {
-    const snaps = await loadLastDays(30);
+    const index = await (await fetch(new URL("./history/index.json", import.meta.url).pathname + "?v=" + Date.now())).json();
+    if (!index?.dates?.length) {
+      historySections.innerHTML = noHistoryHTML();
+      return;
+    }
+    const snaps = [];
+    for (const d of index.dates.slice(-30)) {
+      try {
+        const r = await fetch(`./history/${d}.json?v=${Date.now()}`);
+        snaps.push(await r.json());
+      } catch {}
+    }
+    if (!snaps.length) { historySections.innerHTML = noHistoryHTML(); return; }
     renderHistory(snaps);
   } catch {
-    console.warn("History not available");
+    historySections.innerHTML = noHistoryHTML();
   }
+}
+
+function noHistoryHTML() {
+  return `<div class="stat-group">
+    <div class="stat-group-title">No history data</div>
+    <p class="lede" style="margin:6px 0">Generate 90 days of example data:</p>
+    <pre style="background:rgba(255,255,255,0.04);padding:10px 14px;border-radius:10px;font-size:0.8rem;overflow-x:auto;margin:6px 0">PYTHONPATH=personal_trainer/src python3 scripts/generate_history.py</pre>
+    <p class="lede" style="margin:4px 0 0">Then reload this page and click <strong>Load 30-day history</strong> again.</p>
+  </div>`;
 }
 
 function renderHistory(snapshots) {
