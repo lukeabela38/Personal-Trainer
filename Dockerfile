@@ -4,8 +4,9 @@ FROM python:3.12-slim-bookworm
 RUN groupadd --system appgroup && \
     useradd --system --gid appgroup --create-home --home-dir /app appuser
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies and apply security updates
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*

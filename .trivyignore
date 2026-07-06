@@ -1,0 +1,3 @@
+# CVEs accepted as low-risk in the container image.
+# Only add entries here after verifying they don't affect runtime behavior.
+# Format: CVE-ID [optional comment]
