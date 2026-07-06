@@ -17,17 +17,21 @@ class BuildSiteArtifactsTest(TestCase):
             output_dir = tmp_path / "dist"
             site_dir.mkdir()
             for name in (
+                "sw.js",
                 "index.html",
                 "styles.css",
                 "app.js",
                 "progress.html",
                 "progress.js",
+                "progress.css",
                 "strength.html",
                 "strength.css",
                 "strength.js",
                 "speed.html",
                 "speed.css",
                 "speed.js",
+                "history.js",
+                "goals.js",
             ):
                 (site_dir / name).write_text(name, encoding="utf-8")
             snapshot.write_text(
