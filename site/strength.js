@@ -13,6 +13,8 @@ let entries = [];
 let activeCategory = "All";
 let activeSort = "date";
 let searchQuery = "";
+let compactView = false;
+let gainsCache = null;
 
 loadStrength();
 
@@ -26,7 +28,7 @@ async function loadStrength() {
     statusBanner.classList.remove("skeleton");
     entries = payload.entries;
     renderControls();
-    renderGrid();
+    loadGains().then(() => renderGrid());
     controls.removeAttribute("hidden");
   } catch {
     sourceLabel.textContent = "Unavailable";
@@ -35,13 +37,26 @@ async function loadStrength() {
   }
 }
 
+async function loadGains() {
+  if (gainsCache) return gainsCache;
+  try {
+    const resp = await fetch(`./history/exercises/_gains.json?v=${Date.now()}`);
+    gainsCache = await resp.json();
+    return gainsCache;
+  } catch {
+    return {};
+  }
+}
+
 function renderControls() {
+  const counts = {};
+  entries.forEach((e) => { counts[e.category] = (counts[e.category] || 0) + 1; });
   const categories = ["All", ...new Set(entries.map((e) => e.category).filter(Boolean))];
   filterPills.innerHTML = categories
-    .map(
-      (cat) =>
-        `<button class="pill${cat === activeCategory ? " is-active" : ""}" data-category="${cat}" type="button">${cat}</button>`,
-    )
+    .map((cat) => {
+      const count = cat === "All" ? entries.length : counts[cat] ?? 0;
+      return `<button class="pill${cat === activeCategory ? " is-active" : ""}" data-category="${cat}" type="button">${cat} (${count})</button>`;
+    })
     .join("");
   filterPills.addEventListener("click", (e) => {
     const btn = e.target.closest(".pill");
@@ -69,6 +84,14 @@ function renderControls() {
   }
 }
 
+function toggleView() {
+  compactView = !compactView;
+  grid.classList.toggle("compact", compactView);
+  document.querySelectorAll(".view-toggle").forEach((b) => {
+    b.textContent = compactView ? "Grid" : "Compact";
+  });
+}
+
 function renderGrid() {
   let visible = activeCategory === "All" ? entries : entries.filter((e) => e.category === activeCategory);
 
@@ -81,6 +104,12 @@ function renderGrid() {
       const wa = a.estimated_one_rm_kg ?? a.best_set?.weight_kg ?? 0;
       const wb = b.estimated_one_rm_kg ?? b.best_set?.weight_kg ?? 0;
       return wb - wa;
+    }
+    if (activeSort === "gain") {
+      if (!gainsCache) loadGains().then(() => renderGrid());
+      const ga = gainsCache?.[findTemplateId(a.name)]?.gain_pct ?? 0;
+      const gb = gainsCache?.[findTemplateId(b.name)]?.gain_pct ?? 0;
+      return gb - ga;
     }
     const da = a.best_set?.workout_start_date ?? "";
     const db = b.best_set?.workout_start_date ?? "";
@@ -100,10 +129,17 @@ function renderCard(entry) {
   const cat = entry.category ?? "Strength";
   const hasWeight = best.weight_kg != null;
   const bestLine = hasWeight ? `${formatNum(best.weight_kg)} kg × ${best.reps}` : `${best.reps} reps`;
-  const oneRm = entry.estimated_one_rm_kg != null ? `${formatNum(entry.estimated_one_rm_kg)} kg` : "—";
+  const oneRm = entry.estimated_one_rm_kg ?? best.weight_kg ?? null;
+  const oneRmStr = oneRm != null ? `${formatNum(oneRm)} kg` : "—";
   const date = best.workout_start_date ?? "";
+
+  const tid = findTemplateId(entry.name);
+  const gain = gainsCache?.[tid];
+  const peakStr = gain?.peak ? formatNum(gain.peak) + " kg" : null;
+  const pctOfPeak = oneRm != null && gain?.peak ? Math.round((oneRm / gain.peak) * 100) : null;
+
   return `
-    <article class="exercise-card" data-exercise-name="${escapeHtml(entry.name)}">
+    <article class="exercise-card${compactView ? "" : ""}" data-exercise-name="${escapeHtml(entry.name)}">
       <div class="exercise-head">
         <div class="exercise-name">${escapeHtml(entry.name)}</div>
         <span class="exercise-category cat-${cat.replace(/\s+/g, "")}">${escapeHtml(cat)}</span>
@@ -115,7 +151,7 @@ function renderCard(entry) {
         </div>
         <div class="exercise-metric">
           <span class="exercise-metric-label">Est. 1RM</span>
-          <span class="exercise-metric-value">${escapeHtml(oneRm)}</span>
+          <span class="exercise-metric-value">${escapeHtml(oneRmStr)} ${pctOfPeak != null ? `<span class="peak-indicator">${pctOfPeak}% of peak</span>` : ""}</span>
         </div>
       </div>
       ${date ? `<span class="exercise-date">${escapeHtml(date)}</span>` : ""}
@@ -144,40 +180,18 @@ grid.addEventListener("click", async (e) => {
 
 function findTemplateId(name) {
   const mapping = {
-    "Squat (Barbell)": "D04AC939",
-    "Bench Press (Barbell)": "79D0BB3A",
-    "Chin Up": "29083183",
-    "Triceps Dip": "28BB4A95",
-    "Push Up": "392887AA",
-    "Dumbbell Row": "F1E57334",
-    "Sumo Squat (Kettlebell)": "5E10D0E6",
-    "Single Arm Tricep Extension (Dumbbell)": "8347DFD1",
-    "Deadlift (Barbell)": "A1B2C3D4",
-    "Overhead Press (Barbell)": "B2C3D4E5",
-    "Pull Up": "C3D4E5F6",
-    "Romanian Deadlift": "D4E5F6A7",
-    "Bulgarian Split Squat": "E5F6A7B8",
-    "Dumbbell Bench Press": "F6A7B8C9",
-    "Seated Cable Row": "A7B8C9D0",
-    "Bicep Curl (Dumbbell)": "B8C9D0A1",
-    "Tricep Pushdown": "C9D0A1B2",
-    "Lateral Raise": "D0A1B2C3",
-    "Leg Press": "E1F2A3B4",
-    "Hamstring Curl": "F2A3B4C5",
-    "Calf Raise": "A3B4C5D6",
-    "Face Pull": "B4C5D6E7",
-    "Pendlay Row": "C5D6E7F8",
-    "Front Squat": "D6E7F8A9",
-    "Incline Bench Press": "E7F8A9B0",
-    "Skull Crusher": "F8A9B0C1",
-    "Dumbbell Shoulder Press": "A9B0C1D2",
-    "Barbell Hip Thrust": "B0C1D2E3",
-    "Farmer Walk": "C1D2E3F4",
-    "Pistol Squat": "D2E3F4A5",
-    "Weighted Plank": "E3F4A5B6",
-    "Kettlebell Swing": "F4A5B6C7",
-    "Box Jump": "A5B6C7D8",
-    "Dips (Weighted)": "B6C7D8E9",
+    "Squat (Barbell)": "D04AC939", "Bench Press (Barbell)": "79D0BB3A", "Chin Up": "29083183",
+    "Triceps Dip": "28BB4A95", "Push Up": "392887AA", "Dumbbell Row": "F1E57334",
+    "Sumo Squat (Kettlebell)": "5E10D0E6", "Single Arm Tricep Extension (Dumbbell)": "8347DFD1",
+    "Deadlift (Barbell)": "A1B2C3D4", "Overhead Press (Barbell)": "B2C3D4E5", "Pull Up": "C3D4E5F6",
+    "Romanian Deadlift": "D4E5F6A7", "Bulgarian Split Squat": "E5F6A7B8", "Dumbbell Bench Press": "F6A7B8C9",
+    "Seated Cable Row": "A7B8C9D0", "Bicep Curl (Dumbbell)": "B8C9D0A1", "Tricep Pushdown": "C9D0A1B2",
+    "Lateral Raise": "D0A1B2C3", "Leg Press": "E1F2A3B4", "Hamstring Curl": "F2A3B4C5",
+    "Calf Raise": "A3B4C5D6", "Face Pull": "B4C5D6E7", "Pendlay Row": "C5D6E7F8",
+    "Front Squat": "D6E7F8A9", "Incline Bench Press": "E7F8A9B0", "Skull Crusher": "F8A9B0C1",
+    "Dumbbell Shoulder Press": "A9B0C1D2", "Barbell Hip Thrust": "B0C1D2E3", "Farmer Walk": "C1D2E3F4",
+    "Pistol Squat": "D2E3F4A5", "Weighted Plank": "E3F4A5B6", "Kettlebell Swing": "F4A5B6C7",
+    "Box Jump": "A5B6C7D8", "Dips (Weighted)": "B6C7D8E9",
   };
   return mapping[name] ?? null;
 }
@@ -192,7 +206,6 @@ function showTrendModal(name, history) {
   const oneRmPct = firstOneRm ? Math.round((oneRmChange / firstOneRm) * 100) : 0;
   const peak = Math.max(...oneRms);
   const trendUp = oneRmChange >= 0;
-
   const recent = history.slice(-10).reverse();
 
   const modal = document.createElement("div");
@@ -203,7 +216,6 @@ function showTrendModal(name, history) {
         <h2>${escapeHtml(name)}</h2>
         <button class="modal-close" type="button">&times;</button>
       </div>
-
       <div class="modal-progression">
         <span class="modal-progression-value ${trendUp ? "delta-up" : "delta-down"}">
           ${firstOneRm} kg → ${lastOneRm} kg
@@ -212,21 +224,18 @@ function showTrendModal(name, history) {
           ${trendUp ? "+" : ""}${oneRmPct}% over ${history.length} days
         </span>
       </div>
-
       ${oneRms.length > 1 ? `
         <div class="modal-section">
           <p class="label">Estimated 1RM trend</p>
           ${renderSparkline(oneRms, 300, 72, { dots: true, labels: true, color: "var(--accent)" })}
         </div>
       ` : ""}
-
       ${weights.length > 1 ? `
         <div class="modal-section">
           <p class="label">Working weight trend</p>
           ${renderSparkline(weights, 300, 56, { dots: true, color: "var(--accent-2)" })}
         </div>
       ` : ""}
-
       <div class="modal-stats">
         <div class="stat-item">
           <span class="stat-item-label">Current 1RM</span>
@@ -245,7 +254,6 @@ function showTrendModal(name, history) {
           <span class="stat-item-value">${latest?.weight_kg ?? "—"} kg × ${latest?.reps ?? "—"}</span>
         </div>
       </div>
-
       <details class="modal-history">
         <summary><span class="label">Recent history (last ${recent.length})</span></summary>
         <div class="modal-history-list">
@@ -262,11 +270,8 @@ function showTrendModal(name, history) {
   `;
 
   modal.addEventListener("click", (e) => {
-    if (e.target === modal || e.target.closest(".modal-close")) {
-      modal.remove();
-    }
+    if (e.target === modal || e.target.closest(".modal-close")) { modal.remove(); }
   });
-
   document.body.appendChild(modal);
 }
 
@@ -282,3 +287,5 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
+window.toggleView = toggleView;

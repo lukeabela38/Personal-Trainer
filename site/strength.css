@@ -121,6 +121,31 @@
 .exercise-metric-value { display: block; margin-top: 2px; font-size: 0.9rem; font-weight: 700; }
 .exercise-date { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
 
+.peak-indicator { font-size: 0.7rem; color: var(--muted); font-weight: 400; margin-left: 4px; }
+
+/* Compact list view */
+.strength-grid.compact { grid-template-columns: 1fr; gap: 6px; }
+.strength-grid.compact .exercise-card {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  padding: 10px 14px;
+  align-items: center;
+}
+.strength-grid.compact .exercise-head { gap: 8px; }
+.strength-grid.compact .exercise-metrics {
+  display: contents;
+}
+.strength-grid.compact .exercise-metric {
+  padding: 0;
+  background: none;
+  text-align: right;
+}
+.strength-grid.compact .exercise-metric-label { display: none; }
+.strength-grid.compact .exercise-metric-value { font-size: 0.85rem; margin-top: 0; }
+.strength-grid.compact .exercise-date { display: none; }
+.strength-grid.compact .exercise-category { font-size: 0.6rem; }
+
 /* Modal overlay */
 .modal-overlay {
   position: fixed;

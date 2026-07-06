@@ -153,6 +153,20 @@ def main():
     for tid, entries in exercise_history.items():
         (ex_dir / f"{tid}.json").write_text(json.dumps(entries, indent=2))
 
+    gains = {}
+    for tid, entries in exercise_history.items():
+        one_rms = [e["estimated_one_rm_kg"] for e in entries if e.get("estimated_one_rm_kg") is not None]
+        if len(one_rms) < 2:
+            gains[tid] = {"start": None, "current": None, "peak": None, "gain_pct": 0}
+            continue
+        gains[tid] = {
+            "start": one_rms[0],
+            "current": one_rms[-1],
+            "peak": max(one_rms),
+            "gain_pct": round(((one_rms[-1] - one_rms[0]) / one_rms[0]) * 100, 1) if one_rms[0] else 0,
+        }
+    (ex_dir / "_gains.json").write_text(json.dumps(gains, indent=2))
+
     print(f"Generated {days} snapshots ({start} → {current})")
     print(f"  Per-exercise files: {len(exercise_history)}")
     print(f"Output: {output_dir}/")
