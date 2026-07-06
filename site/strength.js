@@ -118,10 +118,7 @@ function renderCard(entry) {
           <span class="exercise-metric-value">${escapeHtml(oneRm)}</span>
         </div>
       </div>
-      <div class="exercise-footer">
-        ${date ? `<span class="exercise-date">${escapeHtml(date)}</span>` : ""}
-        <button class="trend-btn" type="button">Trend</button>
-      </div>
+      ${date ? `<span class="exercise-date">${escapeHtml(date)}</span>` : ""}
     </article>
   `;
 }
@@ -129,10 +126,9 @@ function renderCard(entry) {
 /* ── Trend modal ── */
 
 grid.addEventListener("click", async (e) => {
-  const btn = e.target.closest(".trend-btn");
-  if (!btn) return;
-  const card = btn.closest(".exercise-card");
+  const card = e.target.closest(".exercise-card");
   if (!card) return;
+  if (e.target.closest(".pill, .sort-btn, .search-input, .filter-pills")) return;
   const name = card.dataset.exerciseName;
   const tid = findTemplateId(name);
   if (!tid) return;
