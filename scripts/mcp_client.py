@@ -2,8 +2,30 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import shlex
+from pathlib import Path
 from typing import Any
+
+
+def load_dotenv() -> None:
+    """Load .env from the repo root into os.environ (if present)."""
+    start = Path(__file__).resolve().parent
+    for ancestor in [start] + list(start.parents):
+        candidate = ancestor / ".env"
+        if candidate.is_file():
+            for line in candidate.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key, val = key.strip(), val.strip().strip("\"'")
+                if key not in os.environ:
+                    os.environ[key] = val
+            return
+
+
+load_dotenv()
 
 
 class McpError(Exception):

@@ -203,21 +203,29 @@ Reads check-in data from `PERSONAL_TRAINER_MANUAL_COMMAND` (shell command emitti
 
 ### Environment Variables
 
-To wire the live pipeline, set these in your shell profile or daily run script:
+Copy `.env.example` to `.env` in the repo root and fill in your values:
 
 ```bash
-export PERSONAL_TRAINER_GARMIN_COMMAND="python3 $REPO/scripts/wrappers/fetch_garmin.py"
-export PERSONAL_TRAINER_HEVY_COMMAND="python3 $REPO/scripts/wrappers/fetch_hevy.py"
-export PERSONAL_TRAINER_CRONOMETER_COMMAND="python3 $REPO/scripts/wrappers/fetch_cronometer.py"
-export PERSONAL_TRAINER_MANUAL_COMMAND="python3 $REPO/scripts/wrappers/fetch_manual.py"
-export PERSONAL_TRAINER_GARMIN_SPEED_COMMAND="python3 $REPO/scripts/wrappers/fetch_garmin_speed.py"
-export PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND="python3 $REPO/scripts/wrappers/fetch_hevy_strength.py"
-
-# Optionally override the MCP server commands (defaults use uvx/npx):
-# export PERSONAL_TRAINER_GARMIN_MCP_COMMAND="..."
-# export PERSONAL_TRAINER_HEVY_MCP_COMMAND="..."
-# export PERSONAL_TRAINER_CRONOMETER_MCP_COMMAND="..."
+cp .env.example .env
+# edit .env to set REPO_ROOT to your local path
 ```
+
+`.env` is auto-loaded by `scripts/mcp_client.py` on import — no shell sourcing needed. Variables already set in your environment take precedence.
+
+Key variables at a glance:
+
+| Variable | Purpose |
+|---|---|
+| `REPO_ROOT` | Absolute path to the repository |
+| `PERSONAL_TRAINER_GARMIN_COMMAND` | Garmin source fetcher |
+| `PERSONAL_TRAINER_HEVY_COMMAND` | Hevy source fetcher |
+| `PERSONAL_TRAINER_CRONOMETER_COMMAND` | Cronometer source fetcher |
+| `PERSONAL_TRAINER_MANUAL_COMMAND` | Manual check-in |
+| `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND` | Garmin speed records |
+| `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND` | Hevy exercise history |
+| `PERSONAL_TRAINER_GARMIN_MCP_COMMAND` | (optional) override Garmin MCP server command |
+| `PERSONAL_TRAINER_HEVY_MCP_COMMAND` | (optional) override Hevy MCP server command |
+| `PERSONAL_TRAINER_CRONOMETER_MCP_COMMAND` | (optional) override Cronometer MCP server command |
 
 Each wrapper output is JSON to stdout and describes errors on stderr.
 MCP server startup latency is expected on first call (uvx/npx cache).
