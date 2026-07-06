@@ -46,6 +46,7 @@ Wave order:
 - Prefer one issue per behavior, source adapter, or page.
 - Add a short acceptance note to each card.
 - Any work intended for review must be delivered as a pull request, not a direct commit.
+- Unless explicitly told otherwise, create a feature branch and open a PR for reviewable work.
 - Do not combine contract changes with UI work unless the card is explicitly about integration.
 - Avoid duplicate cards; if scope overlaps, keep the sharper card and archive the broader one.
 

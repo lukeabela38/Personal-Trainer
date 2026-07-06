@@ -12,6 +12,7 @@ This repository builds a personal performance system for Luke.
 - Keep a dedicated progress page that compares the current snapshot with the previously loaded snapshot.
 - Prefer a single daily runner command for live capture, snapshot build, and site artifact generation.
 - Treat any work intended for review as a pull request by default.
+- Unless explicitly told otherwise, put reviewable work on a feature branch and open a PR.
 
 ## Where To Start
 
