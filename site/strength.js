@@ -1,4 +1,4 @@
-import { renderSparkline } from "./goals.js";
+import { renderSparkline, fmtNum } from "./goals.js";
 
 const strengthUrl = new URL("./strength.json", import.meta.url);
 const grid = document.getElementById("strength-grid");
@@ -147,7 +147,7 @@ function renderInsights() {
   const catHealth = Object.entries(catStats).map(([cat, s]) => ({
     cat,
     pct: Math.round(s.totalPct / s.count),
-    gain: (s.totalGain / s.count).toFixed(1),
+    gain: fmtNum(s.totalGain / s.count),
   }));
 
   /* Stall detection */
@@ -194,7 +194,7 @@ function renderInsights() {
           ${stalls.slice(0, 5).map((s) => `
             <div class="item">
               <span title="Hasn't improved in recent training">${escapeHtml(s.name)}</span>
-              <strong class="delta-down" title="Peak was ${s.peak} kg — currently at ${Math.round((s.current / s.peak) * 100)}%">${s.current} kg · ${Math.round((s.current / s.peak) * 100)}% of peak</strong>
+              <strong class="delta-down" title="Peak was ${fmtNum(s.peak)} kg — currently at ${Math.round((s.current / s.peak) * 100)}%">${fmtNum(s.current)} kg · ${Math.round((s.current / s.peak) * 100)}% of peak</strong>
             </div>
           `).join("")}
         </div>
@@ -214,15 +214,15 @@ function renderInsights() {
           </div>
           <div class="stat-item">
             <span class="stat-item-label">Current 1RM</span>
-            <span class="stat-item-value">${bg.current} kg</span>
+            <span class="stat-item-value">${fmtNum(bg.current)} kg</span>
           </div>
           <div class="stat-item">
             <span class="stat-item-label">Peak 1RM</span>
-            <span class="stat-item-value">${bg.peak} kg</span>
+            <span class="stat-item-value">${fmtNum(bg.peak)} kg</span>
           </div>
           <div class="stat-item">
             <span class="stat-item-label">Gap</span>
-            <span class="stat-item-value delta-down">-${bg.peak - bg.current} kg</span>
+            <span class="stat-item-value delta-down">-${fmtNum(bg.peak - bg.current)} kg</span>
           </div>
         </div>
       </div>

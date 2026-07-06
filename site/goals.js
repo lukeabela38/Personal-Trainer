@@ -60,6 +60,12 @@ export function goalProgress(g) {
   return 0;
 }
 
+export function fmtNum(value) {
+  if (value == null || Number.isNaN(Number(value))) return String(value ?? "");
+  const n = Number(value);
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
+}
+
 function timeToSeconds(t) {
   if (t == null) return null;
   const parts = String(t).split(":").map(Number);
@@ -80,8 +86,8 @@ export function renderSparkline(values, width = 160, height = 40, opts = {}) {
   const h = height - pad * 2;
   const color = opts.color ?? (pts[pts.length - 1] >= pts[0] ? "var(--green)" : "var(--red)");
   const showDots = opts.dots ?? false;
-  const labelMin = opts.labels ? String(min) : null;
-  const labelMax = opts.labels ? String(max) : null;
+  const labelMin = opts.labels ? fmtNum(min) : null;
+  const labelMax = opts.labels ? fmtNum(max) : null;
 
   const step = pts.length - 1;
   const lines = [];
