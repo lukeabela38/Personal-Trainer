@@ -121,7 +121,8 @@
 .exercise-metric-value { display: block; margin-top: 2px; font-size: 0.9rem; font-weight: 700; }
 .exercise-date { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
 
-.peak-indicator { font-size: 0.7rem; color: var(--muted); font-weight: 400; margin-left: 4px; }
+.peak-indicator { font-size: 0.7rem; color: var(--muted); font-weight: 400; margin-left: 4px; cursor: help; }
+[title] { cursor: help; }
 
 /* Compact list view */
 .strength-grid.compact { grid-template-columns: 1fr; gap: 6px; }

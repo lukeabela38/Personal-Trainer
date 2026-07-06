@@ -150,8 +150,8 @@ function renderCard(entry) {
           <span class="exercise-metric-value">${escapeHtml(bestLine)}</span>
         </div>
         <div class="exercise-metric">
-          <span class="exercise-metric-label">Est. 1RM</span>
-          <span class="exercise-metric-value">${escapeHtml(oneRmStr)} ${pctOfPeak != null ? `<span class="peak-indicator">${pctOfPeak}% of peak</span>` : ""}</span>
+          <span class="exercise-metric-label" title="Estimated one-rep max based on your best set">Est. 1RM</span>
+          <span class="exercise-metric-value">${escapeHtml(oneRmStr)} ${pctOfPeak != null ? `<span class="peak-indicator" title="Highest estimated 1RM ever recorded for this exercise">${pctOfPeak}% of peak</span>` : ""}</span>
         </div>
       </div>
       ${date ? `<span class="exercise-date">${escapeHtml(date)}</span>` : ""}
@@ -242,7 +242,7 @@ function showTrendModal(name, history) {
           <span class="stat-item-value">${lastOneRm} kg</span>
         </div>
         <div class="stat-item">
-          <span class="stat-item-label">Peak 1RM</span>
+          <span class="stat-item-label" title="Highest estimated 1RM ever recorded for this exercise">Peak 1RM</span>
           <span class="stat-item-value">${peak} kg</span>
         </div>
         <div class="stat-item">
