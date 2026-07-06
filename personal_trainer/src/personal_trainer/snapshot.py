@@ -31,8 +31,7 @@ def build_snapshot(
     cronometer = _normalize_cronometer(sources.get("cronometer", {}))
     manual = _normalize_manual_context(sources.get("manual_context", {}))
     derived = _derive_context(garmin, hevy, cronometer, manual)
-
-    return {
+    snapshot = {
         "snapshot_date": snapshot_date or sources.get("snapshot_date") or date.today().isoformat(),
         "timezone": sources.get("timezone", timezone),
         "athlete": normalized_athlete,
@@ -42,6 +41,7 @@ def build_snapshot(
         "manual_context": manual,
         "derived": derived,
     }
+    return _validate_snapshot(snapshot)
 
 
 def _normalize_garmin(raw: SourcePayload) -> SourcePayload:
@@ -240,3 +240,29 @@ def _dedupe(values: list[Any]) -> list[Any]:
         deduped.append(value)
         seen.add(value)
     return deduped
+
+
+def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
+    required_top_level = ("snapshot_date", "timezone", "athlete", "garmin", "hevy", "cronometer", "manual_context", "derived")
+    missing = [key for key in required_top_level if key not in snapshot]
+    if missing:
+        raise ValueError(f"snapshot missing required fields: {', '.join(missing)}")
+
+    for section in ("athlete", "garmin", "hevy", "cronometer", "manual_context", "derived"):
+        if not isinstance(snapshot.get(section), dict):
+            raise ValueError(f"snapshot section '{section}' must be a JSON object")
+
+    derived = snapshot["derived"]
+    required_derived = ("data_quality", "hard_session_allowed", "primary_constraints", "likely_conflicts", "check_in_required", "check_in_questions")
+    missing_derived = [key for key in required_derived if key not in derived]
+    if missing_derived:
+        raise ValueError(f"derived snapshot missing required fields: {', '.join(missing_derived)}")
+
+    if not isinstance(derived.get("primary_constraints"), list):
+        raise ValueError("derived.primary_constraints must be a list")
+    if not isinstance(derived.get("likely_conflicts"), list):
+        raise ValueError("derived.likely_conflicts must be a list")
+    if not isinstance(derived.get("check_in_questions"), list):
+        raise ValueError("derived.check_in_questions must be a list")
+
+    return snapshot
