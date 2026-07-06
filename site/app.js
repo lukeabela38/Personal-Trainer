@@ -273,12 +273,9 @@ try {
 } catch {}
 
 document.addEventListener("click", (e) => {
-  if (e.target.closest("#welcome-dismiss")) {
-    document.getElementById("welcome-overlay")?.setAttribute("hidden", "");
+  if (e.target.closest("#welcome-dismiss") || e.target.id === "welcome-dismiss") {
+    document.getElementById("welcome-overlay")?.remove();
     try { localStorage.setItem("personal-trainer:welcome-dismissed", "1"); } catch {}
-    return;
-  }
-  if (e.target.id === "welcome-dismiss") {
     return;
   }
   if (e.target.id === "log-session") {

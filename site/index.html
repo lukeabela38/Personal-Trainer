@@ -60,7 +60,7 @@
           </div>
           <div class="welcome-footer">
             <span class="muted">Load a snapshot via <strong>Actions → Load deployed snapshot</strong> or generate history data with the pipeline script.</span>
-            <button id="welcome-dismiss" class="button" type="button" onclick="document.getElementById('welcome-overlay').setAttribute('hidden','');try{localStorage.setItem('personal-trainer:welcome-dismissed','1')}catch(e){}">Get started</button>
+            <button id="welcome-dismiss" class="button" type="button" onclick="var o=document.getElementById('welcome-overlay');if(o)o.remove();try{localStorage.setItem('personal-trainer:welcome-dismissed','1')}catch(e){}">Get started</button>
           </div>
         </div>
       </div>
