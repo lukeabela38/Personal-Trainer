@@ -59,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
     for name in (
+        "sw.js",
         "index.html",
         "styles.css",
         "app.js",
