@@ -1,26 +1,23 @@
 const deployedSnapshotPath = new URL("./data/snapshot.json", import.meta.url);
-
 const sections = document.getElementById("sections");
 const statusBanner = document.getElementById("status-banner");
-const rawJsonUrl = new URL("./raw.json", import.meta.url);
+const state = {
+  currentPayload: null,
+  previousSnapshot: readStoredSnapshot(),
+};
 
-const labels = [
-  ["athlete", "Athlete"],
-  ["garmin", "Garmin"],
-  ["hevy", "Hevy"],
-  ["cronometer", "Cronometer"],
-  ["manual_context", "Manual context"],
-  ["derived", "Derived"],
+const VIEW_LINKS = [
+  ["Snapshot viewer", "./index.html"],
+  ["Strength", "./strength.html"],
+  ["Speed", "./speed.html"],
+  ["Progress", "./progress.html"],
 ];
-
-const state = { currentPayload: null };
 
 document.getElementById("file-input").addEventListener("change", (event) => handleFile(event, "snapshot"));
 document.getElementById("live-input").addEventListener("change", (event) => handleFile(event, "live payload"));
 document.getElementById("load-sample").addEventListener("click", () => loadFromUrl(deployedSnapshotPath, "deployed snapshot"));
 document.getElementById("load-example").addEventListener("click", () => loadFromUrl(deployedSnapshotPath, "deployed snapshot"));
 document.getElementById("open-raw").addEventListener("click", openRawView);
-
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
 
 async function handleFile(event, kind) {
@@ -39,7 +36,7 @@ async function loadFromUrl(url, sourceLabel) {
 function renderPayload(payload, sourceLabel) {
   state.currentPayload = payload;
   const snapshot = payload.snapshot ?? payload;
-  const recommendation = snapshot.recommendation ?? payload.recommendation ?? snapshot;
+  const recommendation = payload.recommendation ?? snapshot.recommendation ?? snapshot;
   renderSnapshot(snapshot, recommendation, sourceLabel);
 }
 
@@ -57,81 +54,209 @@ function renderEmptyState() {
   sections.innerHTML = "";
   statusBanner.textContent = "No file loaded";
   state.currentPayload = null;
+  clearStoredSnapshot();
 }
 
 function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const garmin = snapshot.garmin ?? {};
+  const hevy = snapshot.hevy ?? {};
   const cronometer = snapshot.cronometer ?? {};
   const manual = snapshot.manual_context ?? {};
   const derived = snapshot.derived ?? {};
+  const priority = recommendation.Priority ?? recommendation.priority ?? "No recommendation";
+  const reason = recommendation.Reason ?? recommendation.reason ?? "No explanation available.";
 
-  setText("priority", recommendation.Priority ?? "No recommendation");
-  setText("reason", recommendation.Reason ?? "No reason available.");
-  setText("confidence", recommendation.Confidence ?? "-");
-  setText("check-in", recommendation["Needs check-in"] ?? "-");
+  setText("priority", priority);
+  setText("reason", reason);
+  setText("confidence", recommendation.confidence ?? recommendation.Confidence ?? "-");
+  setText("check-in", derived.check_in_required ?? derived.check_in ?? "-");
   setText("data-quality", derived.data_quality ?? "-");
   setText("vo2max", formatValue(garmin.current_vo2max));
   setText("fueling", formatValue(cronometer.fueling_status));
   setText("remaining-kcal", formatValue(cronometer.today?.remaining_kcal));
   setText("sleep", formatValue(manual.sleep_quality));
   setText("motivation", formatValue(manual.motivation));
-  statusBanner.textContent = `Loaded ${sourceLabel}`;
 
-  sections.innerHTML = labels.map(([key, title]) => renderSection(title, snapshot[key] ?? null)).join("");
+  statusBanner.textContent = `${sourceLabel} loaded`;
+  sections.innerHTML = [
+    renderFocusCard("Trend", [
+      ["Current VO2 max", formatValue(garmin.current_vo2max)],
+      ["Fueling", formatValue(cronometer.fueling_status)],
+      ["Remaining kcal", formatValue(cronometer.today?.remaining_kcal)],
+      ["Strength trend", formatValue(hevy.strength_trend)],
+      ["Recovery", formatValue(manual.sleep_quality)],
+    ]),
+    renderDeltaCard(state.previousSnapshot, snapshot),
+    renderCompactSection("Athlete", snapshot.athlete),
+    renderCompactSection("Garmin", garmin),
+    renderCompactSection("Hevy", hevy),
+    renderCompactSection("Cronometer", cronometer),
+    renderCompactSection("Manual context", manual),
+    renderCompactSection("Derived", derived),
+  ]
+    .filter(Boolean)
+    .join("");
+  state.previousSnapshot = snapshot;
+  persistSnapshot(snapshot);
 }
 
-function renderSection(title, value) {
-  const items = flattenEntries(value);
-  if (items.length === 0) {
-    return `
-      <article class="card section">
-        <p class="label">${escapeHtml(title)}</p>
-        <p class="muted">No data available.</p>
-      </article>
-    `;
-  }
+function renderFocusCard(title, rows) {
+  const items = rows
+    .filter(([, value]) => shouldRenderValue(value))
+    .map(
+      ([label, value]) => `
+        <div class="item">
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(value)}</strong>
+        </div>
+      `,
+    )
+    .join("");
 
+  if (!items) return "";
   return `
-    <article class="card section">
-      <p class="label">${escapeHtml(title)}</p>
-      <div class="section-list">
-        ${items.map(([path, entry]) => renderKeyValueItem(path, entry, title)).join("")}
+    <article class="focus-card card">
+      <div class="summary-header">
+        <div>
+          <p class="label">${escapeHtml(title)}</p>
+          <h2>What matters now</h2>
+        </div>
       </div>
+      <div class="grid focus-grid">${items}</div>
     </article>
   `;
 }
 
-function renderKeyValueItem(key, value, sectionTitle) {
+function renderDeltaCard(previousSnapshot, currentSnapshot) {
+  const rows = buildDeltaRows(previousSnapshot ?? {}, currentSnapshot ?? {});
+  if (!rows.length) return "";
   return `
-    <div class="item">
-      <span>${escapeHtml(formatLabel(key, sectionTitle))}</span>
-      <strong>${escapeHtml(String(value))}</strong>
-    </div>
+    <details class="card section-panel">
+      <summary class="section-summary">
+        <div>
+          <p class="label">Progress</p>
+          <h2>Change since last snapshot</h2>
+        </div>
+        <span class="status-banner">Show changes</span>
+      </summary>
+      <div class="section-list">
+        ${rows
+          .map(
+            (row) => `
+              <div class="item">
+                <span>${escapeHtml(row.label)}</span>
+                <strong>${escapeHtml(row.value)}</strong>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    </details>
   `;
 }
 
+function renderCompactSection(title, value) {
+  const entries = flattenEntries(value).filter((entry) => shouldRenderValue(entry.value));
+  if (!entries.length) return "";
+  return `
+    <details class="card section-panel">
+      <summary class="section-summary">
+        <div>
+          <p class="label">${escapeHtml(title)}</p>
+          <h2>${escapeHtml(title)}</h2>
+        </div>
+        <span class="status-banner">${entries.length} items</span>
+      </summary>
+      <div class="section-list">
+        ${entries
+          .slice(0, 12)
+          .map(
+            ([path, itemValue]) => `
+              <div class="item">
+                <span>${escapeHtml(formatLabel(path[path.length - 1], title))}</span>
+                <strong>${escapeHtml(formatRenderedValue(itemValue))}</strong>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    </details>
+  `;
+}
+
+function buildDeltaRows(previousSnapshot, currentSnapshot) {
+  const rows = [];
+  addDeltaRow(rows, "VO2 max", readNumber(previousSnapshot, ["garmin", "current_vo2max"]), readNumber(currentSnapshot, ["garmin", "current_vo2max"]));
+  addDeltaRow(rows, "Fueling", readText(previousSnapshot, ["cronometer", "fueling_status"]), readText(currentSnapshot, ["cronometer", "fueling_status"]));
+  addDeltaRow(rows, "Remaining kcal", readNumber(previousSnapshot, ["cronometer", "today", "remaining_kcal"]), readNumber(currentSnapshot, ["cronometer", "today", "remaining_kcal"]));
+  addDeltaRow(rows, "Strength trend", readText(previousSnapshot, ["hevy", "strength_trend"]), readText(currentSnapshot, ["hevy", "strength_trend"]));
+  addDeltaRow(rows, "Running bests", summarizeBestCount(previousSnapshot), summarizeBestCount(currentSnapshot));
+  return rows;
+}
+
+function summarizeBestCount(snapshot) {
+  const hevyBests = snapshot?.hevy?.recent_bests?.length ?? 0;
+  const garminBests = snapshot?.garmin?.recent_bests?.length ?? 0;
+  return `${hevyBests} strength / ${garminBests} running`;
+}
+
+function addDeltaRow(rows, label, previous, current) {
+  if (!shouldRenderValue(previous) && !shouldRenderValue(current)) return;
+  if (previous === current) return;
+  rows.push({ label, value: `${formatDeltaValue(previous)} → ${formatDeltaValue(current)}` });
+}
+
+function formatDeltaValue(value) {
+  if (!shouldRenderValue(value)) return "-";
+  return String(value);
+}
+
+function readNumber(snapshot, path) {
+  const value = readPath(snapshot, path);
+  if (value == null || value === "") return null;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function readText(snapshot, path) {
+  const value = readPath(snapshot, path);
+  return value == null ? null : String(value);
+}
+
+function readPath(object, path) {
+  return path.reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), object);
+}
+
 function flattenEntries(value, path = []) {
-  if (value == null) return [];
+  if (!shouldDescend(value)) return [[path, value]];
+  return Object.entries(value).flatMap(([key, entry]) => flattenEntries(entry, [...path, key]));
+}
 
-  if (Array.isArray(value)) {
-    return value.flatMap((entry, index) => flattenEntries(entry, [...path, `[${index}]`]));
-  }
+function shouldDescend(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  return value !== null && typeof value === "object" && Object.keys(value).length > 0;
+}
 
-  if (typeof value !== "object") {
-    return [[path.join(" · ") || "Value", value]];
-  }
+function shouldRenderValue(value) {
+  if (value == null) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.keys(value).length > 0;
+  if (typeof value === "string") return value.trim() !== "" && value !== "null";
+  return true;
+}
 
-  return Object.entries(value).flatMap(([key, entry]) => {
-    if (entry == null) return [];
-    if (Array.isArray(entry) && entry.length === 0) return [];
-    if (typeof entry === "object" && !Array.isArray(entry) && Object.keys(entry).length === 0) return [];
-    return flattenEntries(entry, [...path, key]);
-  });
+function formatRenderedValue(value) {
+  if (Array.isArray(value)) return value.map((item) => formatRenderedValue(item)).join(", ");
+  if (value && typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function formatValue(value) {
+  return shouldRenderValue(value) ? String(value) : "-";
 }
 
 function formatLabel(key, sectionTitle = "") {
-  const normalized = String(key).replaceAll("_", " ").replaceAll("-", " ").trim();
-  const lower = normalized.toLowerCase();
+  const normalized = String(key).replaceAll("_", " ").replaceAll("-", " ").trim().toLowerCase();
   const mapping = {
     age: "Age",
     height: "Height (cm)",
@@ -178,48 +303,15 @@ function formatLabel(key, sectionTitle = "") {
     "likely conflicts": "Likely Conflicts",
     "check in required": "Check-in Required",
     "check in questions": "Check-in Questions",
-    priority: "Priority",
-    session: "Session",
-    nutrition: "Nutrition",
-    reason: "Reason",
-    guardrail: "Guardrail",
-    confidence: "Confidence",
-    "needs check in": "Needs Check-in",
-    legs: "Legs",
-    "posterior chain": "Posterior Chain",
-    push: "Push",
-    pull: "Pull",
-    "shoulders arms": "Shoulders & Arms",
-    core: "Core",
   };
 
-  return mapping[lower] ?? titleCase(normalized);
-}
-
-function titleCase(value) {
-  return value
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function formatValue(value) {
-  return value == null || value === "" ? "-" : String(value);
+  if (sectionTitle === "Hevy" && normalized === "estimated one rm kg") return "Estimated 1RM (kg)";
+  return mapping[normalized] ?? normalized.split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 
 function setText(id, value) {
-  document.getElementById(id).textContent = value;
-}
-
-async function openRawView() {
-  const payload = state.currentPayload;
-  if (!payload) return;
-  const json = JSON.stringify(payload, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank", "noopener,noreferrer");
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  const node = document.getElementById(id);
+  if (node) node.textContent = value;
 }
 
 function escapeHtml(value) {
@@ -228,5 +320,35 @@ function escapeHtml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll("'", "&#39;");
+}
+
+function openRawView() {
+  const payload = state.currentPayload;
+  if (!payload) return;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener");
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function persistSnapshot(snapshot) {
+  try {
+    localStorage.setItem("personal-trainer:last-snapshot", JSON.stringify(snapshot));
+  } catch {}
+}
+
+function readStoredSnapshot() {
+  try {
+    const raw = localStorage.getItem("personal-trainer:last-snapshot");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredSnapshot() {
+  try {
+    localStorage.removeItem("personal-trainer:last-snapshot");
+  } catch {}
 }

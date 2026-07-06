@@ -1,57 +1,71 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Personal Trainer</title>
-    <link rel="stylesheet" href="./styles.css?v=3" />
-    <script type="module" src="./app.js?v=3"></script>
-  </head>
-  <body>
-    <main class="shell">
-      <section class="hero">
-        <div>
-          <p class="eyebrow">Personal Trainer</p>
-          <h1>Snapshot Viewer</h1>
-          <p class="lede">
-            Import a snapshot JSON file or a live payload export to inspect the
-            assembled training picture in one place.
-          </p>
-        </div>
-        <div class="controls">
-          <label class="button secondary" for="file-input">Load snapshot</label>
-          <input id="file-input" type="file" accept="application/json" />
-          <label class="button secondary" for="live-input">Load live payload</label>
-          <input id="live-input" type="file" accept="application/json" />
-          <button id="load-sample" class="button secondary" type="button">Load sample</button>
-          <button id="load-example" class="button secondary" type="button">Load deployed snapshot</button>
-          <button id="open-raw" class="button secondary" type="button">Open raw JSON</button>
-        </div>
-      </section>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Personal Trainer</title>
+  <link rel="stylesheet" href="./styles.css?v=3" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Personal Trainer</p>
+        <h1>Snapshot Viewer</h1>
+        <p class="lede">A compact snapshot view with quick navigation to the other pages when you need them.</p>
+      </div>
+      <div class="header-actions">
+        <details class="nav-menu">
+          <summary class="button secondary">Views</summary>
+          <div class="nav-menu-panel">
+            <a class="button secondary" href="./index.html">Snapshot viewer</a>
+            <a class="button secondary" href="./strength.html">Strength</a>
+            <a class="button secondary" href="./speed.html">Speed</a>
+            <a class="button secondary" href="./progress.html">Progress</a>
+          </div>
+        </details>
+        <details class="nav-menu">
+          <summary class="button secondary">Actions</summary>
+          <div class="nav-menu-panel">
+            <label class="button secondary" for="file-input">Load snapshot</label>
+            <label class="button secondary" for="live-input">Load live payload</label>
+            <button id="load-sample" class="button secondary" type="button">Load sample</button>
+            <button id="load-example" class="button secondary" type="button">Load deployed snapshot</button>
+            <button id="open-raw" class="button secondary" type="button">Open raw JSON</button>
+          </div>
+        </details>
+      </div>
+    </header>
 
-      <section class="summary card">
+    <section class="card shell-panel">
+      <input id="file-input" type="file" accept="application/json" />
+      <input id="live-input" type="file" accept="application/json" />
+
+      <div class="summary-card">
         <div class="summary-header">
           <div>
             <p class="label">Recommendation</p>
             <h2 id="priority">Waiting for snapshot</h2>
-            <p id="status-banner" class="status-banner">No file loaded</p>
           </div>
+          <div class="status-banner" id="status-banner">No file loaded</div>
         </div>
-        <p id="reason" class="lede">Choose a JSON file to render the full snapshot and recommendation.</p>
+        <p id="reason" class="lede">Drop in a JSON snapshot file or live payload export to see the current recommendation.</p>
+      </div>
 
-        <div class="stats">
-          <div class="stat"><p class="label">Confidence</p><p id="confidence" class="stat-value">-</p></div>
-          <div class="stat"><p class="label">Check-in</p><p id="check-in" class="stat-value">-</p></div>
-          <div class="stat"><p class="label">Data quality</p><p id="data-quality" class="stat-value">-</p></div>
-          <div class="stat"><p class="label">VO2 max</p><p id="vo2max" class="stat-value">-</p></div>
-          <div class="stat"><p class="label">Fueling</p><p id="fueling" class="stat-value">-</p></div>
-          <div class="stat"><p class="label">Remaining kcal</p><p id="remaining-kcal" class="stat-value">-</p></div>
-          <div class="stat"><p class="label">Sleep</p><p id="sleep" class="stat-value">-</p></div>
-          <div class="stat"><p class="label">Motivation</p><p id="motivation" class="stat-value">-</p></div>
-        </div>
-      </section>
+      <div class="stats">
+        <div class="stat"><span class="label">Confidence</span><strong id="confidence" class="stat-value">-</strong></div>
+        <div class="stat"><span class="label">Check-in</span><strong id="check-in" class="stat-value">-</strong></div>
+        <div class="stat"><span class="label">Data quality</span><strong id="data-quality" class="stat-value">-</strong></div>
+        <div class="stat"><span class="label">VO2 max</span><strong id="vo2max" class="stat-value">-</strong></div>
+        <div class="stat"><span class="label">Fueling</span><strong id="fueling" class="stat-value">-</strong></div>
+        <div class="stat"><span class="label">Remaining kcal</span><strong id="remaining-kcal" class="stat-value">-</strong></div>
+        <div class="stat"><span class="label">Sleep</span><strong id="sleep" class="stat-value">-</strong></div>
+        <div class="stat"><span class="label">Motivation</span><strong id="motivation" class="stat-value">-</strong></div>
+      </div>
 
-      <section id="sections" class="grid"></section>
-    </main>
-  </body>
+      <div id="sections" class="section-stack"></div>
+    </section>
+  </main>
+  <script type="module" src="./app.js?v=3"></script>
+</body>
 </html>
