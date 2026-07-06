@@ -5,10 +5,10 @@ This repository builds a personal performance system for Luke.
 ## Current Direction
 
 - Normalize training, nutrition, recovery, manual check-in, Garmin, and Hevy data into one snapshot.
-- Render the snapshot in a local static viewer.
+- Render the snapshot in the local static viewer.
 - Publish read-only static pages to GitHub Pages.
 - Keep live source ingestion local and separate from the published artifact.
-- Build all published artifacts from one captured snapshot so the data and pages stay aligned.
+- Build all published artifacts from one captured snapshot so the data pages stay aligned.
 - Keep a dedicated progress page that compares the current snapshot with the previously loaded snapshot.
 - Prefer a single daily runner command for live capture, snapshot build, and site artifact generation.
 
@@ -20,41 +20,19 @@ This repository builds a personal performance system for Luke.
 - [Daily recommendation contract](./daily-recommendation-contract.md)
 - [MCP integrations](./mcp-integrations.md)
 - [Repository README](../README.md)
+- [Agent onboarding](./agent-onboarding.md)
+- [Project board execution order](./board-execution-order.md)
 - [Zero-cost fitness app IaC brief](./zero-cost-fitness-app-iac-brief.md)
 
 ## Current Working Shape
 
-- `personal_trainer/src/personal_trainer/` contains Python seam code that loads live source exports.
+- `personal_trainer/src/personal_trainer/` contains the Python seam code that loads live source exports.
 - `site/` contains the static browser viewer plus dedicated `/strength` and `/speed` pages.
 - `site/progress.html` provides the progress comparison view.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
 - `personal_trainer/examples/snapshot-ready.json` is the deployed snapshot input.
 - `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot.
-- `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle in one command.
-
-## Snapshot Viewer
-
-The main viewer supports:
-
-- importing a local JSON snapshot file
-- loading the deployed snapshot from `./data/snapshot.json`
-- showing assembled sections plus a separate raw JSON view
-- showing a compact "change since last snapshot" panel stored in local browser state
-
-If the viewer changes, verify that:
-
-- athlete summary still wraps inside the main card on narrow widths
-- deployed snapshot path remains `./data/snapshot.json`
-- page still works as a static GitHub Pages artifact
-
-## Strength And Speed Views
-
-Dedicated pages are:
-
-- `/strength` for Hevy-backed all-time PBs and estimated 1RMs
-- `/speed` for Garmin running personal records
-
-Both are rendered as horizontally scrolling, center-focused carousels with an emphasized active card.
+- `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle.
 
 ## Python Live-Source Seam
 

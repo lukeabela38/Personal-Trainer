@@ -10,15 +10,15 @@ This repository documents a personal performance system using training, nutritio
 - [Strength view](site/strength.html): Hevy-backed all-time PBs and estimated 1RMs.
 - [Speed view](site/speed.html): Garmin running personal records and fastest efforts.
 
-## How Fits Together
+## How It Fits Together
 
 - `personal_trainer/src/personal_trainer/` contains normalization, recommendation, and live-data seam code.
-- `site/` contains static browser UI, including the main snapshot viewer and dedicated `/strength` and `/speed` pages.
+- `site/` contains the static browser UI, including the main snapshot viewer and dedicated `/strength` and `/speed` pages.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
 
 ## Local Run
 
-Run the local static server:
+Run local static server:
 
 ```bash
 ./scripts/serve_site.sh
@@ -30,7 +30,7 @@ Build the static artifact set from one captured snapshot:
 python3 ./scripts/build_site_artifacts.py
 ```
 
-Pull live sources, build the snapshot, and emit the site bundle in one pass:
+Pull live sources, build snapshot, and emit the site bundle in one pass:
 
 ```bash
 python3 ./scripts/daily_snapshot_runner.py
@@ -51,4 +51,6 @@ Open:
 - [Data snapshot contract](docs/data-snapshot-contract.md)
 - [MCP integrations](docs/mcp-integrations.md)
 - [Handoff guide](docs/handoff-guide.md)
+- [Agent onboarding](docs/agent-onboarding.md)
+- [Project board execution order](docs/board-execution-order.md)
 - [Zero-cost fitness app IaC brief](docs/zero-cost-fitness-app-iac-brief.md)
