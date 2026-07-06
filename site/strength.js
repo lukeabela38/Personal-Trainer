@@ -192,6 +192,14 @@ function showTrendModal(name, history) {
   const oneRms = history.map((h) => h.estimated_one_rm_kg).filter((v) => v != null);
   const weights = history.map((h) => h.weight_kg).filter((v) => v != null);
   const latest = history[history.length - 1];
+  const firstOneRm = oneRms[0];
+  const lastOneRm = oneRms[oneRms.length - 1];
+  const oneRmChange = lastOneRm - firstOneRm;
+  const oneRmPct = firstOneRm ? Math.round((oneRmChange / firstOneRm) * 100) : 0;
+  const peak = Math.max(...oneRms);
+  const trendUp = oneRmChange >= 0;
+
+  const recent = history.slice(-10).reverse();
 
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
@@ -201,36 +209,61 @@ function showTrendModal(name, history) {
         <h2>${escapeHtml(name)}</h2>
         <button class="modal-close" type="button">&times;</button>
       </div>
+
+      <div class="modal-progression">
+        <span class="modal-progression-value ${trendUp ? "delta-up" : "delta-down"}">
+          ${firstOneRm} kg → ${lastOneRm} kg
+        </span>
+        <span class="modal-progression-pct ${trendUp ? "delta-up" : "delta-down"}">
+          ${trendUp ? "+" : ""}${oneRmPct}% over ${history.length} days
+        </span>
+      </div>
+
       ${oneRms.length > 1 ? `
         <div class="modal-section">
-          <p class="label">Estimated 1RM trend (${history.length} days)</p>
-          ${renderSparkline(oneRms, 280, 64)}
+          <p class="label">Estimated 1RM trend</p>
+          ${renderSparkline(oneRms, 300, 72, { dots: true, labels: true, color: "var(--accent)" })}
         </div>
       ` : ""}
+
       ${weights.length > 1 ? `
         <div class="modal-section">
           <p class="label">Working weight trend</p>
-          ${renderSparkline(weights, 280, 64)}
+          ${renderSparkline(weights, 300, 56, { dots: true, color: "var(--accent-2)" })}
         </div>
       ` : ""}
+
       <div class="modal-stats">
         <div class="stat-item">
           <span class="stat-item-label">Current 1RM</span>
-          <span class="stat-item-value">${latest?.estimated_one_rm_kg ?? "—"} kg</span>
+          <span class="stat-item-value">${lastOneRm} kg</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Peak 1RM</span>
-          <span class="stat-item-value">${Math.max(...oneRms)} kg</span>
+          <span class="stat-item-value">${peak} kg</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Start 1RM</span>
-          <span class="stat-item-value">${oneRms[0]} kg</span>
+          <span class="stat-item-value">${firstOneRm} kg</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Latest set</span>
           <span class="stat-item-value">${latest?.weight_kg ?? "—"} kg × ${latest?.reps ?? "—"}</span>
         </div>
       </div>
+
+      <details class="modal-history">
+        <summary><span class="label">Recent history (last ${recent.length})</span></summary>
+        <div class="modal-history-list">
+          ${recent.map((h) => `
+            <div class="modal-history-row">
+              <span class="modal-history-date">${escapeHtml(h.date.slice(5))}</span>
+              <span>${h.weight_kg != null ? `${h.weight_kg} kg × ${h.reps}` : `${h.reps} reps`}</span>
+              <span class="modal-history-1rm">${h.estimated_one_rm_kg != null ? `${h.estimated_one_rm_kg} kg` : "—"}</span>
+            </div>
+          `).join("")}
+        </div>
+      </details>
     </div>
   `;
 

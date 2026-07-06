@@ -68,28 +68,62 @@ function timeToSeconds(t) {
   return null;
 }
 
-export function renderSparkline(values, width = 160, height = 40) {
+export function renderSparkline(values, width = 160, height = 40, opts = {}) {
   if (!values.length) return "";
   const pts = values.filter((v) => v != null);
   if (pts.length < 2) return "";
   const min = Math.min(...pts);
   const max = Math.max(...pts);
   const range = max - min || 1;
-  const pad = 2;
+  const pad = 4;
   const w = width - pad * 2;
   const h = height - pad * 2;
-  const points = pts
-    .map((v, i) => {
-      const x = pad + (i / (pts.length - 1)) * w;
-      const y = pad + h - ((v - min) / range) * h;
-      return `${x},${y}`;
-    })
-    .join(" ");
-  const color = pts[pts.length - 1] >= pts[0] ? "var(--green)" : "var(--red)";
+  const color = opts.color ?? (pts[pts.length - 1] >= pts[0] ? "var(--green)" : "var(--red)");
+  const showDots = opts.dots ?? false;
+  const labelMin = opts.labels ? String(min) : null;
+  const labelMax = opts.labels ? String(max) : null;
+
+  const step = pts.length - 1;
+  const lines = [];
+  const dots = [];
+
+  pts.forEach((v, i) => {
+    const x = pad + (i / step) * w;
+    const y = pad + h - ((v - min) / range) * h;
+    if (i > 0) {
+      const px = pad + ((i - 1) / step) * w;
+      const py = pad + h - ((pts[i - 1] - min) / range) * h;
+      lines.push(`${px},${py} ${x},${y}`);
+    }
+    if (showDots && (i === 0 || i === step || i % Math.max(1, Math.floor(step / 8)) === 0)) {
+      dots.push(`<circle cx="${x}" cy="${y}" r="3" fill="${color}" stroke="var(--bg)" stroke-width="1.5"/>`);
+    }
+  });
+
+  const labels = [];
+  if (labelMin) {
+    const y0 = pad + h;
+    labels.push(`<text x="${pad}" y="${y0 + 12}" fill="var(--muted)" font-size="8">${escapeXml(labelMin)}</text>`);
+  }
+  if (labelMax) {
+    const y0 = pad;
+    labels.push(`<text x="${pad}" y="${y0 - 4}" fill="var(--muted)" font-size="8">${escapeXml(labelMax)}</text>`);
+  }
+
   return `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block">
-      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <svg width="${width}" height="${height + 16}" viewBox="0 0 ${width} ${height + 16}" style="display:block">
+      <polyline points="${pts.map((v, i) => {
+        const x = pad + (i / step) * w;
+        const y = pad + h - ((v - min) / range) * h;
+        return `${x},${y}`;
+      }).join(" ")}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       <line x1="${pad}" y1="${pad + h}" x2="${pad + w}" y2="${pad + h}" stroke="var(--border)" stroke-width="0.5"/>
+      ${dots.join("")}
+      ${labels.join("")}
     </svg>
   `;
+}
+
+function escapeXml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
