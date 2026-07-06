@@ -1,16 +1,14 @@
 const strengthUrl = new URL("./strength.json", import.meta.url);
-const carousel = document.getElementById("strength-carousel");
+const grid = document.getElementById("strength-grid");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
-const slideStatus = document.getElementById("slide-status");
+const controls = document.getElementById("strength-controls");
+const filterPills = document.getElementById("filter-pills");
+const sortButtons = document.querySelectorAll(".sort-btn");
 
-let cards = [];
-let activeIndex = -1;
-let rafId = null;
-let settleTimer = null;
-let baseCount = 0;
-let cycleWidth = 0;
-let resetBand = 0;
+let entries = [];
+let activeCategory = "All";
+let activeSort = "date";
 
 loadStrength();
 
@@ -20,119 +18,95 @@ async function loadStrength() {
     const payload = await response.json();
     sourceLabel.textContent = `${payload.source ?? "Hevy"} · ${payload.snapshot_date ?? "unknown date"}`;
     statusBanner.textContent = `${payload.entries.length} lifts`;
-    baseCount = payload.entries.length;
-    carousel.innerHTML = [
-      ...payload.entries,
-      ...payload.entries,
-      ...payload.entries,
-    ].map(renderEntry).join("");
-    cards = Array.from(carousel.querySelectorAll(".strength-card"));
-    requestAnimationFrame(() => {
-      initializeLooping();
-      updateActiveCard();
-    });
-    carousel.addEventListener("scroll", scheduleActiveUpdate, { passive: true });
-    window.addEventListener("resize", scheduleActiveUpdate, { passive: true });
+    entries = payload.entries;
+    renderControls();
+    renderGrid();
+    controls.removeAttribute("hidden");
   } catch {
     sourceLabel.textContent = "Unavailable";
     statusBanner.textContent = "Could not load strength data";
-    carousel.innerHTML = `<div class="muted strength-empty">Failed to load <code>strength.json</code>.</div>`;
+    grid.innerHTML = `<div class="item"><span>Strength</span><strong>Failed to load data</strong></div>`;
   }
 }
 
-function scheduleActiveUpdate() {
-  if (rafId != null) return;
-  rafId = requestAnimationFrame(() => {
-    rafId = null;
-    updateActiveCard();
-    window.clearTimeout(settleTimer);
-    settleTimer = window.setTimeout(() => {
-      normalizeScrollPosition();
-      updateActiveCard();
-    }, 90);
+function renderControls() {
+  const categories = ["All", ...new Set(entries.map((e) => e.category).filter(Boolean))];
+  filterPills.innerHTML = categories
+    .map(
+      (cat) =>
+        `<button class="pill${cat === activeCategory ? " is-active" : ""}" data-category="${cat}" type="button">${cat}</button>`,
+    )
+    .join("");
+  filterPills.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pill");
+    if (!btn) return;
+    filterPills.querySelectorAll(".pill").forEach((p) => p.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    activeCategory = btn.dataset.category;
+    renderGrid();
   });
-}
 
-function initializeLooping() {
-  if (!cards.length) return;
-  const first = cards[0];
-  const styles = window.getComputedStyle(carousel);
-  const cardWidth = first.getBoundingClientRect().width;
-  const gap = parseFloat(styles.columnGap || styles.gap) || 0;
-  cycleWidth = baseCount * (cardWidth + gap);
-  resetBand = Math.max(cardWidth, carousel.clientWidth * 0.25);
-  carousel.scrollLeft = cycleWidth + Math.max(0, cardWidth / 2 - carousel.clientWidth / 2);
-}
-
-function normalizeScrollPosition() {
-  if (!cycleWidth) return;
-  const min = cycleWidth - resetBand;
-  const max = cycleWidth * 2 + resetBand;
-  if (carousel.scrollLeft < min) {
-    carousel.scrollLeft += cycleWidth;
-  } else if (carousel.scrollLeft > max) {
-    carousel.scrollLeft -= cycleWidth;
-  }
-}
-
-function updateActiveCard() {
-  if (!cards.length) return;
-  const center = carousel.scrollLeft + carousel.clientWidth / 2;
-  let bestIndex = 0;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  cards.forEach((card, index) => {
-    const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-    const distance = Math.abs(center - cardCenter);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      bestIndex = index;
-    }
-  });
-  if (bestIndex !== activeIndex) {
-    activeIndex = bestIndex;
-    const logicalIndex = baseCount ? ((activeIndex % baseCount) + baseCount) % baseCount : activeIndex;
-    cards.forEach((card, index) => {
-      const cardLogicalIndex = baseCount ? index % baseCount : index;
-      card.classList.toggle("is-active", cardLogicalIndex === logicalIndex && index >= baseCount && index < baseCount * 2);
-      card.classList.toggle(
-        "is-near",
-        cardLogicalIndex === ((logicalIndex - 1 + baseCount) % baseCount) ||
-          cardLogicalIndex === ((logicalIndex + 1) % baseCount),
-      );
+  sortButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      sortButtons.forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      activeSort = btn.dataset.sort;
+      renderGrid();
     });
-    slideStatus.textContent = `${logicalIndex + 1} / ${baseCount}`;
-  }
+  });
 }
 
-function renderEntry(entry, index) {
-  const best = entry.best_set;
-  const bestLine = best.weight_kg != null ? `${formatNumber(best.weight_kg)} kg x ${best.reps}` : `${best.reps} reps`;
-  const oneRmLine = entry.estimated_one_rm_kg != null ? `${formatNumber(entry.estimated_one_rm_kg)} kg` : "n/a";
+function renderGrid() {
+  let visible = activeCategory === "All" ? entries : entries.filter((e) => e.category === activeCategory);
+
+  visible = [...visible].sort((a, b) => {
+    if (activeSort === "weight") {
+      const wa = a.estimated_one_rm_kg ?? a.best_set?.weight_kg ?? 0;
+      const wb = b.estimated_one_rm_kg ?? b.best_set?.weight_kg ?? 0;
+      return wb - wa;
+    }
+    const da = a.best_set?.workout_start_date ?? "";
+    const db = b.best_set?.workout_start_date ?? "";
+    return db.localeCompare(da);
+  });
+
+  if (!visible.length) {
+    grid.innerHTML = `<div class="item"><span>Strength</span><strong>No exercises in this category</strong></div>`;
+    return;
+  }
+
+  grid.innerHTML = visible.map(renderCard).join("");
+}
+
+function renderCard(entry) {
+  const best = entry.best_set ?? {};
+  const cat = entry.category ?? "Strength";
+  const hasWeight = best.weight_kg != null;
+  const bestLine = hasWeight ? `${formatNum(best.weight_kg)} kg × ${best.reps}` : `${best.reps} reps`;
+  const oneRm = entry.estimated_one_rm_kg != null ? `${formatNum(entry.estimated_one_rm_kg)} kg` : "—";
+  const date = best.workout_start_date ?? "";
   return `
-    <article class="strength-card" data-index="${index}" tabindex="0">
-      <div class="strength-head">
-        <h3>${escapeHtml(entry.name)}</h3>
-        <p class="muted">${escapeHtml(entry.category)}</p>
+    <article class="exercise-card">
+      <div class="exercise-head">
+        <div class="exercise-name">${escapeHtml(entry.name)}</div>
+        <span class="exercise-category cat-${cat.replace(/\s+/g, "")}">${escapeHtml(cat)}</span>
       </div>
-      <div class="strength-metrics">
-        <div class="metric">
-          <span class="label">Best set</span>
-          <strong>${escapeHtml(bestLine)}</strong>
+      <div class="exercise-metrics">
+        <div class="exercise-metric">
+          <span class="exercise-metric-label">Best set</span>
+          <span class="exercise-metric-value">${escapeHtml(bestLine)}</span>
         </div>
-        <div class="metric">
-          <span class="label">Estimated 1RM</span>
-          <strong>${escapeHtml(oneRmLine)}</strong>
-        </div>
-        <div class="metric">
-          <span class="label">PB date</span>
-          <strong>${escapeHtml(entry.best_set.workout_start_date ?? "unknown")}</strong>
+        <div class="exercise-metric">
+          <span class="exercise-metric-label">Est. 1RM</span>
+          <span class="exercise-metric-value">${escapeHtml(oneRm)}</span>
         </div>
       </div>
+      ${date ? `<span class="exercise-date">${escapeHtml(date)}</span>` : ""}
     </article>
   `;
 }
 
-function formatNumber(value) {
+function formatNum(value) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
 

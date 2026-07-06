@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer - Speed</title>
   <link rel="stylesheet" href="./styles.css?v=4" />
-  <link rel="stylesheet" href="./speed.css?v=2" />
+  <link rel="stylesheet" href="./speed.css?v=3" />
 </head>
 <body>
   <main class="shell">
@@ -13,9 +13,9 @@
       <div>
         <p class="eyebrow">Personal Trainer</p>
         <h1>Speed</h1>
-        <p class="lede">Garmin personal bests for running, surfaced from the same snapshot contract.</p>
+        <p class="lede">Personal bests for running, surfaced from Garmin data.</p>
       </div>
-      <div class="controls">
+      <div class="header-actions">
         <details class="nav-menu">
           <summary class="button secondary">Views</summary>
           <div class="nav-menu-panel">
@@ -27,21 +27,19 @@
         </details>
       </div>
     </header>
-    <section class="card">
-      <div class="summary-header">
+
+    <section class="card shell-panel">
+      <div class="speed-header">
         <div>
           <p class="label">Source</p>
           <h2 id="source-label">Loading…</h2>
         </div>
-        <div class="status-banner" id="status-banner">Waiting for data</div>
+        <span class="status-banner" id="status-banner">Waiting for data</span>
       </div>
-      <div class="summary-header">
-        <div class="muted">Centered record is active.</div>
-        <div class="status-banner" id="slide-status">0 / 0</div>
-      </div>
-      <div id="speed-carousel" class="carousel"></div>
+
+      <div id="speed-table" class="speed-table"></div>
     </section>
   </main>
-  <script type="module" src="./speed.js?v=1"></script>
+  <script type="module" src="./speed.js?v=3"></script>
 </body>
 </html>

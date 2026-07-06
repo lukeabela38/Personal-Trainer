@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer - Strength</title>
   <link rel="stylesheet" href="./styles.css?v=4" />
-  <link rel="stylesheet" href="./strength.css?v=2" />
+  <link rel="stylesheet" href="./strength.css?v=3" />
 </head>
 <body>
   <main class="shell">
@@ -15,7 +15,7 @@
         <h1>Strength</h1>
         <p class="lede">All-time PBs and estimated 1RMs from live Hevy history.</p>
       </div>
-      <div class="controls">
+      <div class="header-actions">
         <details class="nav-menu">
           <summary class="button secondary">Views</summary>
           <div class="nav-menu-panel">
@@ -27,21 +27,27 @@
         </details>
       </div>
     </header>
-    <section class="card">
-      <div class="summary-header">
+
+    <section class="card shell-panel">
+      <div class="strength-header">
         <div>
           <p class="label">Source</p>
           <h2 id="source-label">Loading…</h2>
         </div>
-        <div class="status-banner" id="status-banner">Waiting for data</div>
+        <span class="status-banner" id="status-banner">Waiting for data</span>
       </div>
-      <div class="summary-header">
-        <div class="muted">Active item follows the viewport center.</div>
-        <div class="status-banner" id="slide-status">0 / 0</div>
+
+      <div class="strength-controls" id="strength-controls" hidden>
+        <div class="filter-pills" id="filter-pills"></div>
+        <div class="sort-controls">
+          <button class="sort-btn is-active" data-sort="date" type="button">By date</button>
+          <button class="sort-btn" data-sort="weight" type="button">By 1RM</button>
+        </div>
       </div>
-      <div id="strength-carousel" class="carousel"></div>
+
+      <div id="strength-grid" class="strength-grid"></div>
     </section>
   </main>
-  <script type="module" src="./strength.js?v=1"></script>
+  <script type="module" src="./strength.js?v=3"></script>
 </body>
 </html>
