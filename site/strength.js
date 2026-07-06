@@ -1,8 +1,7 @@
-import { loadGoals, updateGoalCurrent, goalProgress, renderSparkline } from "./goals.js";
+import { renderSparkline } from "./goals.js";
 
 const strengthUrl = new URL("./strength.json", import.meta.url);
 const grid = document.getElementById("strength-grid");
-const goalsContainer = document.getElementById("strength-goals");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
 const controls = document.getElementById("strength-controls");
@@ -28,7 +27,6 @@ async function loadStrength() {
     entries = payload.entries;
     renderControls();
     renderGrid();
-    renderGoals(payload);
     controls.removeAttribute("hidden");
   } catch {
     sourceLabel.textContent = "Unavailable";
@@ -274,36 +272,6 @@ function showTrendModal(name, history) {
   });
 
   document.body.appendChild(modal);
-}
-
-function renderGoals(payload) {
-  if (!goalsContainer) return;
-  const snapshot = { hevy: { recent_bests: payload.entries.map((e) => ({
-    exercise_template_id: e.exerciseIdFromBest ?? "",
-    estimated_one_rm_kg: e.estimated_one_rm_kg,
-    weight_kg: e.best_set?.weight_kg ?? null,
-  }))}};
-  const goals = updateGoalCurrent(loadGoals(), snapshot);
-  const strengthGoals = goals.filter((g) => g.type === "strength");
-  if (!strengthGoals.length) return;
-  goalsContainer.innerHTML = strengthGoals
-    .map((g) => {
-      const pct = goalProgress(g);
-      const cls = pct >= 100 ? "high" : pct >= 75 ? "medium" : "low";
-      return `
-        <div class="goal-item">
-          <div class="goal-header">
-            <span class="goal-name">${escapeHtml(g.name)}</span>
-            <span class="goal-numbers">${g.current ?? "-"} / ${g.target}${g.unit}</span>
-          </div>
-          <div class="macro-track">
-            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(pct, 100)}%"></div>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-  goalsContainer.removeAttribute("hidden");
 }
 
 function formatNum(value) {
