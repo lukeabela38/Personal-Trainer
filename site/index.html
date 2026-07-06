@@ -49,6 +49,9 @@
       <input id="live-input" type="file" accept="application/json" />
 
       <div id="welcome-overlay" class="welcome-overlay" hidden>
+        <script>
+          try { if (!localStorage.getItem('personal-trainer:welcome-dismissed')) document.currentScript.parentElement.removeAttribute('hidden'); } catch(e) {}
+        </script>
         <div class="welcome-card card">
           <h2>Welcome</h2>
           <p class="lede">Track your training, nutrition, and progress in one place.</p>
@@ -64,6 +67,8 @@
           </div>
         </div>
       </div>
+
+      <div id="freshness-bar"></div>
 
       <div class="rec-card" id="rec-card">
         <div class="rec-header">
