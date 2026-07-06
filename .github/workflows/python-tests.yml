@@ -64,7 +64,7 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
-          exit-code: 0
+          exit-code: 1
           ignore-unfixed: true
 
       - name: Upload Trivy results to GitHub Security
@@ -83,7 +83,7 @@ jobs:
           format: sarif
           output: trivy-iac-results.sarif
           severity: CRITICAL,HIGH
-          exit-code: 0
+          exit-code: 1
 
       - name: Check if IaC SARIF exists
         if: always()

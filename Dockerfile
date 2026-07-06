@@ -18,7 +18,7 @@ ENV PATH="/app/.local/bin:${PATH}"
 # Install Node.js 26 for Hevy MCP server
 RUN curl -fsSL https://deb.nodesource.com/setup_26.x -o /tmp/nodesetup.sh \
     && bash /tmp/nodesetup.sh \
-    && apt-get install -y nodejs \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* /tmp/nodesetup.sh
 
 WORKDIR /app
@@ -41,6 +41,9 @@ RUN uvx cronometer-api-mcp --help > /dev/null 2>&1 || true
 # Set ownership and switch to non-root user
 RUN chown -R appuser:appgroup /app /app/.local
 USER appuser
+
+# Explicitly no healthcheck needed — container runs on-demand, not as a service
+HEALTHCHECK NONE
 
 # Default command: build the site from example data
 CMD ["python3", "scripts/daily_snapshot_runner.py", "--sources-file", "personal_trainer/examples/sources-ready.json"]
