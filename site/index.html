@@ -48,7 +48,7 @@
       <input id="file-input" type="file" accept="application/json" />
       <input id="live-input" type="file" accept="application/json" />
 
-      <div id="welcome-overlay" class="welcome-overlay" hidden>
+      <div id="welcome-overlay" class="welcome-overlay">
         <div class="welcome-card card">
           <h2>Welcome</h2>
           <p class="lede">Track your training, nutrition, and progress in one place.</p>
@@ -64,7 +64,7 @@
           </div>
         </div>
       </div>
-      <script>try{if(!localStorage.getItem('personal-trainer:welcome-dismissed'))document.getElementById('welcome-overlay').removeAttribute('hidden')}catch(e){}</script>
+      <script>try{if(!localStorage.getItem('personal-trainer:welcome-dismissed'))document.getElementById('welcome-overlay').style.display='flex'}catch(e){}</script>
 
       <div id="freshness-bar"></div>
 

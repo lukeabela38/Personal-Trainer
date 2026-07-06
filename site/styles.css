@@ -265,13 +265,13 @@ input[type="file"] { display: none; }
 .bottom-nav-item.is-active { color: var(--accent); }
 .bottom-nav-icon { font-size: 1.2rem; line-height: 1; }
 
-/* Welcome overlay */
+/* Welcome overlay — hidden by default, shown via JS only on first visit */
 .welcome-overlay {
+  display: none;
   position: fixed;
   inset: 0;
   z-index: 300;
   background: rgba(0, 0, 0, 0.7);
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
