@@ -64,12 +64,15 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
         "app.js",
         "progress.html",
         "progress.js",
+        "progress.css",
         "strength.html",
         "strength.css",
         "strength.js",
         "speed.html",
         "speed.css",
         "speed.js",
+        "history.js",
+        "goals.js",
     ):
         shutil.copy2(site_dir / name, output_dir / name)
 

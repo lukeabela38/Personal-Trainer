@@ -181,6 +181,13 @@ input[type="file"] { display: none; }
   gap: 4px;
 }
 
+/* Goal tracking */
+.goal-item { display: grid; gap: 4px; }
+.goal-header { display: flex; justify-content: space-between; font-size: 0.8rem; }
+.goal-name { color: var(--text); font-weight: 600; }
+.goal-numbers { color: var(--muted); }
+.goal-pct { font-size: 0.7rem; color: var(--muted); text-align: right; }
+
 /* Skeleton loading */
 @keyframes shimmer {
   0% { background-position: -400px 0; }

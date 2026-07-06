@@ -1,5 +1,9 @@
+import { loadLastDays, weeklySummary, extractBodyWeight } from "./history.js";
+import { loadGoals, updateGoalCurrent, goalProgress, renderSparkline } from "./goals.js";
+
 const deployedSnapshotPath = new URL("./data/snapshot.json", import.meta.url);
 const sections = document.getElementById("sections");
+const historySections = document.getElementById("history-sections");
 const statGroups = document.getElementById("stat-groups");
 const statusBanner = document.getElementById("status-banner");
 const freshnessBar = document.getElementById("freshness-bar");
@@ -8,6 +12,7 @@ const state = {
   currentPayload: null,
   previousSnapshot: readStoredSnapshot(),
   completedSessions: readCompletedSessions(),
+  goals: loadGoals(),
 };
 
 document.getElementById("file-input").addEventListener("change", (event) => handleFile(event, "snapshot"));
@@ -15,7 +20,32 @@ document.getElementById("live-input").addEventListener("change", (event) => hand
 document.getElementById("load-sample").addEventListener("click", () => loadFromUrl(deployedSnapshotPath, "deployed snapshot"));
 document.getElementById("load-example").addEventListener("click", () => loadFromUrl(deployedSnapshotPath, "deployed snapshot"));
 document.getElementById("open-raw").addEventListener("click", openRawView);
+document.getElementById("load-history").addEventListener("click", loadHistory);
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
+
+async function loadHistory() {
+  try {
+    const snaps = await loadLastDays(30);
+    renderHistory(snaps);
+  } catch {
+    console.warn("History not available");
+  }
+}
+
+function renderHistory(snapshots) {
+  if (!historySections) return;
+  const goals = updateGoalCurrent(state.goals, snapshots[snapshots.length - 1]);
+  saveGoals(goals);
+
+  const summary = weeklySummary(snapshots);
+  const bw = extractBodyWeight(snapshots);
+
+  historySections.innerHTML = [
+    summary ? renderWeekSummary(summary) : "",
+    goals.length ? renderGoalsCard(goals) : "",
+    bw.length > 1 ? renderSparklineCard(bw) : "",
+  ].filter(Boolean).join("");
+}
 
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
@@ -480,6 +510,96 @@ function formatLabel(key, sectionTitle = "") {
 function setText(id, value) {
   const node = document.getElementById(id);
   if (node) node.textContent = value;
+}
+
+/* ── History features ── */
+
+function renderWeekSummary(summary) {
+  const bwDelta = summary.bwDelta != null ? (summary.bwDelta > 0 ? `<span class="delta-up">+${summary.bwDelta}</span>` : `<span class="delta-down">${summary.bwDelta}</span>`) : "";
+  const vo2Delta = summary.vo2Delta != null ? (summary.vo2Delta > 0 ? `<span class="delta-up">+${summary.vo2Delta}</span>` : `<span class="delta-down">${summary.vo2Delta}</span>`) : "";
+  return `
+    <div class="stat-group">
+      <div class="stat-group-title">Last 7 days</div>
+      <div class="stat-group-grid">
+        <div class="stat-item">
+          <span class="stat-item-label">Quality sessions</span>
+          <span class="stat-item-value">${summary.hardDays}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Recovery days</span>
+          <span class="stat-item-value">${summary.recoveryDays}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg calories</span>
+          <span class="stat-item-value">${summary.avgCalories}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg protein</span>
+          <span class="stat-item-value">${summary.avgProtein}g</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">VO2 max</span>
+          <span class="stat-item-value">${summary.vo2 ?? "-"}${vo2Delta}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Body weight</span>
+          <span class="stat-item-value">${summary.bw ?? "-"}${bwDelta}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderGoalsCard(goals) {
+  const items = goals
+    .map((g) => {
+      const pct = goalProgress(g);
+      const cls = pct >= 100 ? "high" : pct >= 75 ? "medium" : "low";
+      return `
+        <div class="goal-item">
+          <div class="goal-header">
+            <span class="goal-name">${escapeHtml(g.name)}</span>
+            <span class="goal-numbers">${g.current ?? "-"} / ${g.target}${g.unit}</span>
+          </div>
+          <div class="macro-track">
+            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(pct, 100)}%"></div>
+          </div>
+          <span class="goal-pct">${pct}%</span>
+        </div>
+      `;
+    })
+    .join("");
+  return `
+    <div class="stat-group">
+      <div class="stat-group-title">Goals</div>
+      <div style="display:grid;gap:10px">${items}</div>
+    </div>
+  `;
+}
+
+function renderSparklineCard(bw) {
+  const values = bw.map((d) => d.value);
+  const latest = values[values.length - 1];
+  const first = values[0];
+  const trend = latest > first ? "up" : latest < first ? "down" : "same";
+  return `
+    <div class="stat-group">
+      <div class="stat-group-title">Body weight trend (${bw.length} days)</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        ${renderSparkline(values, 180, 48)}
+        <div style="display:grid;gap:4px">
+          <span class="stat-item-label">Start</span>
+          <span class="stat-item-value">${first} kg</span>
+          <span class="stat-item-label">Current</span>
+          <span class="stat-item-value">${latest} kg</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function saveGoals(goals) {
+  try { localStorage.setItem("personal-trainer:goals", JSON.stringify(goals)); } catch {}
 }
 
 function escapeHtml(value) {
