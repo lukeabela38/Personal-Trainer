@@ -61,10 +61,12 @@ async function loadHistoryTrends() {
       }
       if (vo2.length > 1) {
         const vals = vo2.map((d) => d.value);
+        const vo2Delta = vals[vals.length - 1] - vals[0];
+        const vo2Dir = vo2Delta > 0 ? "improved" : vo2Delta < 0 ? "declined" : "remained stable";
         parts.push(`
           <div class="stat-group">
             <div class="stat-group-title">VO2 max (${vo2.length} days)</div>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="VO2 max ${vo2Dir} by ${Math.abs(vo2Delta).toFixed(1)} over ${vo2.length} days">
               ${renderSparkline(vals, 240, 56)}
               <div style="display:grid;gap:2px">
                 <span class="stat-item-label">Start</span>
@@ -78,10 +80,12 @@ async function loadHistoryTrends() {
       }
       if (bw.length > 1) {
         const vals = bw.map((d) => d.value);
+        const bwDelta = vals[vals.length - 1] - vals[0];
+        const bwDir = bwDelta < 0 ? "decreased" : bwDelta > 0 ? "increased" : "remained stable";
         parts.push(`
           <div class="stat-group">
             <div class="stat-group-title">Body weight (${bw.length} days)</div>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir} by ${Math.abs(bwDelta).toFixed(1)} kg over ${bw.length} days">
               ${renderSparkline(vals, 240, 56)}
               <div style="display:grid;gap:2px">
                 <span class="stat-item-label">Start</span>
@@ -119,7 +123,7 @@ function renderProgress(snapshot) {
     ? rows.map((row) => `
       <article class="item">
         <span>${escapeHtml(row.label)}</span>
-        <strong class="${row.deltaClass}">${escapeHtml(row.value)}</strong>
+        <strong class="${row.deltaClass}" title="${row.tooltip ?? ""}">${escapeHtml(row.value)}</strong>
       </article>
     `).join("")
     : `<div class="item"><span>Progress</span><strong>No change since the previous snapshot</strong></div>`;
@@ -134,10 +138,17 @@ function deltaRow(label, previous, current) {
   const pNum = Number(previous);
   const cNum = Number(current);
   let deltaClass = "";
+  let tooltip = "Value changed";
   if (!Number.isNaN(pNum) && !Number.isNaN(cNum) && pNum !== cNum) {
-    deltaClass = cNum > pNum ? "delta-up" : "delta-down";
+    const isUp = cNum > pNum;
+    deltaClass = isUp ? "delta-up" : "delta-down";
+    const direction = isUp ? "increased" : "decreased";
+    const goodBad = isUp ? "improvement" : "decline";
+    tooltip = `${label} ${direction} from ${formatValue(previous)} to ${formatValue(current)} — ${goodBad}`;
+  } else {
+    tooltip = `${label}: ${formatValue(previous)} → ${formatValue(current)}`;
   }
-  return { label, value: `${formatValue(previous)} → ${formatValue(current)}`, deltaClass };
+  return { label, value: `${formatValue(previous)} → ${formatValue(current)}`, deltaClass, tooltip };
 }
 
 function summarizeBests(snapshot) {

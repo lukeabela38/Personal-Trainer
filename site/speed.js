@@ -42,7 +42,10 @@ function renderTable(entries) {
       (e) => `
         <div class="speed-row">
           <span class="speed-row-name">${escapeHtml(e.name)}</span>
-          <span class="speed-row-value">${escapeHtml(e.value)}</span>
+          <span class="speed-row-value" title="All-time personal best — set on ${escapeHtml(e.date ?? "unknown date")}">
+            ${escapeHtml(e.value)}
+            <span class="pb-badge">PB</span>
+          </span>
           <span class="speed-row-date">${escapeHtml(e.date ?? "")}</span>
         </div>
       `,

@@ -582,10 +582,11 @@ function renderSparklineCard(bw) {
   const latest = values[values.length - 1];
   const first = values[0];
   const trend = latest > first ? "up" : latest < first ? "down" : "same";
+  const bwDir = latest > first ? "increased" : latest < first ? "decreased" : "stable";
   return `
     <div class="stat-group">
       <div class="stat-group-title">Body weight trend (${bw.length} days)</div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir}: ${first} → ${latest} kg">
         ${renderSparkline(values, 180, 48)}
         <div style="display:grid;gap:4px">
           <span class="stat-item-label">Start</span>
