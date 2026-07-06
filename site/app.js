@@ -266,20 +266,18 @@ function renderSessionLog(priority) {
 }
 
 /* ── First-run welcome ── */
-(function showWelcome() {
-  const overlay = document.getElementById("welcome-overlay");
-  if (!overlay) return;
-  try {
-    if (localStorage.getItem("personal-trainer:welcome-dismissed")) return;
-  } catch { return; }
-  overlay.removeAttribute("hidden");
-  document.getElementById("welcome-dismiss")?.addEventListener("click", () => {
-    overlay.setAttribute("hidden", "");
-    try { localStorage.setItem("personal-trainer:welcome-dismissed", "1"); } catch {}
-  });
-})();
+try {
+  if (!localStorage.getItem("personal-trainer:welcome-dismissed")) {
+    document.getElementById("welcome-overlay")?.removeAttribute("hidden");
+  }
+} catch {}
 
 document.addEventListener("click", (e) => {
+  if (e.target.id === "welcome-dismiss") {
+    document.getElementById("welcome-overlay")?.setAttribute("hidden", "");
+    try { localStorage.setItem("personal-trainer:welcome-dismissed", "1"); } catch {}
+    return;
+  }
   if (e.target.id === "log-session") {
     const priority = document.getElementById("priority")?.textContent;
     if (!priority || priority === "Import a snapshot") return;
