@@ -102,7 +102,8 @@ def _capture_live_sources(date: str | None, timezone: str) -> dict[str, Any]:
         command.extend(["--date", date])
     command.extend(["--timezone", timezone])
     completed = subprocess.run(
-        command, check=True, capture_output=True, text=True, env=_with_pythonpath()
+        command, check=True, capture_output=True, text=True,
+        cwd=str(REPO_ROOT), env=_with_pythonpath(),
     )
     payload = json.loads(completed.stdout)
     if not isinstance(payload, dict):

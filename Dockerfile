@@ -13,7 +13,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 
 # Install uv (provides uvx for Garmin and Cronometer MCP servers)
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/.local sh
-ENV PATH="/app/.local/bin:${PATH}"
+ENV PATH="/app/.local:${PATH}"
 
 # Install Node.js 26 for Hevy MCP server
 RUN curl -fsSL https://deb.nodesource.com/setup_26.x -o /tmp/nodesetup.sh \
