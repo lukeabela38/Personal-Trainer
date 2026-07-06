@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Personal Trainer - Strength</title>
-  <link rel="stylesheet" href="./strength.css?v=1" />
+  <title>Personal Trainer - Progress</title>
+  <link rel="stylesheet" href="./styles.css?v=1" />
 </head>
 <body>
   <main class="shell">
     <header class="hero">
       <div>
         <p class="eyebrow">Personal Trainer</p>
-        <h1>Strength</h1>
-        <p class="lede">All-time PBs and estimated 1RMs from live Hevy history.</p>
+        <h1>Progress</h1>
+        <p class="lede">Current snapshot versus the last loaded snapshot, summarized without raw payload noise.</p>
       </div>
       <div class="controls">
         <details class="nav-menu">
@@ -26,6 +26,7 @@
         </details>
       </div>
     </header>
+
     <section class="card">
       <div class="summary-header">
         <div>
@@ -34,13 +35,9 @@
         </div>
         <div class="status-banner" id="status-banner">Waiting for data</div>
       </div>
-      <div class="summary-header">
-        <div class="muted">Active item follows the viewport center.</div>
-        <div class="status-banner" id="slide-status">0 / 0</div>
-      </div>
-      <div id="strength-carousel" class="carousel"></div>
+      <div id="progress-grid" class="grid"></div>
     </section>
   </main>
-  <script type="module" src="./strength.js?v=1"></script>
+  <script type="module" src="./progress.js?v=1"></script>
 </body>
 </html>
