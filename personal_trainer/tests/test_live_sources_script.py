@@ -9,6 +9,9 @@ from pathlib import Path
 
 class LiveSourcesScriptTests(unittest.TestCase):
     def test_script_emits_merged_source_payload(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        script_path = repo_root / "scripts" / "live_sources.py"
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             commands: dict[str, str] = {}
@@ -25,7 +28,7 @@ class LiveSourcesScriptTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "python3",
-                    "scripts/live_sources.py",
+                    str(script_path),
                     "--garmin-command",
                     commands["garmin"],
                     "--hevy-command",
@@ -41,10 +44,10 @@ class LiveSourcesScriptTests(unittest.TestCase):
             )
             data = json.loads(completed.stdout)
 
-        self.assertEqual(data["garmin"]["freshness"], "fresh")
-        self.assertEqual(data["hevy"]["freshness"], "fresh")
-        self.assertEqual(data["cronometer"]["freshness"], "fresh")
-        self.assertEqual(data["manual_context"]["freshness"], "fresh")
+            self.assertEqual(data["garmin"]["freshness"], "fresh")
+            self.assertEqual(data["hevy"]["freshness"], "fresh")
+            self.assertEqual(data["cronometer"]["freshness"], "fresh")
+            self.assertEqual(data["manual_context"]["freshness"], "fresh")
 
 
 if __name__ == "__main__":
