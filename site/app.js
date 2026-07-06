@@ -265,14 +265,10 @@ function renderSessionLog(priority) {
   return `${btn}${history}`;
 }
 
-/* ── First-run welcome ── */
+/* ── First-run welcome (event delegation in HTML, init here) ── */
 try {
   if (!localStorage.getItem("personal-trainer:welcome-dismissed")) {
     document.getElementById("welcome-overlay")?.removeAttribute("hidden");
-    document.getElementById("welcome-dismiss")?.addEventListener("click", function dismiss() {
-      document.getElementById("welcome-overlay")?.setAttribute("hidden", "");
-      try { localStorage.setItem("personal-trainer:welcome-dismissed", "1"); } catch {}
-    }, { once: true });
   }
 } catch {}
 
@@ -280,6 +276,9 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("#welcome-dismiss")) {
     document.getElementById("welcome-overlay")?.setAttribute("hidden", "");
     try { localStorage.setItem("personal-trainer:welcome-dismissed", "1"); } catch {}
+    return;
+  }
+  if (e.target.id === "welcome-dismiss") {
     return;
   }
   if (e.target.id === "log-session") {
