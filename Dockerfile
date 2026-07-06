@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 # Create non-root user
 RUN groupadd --system appgroup && \
@@ -15,9 +15,10 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/.local 
 ENV PATH="/app/.local/bin:${PATH}"
 
 # Install Node.js 26 for Hevy MCP server
-RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_26.x -o /tmp/nodesetup.sh \
+    && bash /tmp/nodesetup.sh \
     && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/nodesetup.sh
 
 WORKDIR /app
 

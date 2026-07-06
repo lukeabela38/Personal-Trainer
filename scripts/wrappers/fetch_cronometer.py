@@ -7,9 +7,7 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import sys
 
-import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
