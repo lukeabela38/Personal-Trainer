@@ -1,3 +1,6 @@
+import { loadLastDays, extractVo2, extractBodyWeight, weeklySummary } from "./history.js";
+import { renderSparkline } from "./goals.js";
+
 const snapshotUrl = new URL("./data/snapshot.json", import.meta.url);
 const grid = document.getElementById("progress-grid");
 const trendEl = document.getElementById("progress-trend");
@@ -9,6 +12,7 @@ const state = {
 };
 
 loadProgress();
+loadHistoryTrends();
 
 async function loadProgress() {
   try {
@@ -19,6 +23,80 @@ async function loadProgress() {
     sourceLabel.textContent = "Unavailable";
     statusBanner.textContent = "Could not load snapshot data";
     grid.innerHTML = `<div class="item"><span>Progress</span><strong>Failed to load data</strong></div>`;
+  }
+}
+
+async function loadHistoryTrends() {
+  try {
+    const snaps = await loadLastDays(60);
+    const vo2 = extractVo2(snaps);
+    const bw = extractBodyWeight(snaps);
+    const summary = weeklySummary(snaps);
+    if (trendEl) {
+      const parts = [];
+      if (summary) {
+        parts.push(`
+          <div class="stat-group">
+            <div class="stat-group-title">Last 7 days</div>
+            <div class="stat-group-grid">
+              <div class="stat-item">
+                <span class="stat-item-label">Quality sessions</span>
+                <span class="stat-item-value">${summary.hardDays}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-item-label">Recovery days</span>
+                <span class="stat-item-value">${summary.recoveryDays}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-item-label">Avg calories</span>
+                <span class="stat-item-value">${summary.avgCalories}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-item-label">Avg protein</span>
+                <span class="stat-item-value">${summary.avgProtein}g</span>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+      if (vo2.length > 1) {
+        const vals = vo2.map((d) => d.value);
+        parts.push(`
+          <div class="stat-group">
+            <div class="stat-group-title">VO2 max (${vo2.length} days)</div>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              ${renderSparkline(vals, 240, 56)}
+              <div style="display:grid;gap:2px">
+                <span class="stat-item-label">Start</span>
+                <span class="stat-item-value">${vals[0]}</span>
+                <span class="stat-item-label">Current</span>
+                <span class="stat-item-value">${vals[vals.length - 1]}</span>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+      if (bw.length > 1) {
+        const vals = bw.map((d) => d.value);
+        parts.push(`
+          <div class="stat-group">
+            <div class="stat-group-title">Body weight (${bw.length} days)</div>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              ${renderSparkline(vals, 240, 56)}
+              <div style="display:grid;gap:2px">
+                <span class="stat-item-label">Start</span>
+                <span class="stat-item-value">${vals[0]} kg</span>
+                <span class="stat-item-label">Current</span>
+                <span class="stat-item-value">${vals[vals.length - 1]} kg</span>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+      trendEl.innerHTML = parts.join("");
+    }
+  } catch {
+    // history not available
   }
 }
 
@@ -46,46 +124,8 @@ function renderProgress(snapshot) {
     `).join("")
     : `<div class="item"><span>Progress</span><strong>No change since the previous snapshot</strong></div>`;
 
-  trendEl.innerHTML = renderTrend(previous, snapshot);
   persistSnapshot(snapshot);
   state.previous = snapshot;
-}
-
-function renderTrend(previous, current) {
-  const pVo2 = readNumber(previous, ["garmin", "current_vo2max"]);
-  const cVo2 = readNumber(current, ["garmin", "current_vo2max"]);
-  const pFuel = readText(previous, ["cronometer", "fueling_status"]);
-  const cFuel = readText(current, ["cronometer", "fueling_status"]);
-  const hasVo2 = shouldRenderValue(pVo2) || shouldRenderValue(cVo2);
-  const hasFuel = shouldRenderValue(pFuel) && shouldRenderValue(cFuel);
-
-  const vo2Arrow = hasVo2 && pVo2 !== cVo2 ? (cVo2 > pVo2 ? " &#9650;" : " &#9660;") : "";
-  const fuelChanged = hasFuel && pFuel !== cFuel;
-
-  const items = [];
-  if (hasVo2) {
-    items.push(`
-      <div class="stat-item">
-        <span class="stat-item-label">VO2 max</span>
-        <span class="stat-item-value">${formatVal(cVo2)}${vo2Arrow}</span>
-      </div>
-    `);
-  }
-  if (hasFuel) {
-    items.push(`
-      <div class="stat-item">
-        <span class="stat-item-label">Fueling</span>
-        <span class="stat-item-value">${fuelChanged ? `${pFuel} → ${cFuel}` : formatVal(cFuel)}</span>
-      </div>
-    `);
-  }
-  if (!items.length) return "";
-  return `
-    <div class="stat-group">
-      <div class="stat-group-title">Trend</div>
-      <div class="stat-group-grid">${items.join("")}</div>
-    </div>
-  `;
 }
 
 function deltaRow(label, previous, current) {
@@ -133,11 +173,6 @@ function shouldRenderValue(value) {
 function formatValue(value) {
   if (!shouldRenderValue(value)) return "-";
   return String(value);
-}
-
-function formatVal(value, unit) {
-  if (!shouldRenderValue(value)) return "-";
-  return unit ? `${value} ${unit}` : String(value);
 }
 
 function escapeHtml(value) {

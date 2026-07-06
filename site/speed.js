@@ -1,5 +1,8 @@
+import { loadGoals, updateGoalCurrent, goalProgress } from "./goals.js";
+
 const speedUrl = new URL("./speed.json", import.meta.url);
 const table = document.getElementById("speed-table");
+const goalsContainer = document.getElementById("speed-goals");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
 
@@ -14,6 +17,7 @@ async function loadSpeed() {
     statusBanner.textContent = `${payload.entries.length} bests`;
     statusBanner.classList.remove("skeleton");
     renderTable(payload.entries);
+    renderSpeedGoals(payload);
   } catch {
     sourceLabel.textContent = "Unavailable";
     statusBanner.textContent = "Could not load speed data";
@@ -44,6 +48,35 @@ function renderTable(entries) {
       `,
     )
     .join("");
+}
+
+function renderSpeedGoals(payload) {
+  if (!goalsContainer) return;
+  const snapshot = { garmin: { recent_bests: payload.entries.map((e) => ({
+    record_type: e.name ?? "",
+    value: e.value ?? null,
+  }))}};
+  const goals = updateGoalCurrent(loadGoals(), snapshot);
+  const speedGoals = goals.filter((g) => g.type === "speed");
+  if (!speedGoals.length) return;
+  goalsContainer.innerHTML = speedGoals
+    .map((g) => {
+      const pct = goalProgress(g);
+      const cls = pct >= 100 ? "high" : pct >= 75 ? "medium" : "low";
+      return `
+        <div class="goal-item">
+          <div class="goal-header">
+            <span class="goal-name">${escapeHtml(g.name)}</span>
+            <span class="goal-numbers">${g.current ?? "-"} / ${g.target}</span>
+          </div>
+          <div class="macro-track">
+            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(pct, 100)}%"></div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+  goalsContainer.removeAttribute("hidden");
 }
 
 function escapeHtml(value) {
