@@ -1,8 +1,8 @@
 # Data Snapshot Contract
 
-This document defines the normalized data object used by the first daily recommendation feature.
+This document defines the normalized data object used by the daily recommendation feature and the derived UI pages.
 
-The snapshot is the boundary between data collection and recommendation logic. Garmin, Hevy, Cronometer, and manual check-in data may each have different formats, but the recommendation engine should receive one predictable object.
+The snapshot is the boundary between data collection and recommendation logic. Garmin, Hevy, Cronometer, and manual check-in data may each have different shapes, but the recommendation engine should receive one predictable object.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ The data snapshot should answer:
 - What training stress would conflict with current priorities?
 - Is the data complete enough to recommend a hard session?
 
-The snapshot should not decide the recommendation by itself. It should provide the evidence used by the daily recommendation contract.
+The snapshot should not decide the recommendation by itself. It should provide the evidence used by the daily recommendation contract and the derived views.
 
 ## Snapshot Shape
 
@@ -47,6 +47,7 @@ The snapshot should not decide the recommendation by itself. It should provide t
     "recent_runs": [],
     "last_quality_run": null,
     "last_long_run": null,
+    "recent_bests": [],
     "flags": []
   },
   "hevy": {
@@ -91,16 +92,7 @@ The snapshot should not decide the recommendation by itself. It should provide t
     "motivation": null,
     "mental_fatigue": null,
     "table_tennis_today": null,
-    "time_available_minutes": null,
     "constraints": []
-  },
-  "derived": {
-    "data_quality": "medium",
-    "hard_session_allowed": "unknown",
-    "primary_constraints": [],
-    "likely_conflicts": [],
-    "check_in_required": true,
-    "check_in_questions": []
   }
 }
 ```
@@ -109,30 +101,29 @@ The snapshot should not decide the recommendation by itself. It should provide t
 
 Each source should include a `freshness` field:
 
-- `fresh`: data was pulled today or is current enough for the decision.
-- `stale`: data exists but may no longer reflect the current state.
-- `missing`: no useful data was available.
-- `partial`: some useful data exists, but a decision-critical field is missing.
+- `fresh`: data pulled today and current enough for decision-making
+- `stale`: data exists but may no longer reflect current state
+- `missing`: no useful data available
+- `partial`: some useful data exists, but decision-critical fields are missing
 
-Freshness affects confidence. It should not automatically block a recommendation unless the missing data changes the decision.
+Freshness affects confidence. It should not automatically block recommendation output unless missing data changes the decision.
 
 ## Garmin Fields
 
-### Minimum Useful Garmin Data
+Minimum useful Garmin data to capture:
 
-The first implementation should try to capture:
-
-- Current VO2 max or latest available VO2 max estimate.
-- VO2 max trend direction.
-- Recent activities, at least the last 7-14 days.
-- Recent runs, including distance, duration, pace, heart rate, and date when available.
-- Training load trend when available.
-- Training status or readiness when available.
-- Sleep, HRV, resting HR, stress, or Body Battery context when available.
+- current VO2 max
+- VO2 max trend direction
+- recent activities, at least the last 7-14 days
+- recent runs, including distance, duration, pace, heart rate, and date when available
+- training load trend
+- training status readiness
+- sleep, HRV, resting HR, stress, or Body Battery context
+- recent bests for speed-oriented pages
 
 ### Garmin Flags
 
-Garmin flags should be plain strings, such as:
+Example Garmin flags:
 
 - `vo2_waypoint_close`
 - `recent_quality_run`
@@ -148,16 +139,14 @@ Flags are evidence, not final decisions.
 
 ## Hevy Fields
 
-### Minimum Useful Hevy Data
+Minimum useful Hevy data to capture:
 
-The first implementation should try to capture:
-
-- Last workout date and title.
-- Recent workouts, at least the last 7-14 days.
-- Exercises performed, sets, reps, weight, RPE if available.
-- Recent bests or clear progression markers.
-- Muscle-group exposure from recent workouts.
-- Whether legs, posterior chain, shoulders, arms, pressing, or pulling may be fatigued.
+- last workout date and title
+- recent workouts, at least the last 7-14 days
+- exercises performed, sets, reps, weight, and RPE if available
+- recent bests that show progression markers
+- muscle-group exposure from recent workouts
+- whether legs, posterior chain, shoulders, arms, pressing, or pulling may be fatigued
 
 ### Muscle Group Fatigue Values
 
@@ -168,11 +157,11 @@ Use these values:
 - `high`
 - `unknown`
 
-The first implementation can infer this conservatively from recent workout recency and volume. It should avoid pretending precision that does not exist.
+The first implementation should infer conservatively from recency and volume. It should avoid pretending precision does not exist.
 
 ### Hevy Flags
 
-Examples:
+Example Hevy flags:
 
 - `heavy_legs_recently`
 - `posterior_chain_fatigue_risk`
@@ -184,16 +173,13 @@ Examples:
 
 ## Cronometer Fields
 
-### Minimum Useful Cronometer Data
+Minimum useful Cronometer data to capture:
 
-The first implementation should try to capture:
-
-- Today calorie target, calories consumed, and remaining calories.
-- Today protein, carbohydrates, fat, and fiber.
-- Recent 3-7 day calorie and protein pattern when available.
-- Whether the log is complete enough to guide fueling.
-- Whether carbohydrate availability supports a quality run.
-- Whether protein intake supports recovery and recomposition.
+- calorie balance
+- protein intake
+- carbohydrate availability
+- recent day summaries
+- log completeness
 
 ### Nutrition Status Values
 
@@ -207,7 +193,7 @@ Use these values for `fueling_status`, `protein_status`, and `carb_availability`
 
 ### Cronometer Flags
 
-Examples:
+Example Cronometer flags:
 
 - `under_fueled_today`
 - `protein_low_today`
@@ -219,11 +205,11 @@ Examples:
 
 ## Manual Context Fields
 
-Manual context should be short. The system should ask for it only when it changes the decision.
+Manual context should stay short. The system should ask only what changes the decision.
 
 ### Minimum Check-In Questions
 
-When needed, ask no more than three questions selected from:
+When needed, ask no more than three questions, chosen from:
 
 - How did you sleep, subjectively?
 - Any pain or unusual soreness today?
@@ -247,85 +233,28 @@ Derived fields summarize conflicts and readiness for the recommendation engine.
 
 ### Data Quality
 
-Use:
+Use these values:
 
-- `high`: all important sources are fresh and agree.
-- `medium`: enough data exists, but one source is partial, stale, or mildly conflicting.
-- `low`: important data is missing, stale, or contradictory.
+- `high`: all important sources are fresh and agree
+- `medium`: enough data exists, but one source is partial, stale, or mildly conflicting
+- `low`: important data is missing, stale, or contradictory
 
 ### Hard Session Allowed
 
-Use:
+Use these values:
 
-- `yes`: hard training appears reasonable.
-- `no`: hard training is not recommended.
-- `conditional`: hard training may be possible after a check-in or fueling correction.
-- `unknown`: data is insufficient.
+- `yes`: hard training appears reasonable
+- `no`: hard training should be avoided today
+- `unknown`: there is not enough data to decide
 
-### Primary Constraints
+### Garmin Recent Bests
 
-Examples:
+The Garmin snapshot may expose `recent_bests` for running and related endurance bests. The dedicated `/speed` page should use the Garmin personal-record shape and prefer these records when the live Garmin source provides them.
 
-- `poor_recovery`
-- `under_fueled`
-- `leg_fatigue`
-- `upper_body_fatigue`
-- `table_tennis_conflict`
-- `time_limited`
-- `data_missing`
-- `pain_risk`
+## Validation Questions
 
-### Likely Conflicts
+At the end of snapshot build, ask:
 
-Examples:
-
-- `heavy_legs_vs_quality_run`
-- `calorie_deficit_vs_hard_training`
-- `shoulder_fatigue_vs_table_tennis`
-- `low_sleep_vs_intensity`
-- `high_run_load_vs_strength_progression`
-
-## Missing Data Rules
-
-1. Missing recovery data should reduce confidence before a hard recommendation.
-2. Missing nutrition data should reduce confidence if the recommendation depends on hard training or a deficit.
-3. Missing Hevy data should reduce confidence for strength or power recommendations.
-4. Missing table tennis schedule should trigger a check-in if upper-body or high-coordination fatigue is relevant.
-5. Missing subjective pain/soreness should trigger a check-in before high-impact intervals, heavy lower-body lifting, or shoulder-intensive work.
-
-## Stale Data Rules
-
-Use these default stale thresholds unless implementation evidence suggests better ones:
-
-- Garmin activities: stale after 48 hours if no recent activity data is available.
-- Garmin recovery metrics: stale after 24 hours.
-- Hevy workouts: stale after 7 days for strength trend, but still useful for historical bests.
-- Cronometer today log: partial until the day is complete; still useful for current fueling.
-- Manual context: stale after 24 hours.
-
-## Privacy Rules
-
-The snapshot should not store secrets, tokens, raw credential material, or unnecessary personally identifying account metadata.
-
-The snapshot may include personal health and training metrics because that is its purpose, but it should keep only fields needed for recommendation decisions.
-
-## Version One Implementation Boundary
-
-The first implementation should build this snapshot for today and print it or use it directly for one recommendation.
-
-It should not yet:
-
-- Store long-term local history unless explicitly designed.
-- Write back to Garmin, Hevy, or Cronometer.
-- Create workouts automatically.
-- Invent precise scores that cannot be explained.
-- Treat missing fields as zero.
-
-## Review Questions
-
-Before implementation, review these points:
-
-1. Are any required fields missing from the snapshot?
-2. Are any fields too detailed for version one?
-3. Are the freshness thresholds reasonable?
-4. Should manual check-in be required every day, or only when data is incomplete or conflicting?
+- Are any required fields missing from the snapshot?
+- Are Garmin, Hevy, or Cronometer values stale or contradictory?
+- Is the recommendation boundary still cleanly separated from source collection?

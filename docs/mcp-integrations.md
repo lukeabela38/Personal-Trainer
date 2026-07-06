@@ -1,6 +1,6 @@
 # MCP Integrations
 
-This document records the local Codex MCP setup used to access training, nutrition, strength, and repository data. It intentionally does not contain API keys, passwords, Garmin credentials, or OAuth tokens.
+This document records the local MCP setup used to access training, nutrition, strength, and repository data. It intentionally does not contain API keys, passwords, Garmin credentials, or OAuth tokens.
 
 ## Local Configuration
 
@@ -16,7 +16,7 @@ Local wrapper scripts live in:
 /Users/labela/.codex/mcp-wrappers/
 ```
 
-Secrets are stored outside the repository and outside `config.toml` wherever possible. The preferred storage is macOS Keychain.
+Secrets should be stored outside the repository and outside `config.toml` wherever possible. The preferred storage is macOS Keychain.
 
 ## Garmin
 
@@ -27,13 +27,7 @@ Configured MCP server:
 ```toml
 [mcp_servers.garmin]
 command = "/opt/homebrew/bin/uvx"
-args = [
-  "--python",
-  "3.12",
-  "--from",
-  "git+https://github.com/Taxuspt/garmin_mcp",
-  "garmin-mcp"
-]
+args = ["--python", "3.12", "--from", "git+https://github.com/Taxuspt/garmin_mcp", "garmin-mcp"]
 ```
 
 Authentication flow:
@@ -48,26 +42,27 @@ The Garmin auth tool stores reusable token data under:
 ~/.garminconnect
 ```
 
-No Garmin email or password is stored in `config.toml`.
+No Garmin email or password should be stored in `config.toml`.
 
-Verified capabilities include:
+Verified Garmin capabilities include:
 
-- Latest Garmin activity summaries
-- Running activity history by date range
+- latest activity summaries
+- running activity history by date range
 - VO2 max trend
-- Race predictions
-- Training load trend
-- Activity splits and details
-- Recovery context such as HRV, Body Battery, sleep, stress, and resting HR
+- race predictions
+- training load trend
+- activity splits details
+- recovery context including HRV, Body Battery, sleep, stress, and resting HR
+- personal records for running
 
 Notes:
 
-- Some Garmin tools are configured to require explicit approval before access, for example broader activity pulls and VO2 max trend queries.
-- Garmin data is only queried when explicitly requested.
+- Some Garmin tools require explicit approval before access, especially broader activity pulls and trend queries.
+- Garmin data should only be queried when explicitly requested.
 
 ## Cronometer
 
-Purpose: read and manage nutrition data such as food logs, calorie balance, macro targets, micronutrients, and fasting data.
+Purpose: read and manage nutrition data, food logs, calorie balance, macro targets, micronutrients, and fasting data.
 
 Configured MCP server:
 
@@ -88,9 +83,9 @@ Secret handling:
 
 - Cronometer username is exported by the local wrapper.
 - Cronometer password is loaded from macOS Keychain at runtime.
-- The password is not stored in `config.toml` or in this repository.
+- The password should not be stored in `config.toml` or this repository.
 
-The wrapper runs:
+Wrapper command:
 
 ```bash
 /opt/homebrew/bin/uvx cronometer-api-mcp
@@ -98,11 +93,11 @@ The wrapper runs:
 
 Verified capabilities include:
 
-- Food log retrieval
-- Daily nutrition summary
-- Macro target retrieval
-- Fasting history and fasting statistics
-- Food search and food entry management
+- food log retrieval
+- daily nutrition summary
+- macro target retrieval
+- fasting history and statistics
+- food search and food entry management
 
 ## Hevy
 
@@ -131,33 +126,33 @@ The active Hevy wrapper uses the maintained package:
 
 Reason for `node@26`:
 
-- `hevy-mcp@1.25.15` declares `node >=26.0.0`.
-- The wrapper supplies Node 26 through `npx` instead of requiring a system Node upgrade.
+- `hevy-mcp@1.25.15` declares `node >=26.0.0`
+- the wrapper supplies Node 26 through `npx` instead of requiring a system Node upgrade
 
 Secret handling:
 
-- `HEVY_API_KEY` is stored in macOS Keychain.
-- The wrapper reads it at startup and exports it as an environment variable.
-- The API key is not stored in `config.toml`, in the wrapper text, or in this repository.
+- `HEVY_API_KEY` is stored in macOS Keychain
+- the wrapper reads startup exports from the environment
+- the API key should not be stored in `config.toml`, the wrapper script, or the repository
 
 Verified capabilities include:
 
-- Workout count retrieval
-- Latest workout retrieval
-- Paginated workout history
-- Routines
-- Exercise templates
-- Exercise history
-- Body measurements
-- Workout/routine create and update tools where supported by Hevy
+- workout count retrieval
+- latest workout retrieval
+- paginated workout history
+- routines
+- exercise templates
+- exercise history
+- body measurements
+- workout and routine create/update tools where supported
 
 Example verified result:
 
-- Latest pulled Hevy workout at setup time: `Loft`, started `2026-06-30T05:15:15+00:00`, with kettlebell thrusters, incline dumbbell fly, dips, and pull-ups.
+- latest pulled Hevy workout: `Loft`, started `2026-06-30T05:15:15+00:00`, with kettlebell thrusters, incline dumbbell fly, dips, and pull-ups
 
 ## GitHub
 
-Purpose: allow Codex to read and write this repository for documentation and training-tooling work.
+Purpose: allow Codex to read and write repository files and documentation.
 
 Repository:
 
@@ -167,10 +162,10 @@ lukeabela38/Personal-Trainer
 
 Connection method:
 
-- GitHub access is managed through Composio.
-- The connected GitHub user is `lukeabela38`.
-- Repository access was verified by reading the repository root.
-- Write access was verified by committing a test README update to `main`.
+- GitHub access is managed through Composio
+- connected GitHub user is `lukeabela38`
+- repository access is verified by reading the repository root
+- write access is verified by committing a test README update on `main`
 
 Verified write commit:
 
@@ -178,20 +173,18 @@ Verified write commit:
 cd3c476a0cfa74c75b380eb2ffdc2d0292131cd4
 ```
 
-Current documentation commit replaced that temporary test README with this documentation structure.
-
 ## Operational Notes
 
 Restart behavior:
 
-- MCP server configuration changes in `config.toml` may require restarting Codex or opening a fresh Codex session.
-- Tool discovery may hot-load newly available tools in some sessions, but a restart is the reliable path.
+- MCP server configuration changes in `config.toml` may require restarting Codex or opening a fresh session
+- tool discovery may hot-load newly available tools in a session, but restart is the reliable path
 
 Credential rules:
 
-- Do not commit API keys, passwords, OAuth tokens, or `.garminconnect` token files.
-- Do not paste secrets into GitHub issues, pull requests, README files, or docs.
-- Prefer Keychain-backed wrapper scripts for API-key based tools.
+- Do not commit API keys, passwords, OAuth tokens, or `.garminconnect` token files
+- Do not paste secrets into GitHub issues, pull requests, README files, or docs
+- Prefer Keychain-backed wrapper scripts for API-key-based tools
 
 Useful checks:
 
@@ -211,7 +204,7 @@ With the configured MCP servers, Codex can access, when requested:
 
 - Garmin endurance and recovery data
 - Cronometer nutrition data
-- Hevy strength training logs
+- Hevy strength-training logs
 - GitHub repository files and documentation
 
 Codex should only query personal training, health, nutrition, or repository data when explicitly asked.
