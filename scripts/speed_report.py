@@ -21,7 +21,9 @@ RUN_RECORD_TYPES = {
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Build site/speed.json from Garmin records.")
+    parser = argparse.ArgumentParser(
+        description="Build site/speed.json from Garmin records."
+    )
     parser.add_argument("--output", type=Path, default=Path("site/speed.json"))
     parser.add_argument("--source", type=Path, default=None)
     args = parser.parse_args(argv)
@@ -42,7 +44,9 @@ def _load_source(path: Path | None) -> dict[str, Any]:
     command = os.environ.get("PERSONAL_TRAINER_GARMIN_SPEED_COMMAND")
     if not command:
         raise ValueError("set PERSONAL_TRAINER_GARMIN_SPEED_COMMAND or pass --source")
-    completed = subprocess.run(command.split(), check=True, capture_output=True, text=True)
+    completed = subprocess.run(
+        command.split(), check=True, capture_output=True, text=True
+    )
     data = json.loads(completed.stdout)
     if not isinstance(data, dict):
         raise ValueError("garmin speed source must be JSON object")
@@ -53,7 +57,8 @@ def build_report(raw: dict[str, Any]) -> dict[str, Any]:
     records = _extract_records(raw)
     return {
         "source": "Garmin personal records",
-        "snapshot_date": raw.get("snapshot_date") or datetime.now(UTC).date().isoformat(),
+        "snapshot_date": raw.get("snapshot_date")
+        or datetime.now(UTC).date().isoformat(),
         "entries": records,
     }
 

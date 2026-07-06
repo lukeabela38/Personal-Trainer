@@ -16,14 +16,35 @@ class BuildSiteArtifactsTest(TestCase):
             site_dir = tmp_path / "site"
             output_dir = tmp_path / "dist"
             site_dir.mkdir()
-            for name in ("index.html", "styles.css", "app.js", "progress.html", "progress.js", "strength.html", "strength.css", "strength.js", "speed.html", "speed.css", "speed.js"):
+            for name in (
+                "index.html",
+                "styles.css",
+                "app.js",
+                "progress.html",
+                "progress.js",
+                "strength.html",
+                "strength.css",
+                "strength.js",
+                "speed.html",
+                "speed.css",
+                "speed.js",
+            ):
                 (site_dir / name).write_text(name, encoding="utf-8")
             snapshot.write_text(
                 json.dumps(
                     {
                         "snapshot_date": "2026-07-06",
-                        "hevy": {"recent_bests": [{"name": "Squat", "best_set": {"weight_kg": 100, "reps": 5}}]},
-                        "garmin": {"recent_bests": [{"name": "Fastest 5K", "value": "20:15"}]},
+                        "hevy": {
+                            "recent_bests": [
+                                {
+                                    "name": "Squat",
+                                    "best_set": {"weight_kg": 100, "reps": 5},
+                                }
+                            ]
+                        },
+                        "garmin": {
+                            "recent_bests": [{"name": "Fastest 5K", "value": "20:15"}]
+                        },
                     }
                 ),
                 encoding="utf-8",

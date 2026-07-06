@@ -9,9 +9,13 @@
 - `TASK_NOTES.md` — temporary task scratchpad
 - `README.md` — human-facing project overview, local run instructions
 - `.env.example` — all environment variables documented
-- `pyproject.toml` (in `personal_trainer/`) — hatchling build config, entrypoints, dependencies
+- `pyproject.toml` (in `personal_trainer/`) — hatchling build config, entrypoints, dependencies, ruff config
 - `.github/workflows/pages.yml` — GitHub Pages deployment
-- `.github/workflows/python-tests.yml` — CI test runner
+- `.github/workflows/python-tests.yml` — CI: lint + package tests + script tests
+- `.github/workflows/pr-review.yml` — PR auto-labeler, size check, branch name check
+- `.github/labeler.yml` — path-based label rules for area labels
+- `.github/PULL_REQUEST_TEMPLATE.md` — PR description template
+- `.github/ISSUE_TEMPLATE/` — bug report and feature request templates
 
 ## Source Directories
 

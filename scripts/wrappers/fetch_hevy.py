@@ -45,7 +45,9 @@ async def fetch() -> dict:
     }
 
     try:
-        workouts = await call_tool(HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 1})
+        workouts = await call_tool(
+            HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 1}
+        )
         if isinstance(workouts, list) and workouts:
             w = workouts[0]
             payload["last_workout"] = _summarize_workout(w)
@@ -54,26 +56,39 @@ async def fetch() -> dict:
         print(f"[hevy] latest workout unavailable: {e}", file=sys.stderr)
 
     try:
-        history = await call_tool(HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 10})
+        history = await call_tool(
+            HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 10}
+        )
         if isinstance(history, list):
-            payload["recent_workouts"] = [_summarize_workout(w) for w in history if isinstance(w, dict)]
+            payload["recent_workouts"] = [
+                _summarize_workout(w) for w in history if isinstance(w, dict)
+            ]
         elif isinstance(history, dict):
             workouts = history.get("workouts") or history.get("data") or []
             if isinstance(workouts, list):
-                payload["recent_workouts"] = [_summarize_workout(w) for w in workouts if isinstance(w, dict)]
+                payload["recent_workouts"] = [
+                    _summarize_workout(w) for w in workouts if isinstance(w, dict)
+                ]
     except McpError as e:
         print(f"[hevy] workout history unavailable: {e}", file=sys.stderr)
 
     for exercise_name, template_id in _TRACKED_EXERCISES:
         try:
-            history = await call_tool(HEVY_COMMAND, "get-exercise-history", {"exerciseTemplateId": template_id, "page": 1, "pageSize": 5})
+            history = await call_tool(
+                HEVY_COMMAND,
+                "get-exercise-history",
+                {"exerciseTemplateId": template_id, "page": 1, "pageSize": 5},
+            )
             rows = history if isinstance(history, list) else []
             if rows:
                 best = _best_set(rows)
                 if best:
                     payload["recent_bests"].append(best)
         except McpError as e:
-            print(f"[hevy] exercise history for {exercise_name} unavailable: {e}", file=sys.stderr)
+            print(
+                f"[hevy] exercise history for {exercise_name} unavailable: {e}",
+                file=sys.stderr,
+            )
 
     return payload
 
@@ -83,7 +98,9 @@ def _summarize_workout(w: dict) -> dict:
         "title": w.get("title") or w.get("name") or "",
         "start_time": w.get("startTime") or w.get("start_time") or "",
         "end_time": w.get("endTime") or w.get("end_time") or "",
-        "exercise_count": len(w.get("exercises", []) if isinstance(w.get("exercises"), list) else []),
+        "exercise_count": len(
+            w.get("exercises", []) if isinstance(w.get("exercises"), list) else []
+        ),
     }
 
 
@@ -96,7 +113,9 @@ def _infer_fatigue(workout: dict) -> dict:
         "shoulders_arms": "unknown",
         "core": "unknown",
     }
-    exercises = workout.get("exercises") if isinstance(workout.get("exercises"), list) else []
+    exercises = (
+        workout.get("exercises") if isinstance(workout.get("exercises"), list) else []
+    )
     for ex in exercises:
         if not isinstance(ex, dict):
             continue
@@ -133,7 +152,9 @@ def _best_set(rows: list[dict]) -> dict | None:
                 "weight_kg": weight,
                 "reps": reps,
                 "estimated_one_rm_kg": round(weight * (1 + reps / 30), 1),
-                "workout_start_time": str(row.get("workoutStartTime") or row.get("startTime") or ""),
+                "workout_start_time": str(
+                    row.get("workoutStartTime") or row.get("startTime") or ""
+                ),
                 "workout_title": str(row.get("workoutTitle") or row.get("title") or ""),
             }
     return best

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Protocol
-
+from typing import Any, Protocol
 
 SourcePayload = dict[str, Any]
 FetchSourcePayload = Callable[[], SourcePayload]
@@ -29,7 +29,10 @@ class CallableSourceAdapter:
 def build_source_adapter_registry(fetchers: dict[str, FetchSourcePayload]) -> dict[str, SourceAdapter]:
     """Wrap source fetch callables into a named adapter registry."""
 
-    return {name: CallableSourceAdapter(source_name=name, fetch_payload=fetch_payload) for name, fetch_payload in fetchers.items()}
+    return {
+        name: CallableSourceAdapter(source_name=name, fetch_payload=fetch_payload)
+        for name, fetch_payload in fetchers.items()
+    }
 
 
 def collect_source_payloads(adapters: dict[str, SourceAdapter]) -> dict[str, SourcePayload]:

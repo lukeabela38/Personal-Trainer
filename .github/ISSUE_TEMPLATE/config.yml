@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Project board
+    url: https://github.com/anomalyco/Personal-Trainer/projects
+    about: Track work in progress on the project board

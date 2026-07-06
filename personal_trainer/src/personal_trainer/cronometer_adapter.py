@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
 
 from .ingestion import SourceAdapter, SourcePayload
-
 
 FetchCronometerPayload = Callable[[], SourcePayload]
 

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import unittest
 
-from personal_trainer.source_registry import CallableSourceAdapter, build_source_adapter_registry, collect_source_payloads
+from personal_trainer.source_registry import (
+    CallableSourceAdapter,
+    build_source_adapter_registry,
+    collect_source_payloads,
+)
 
 
 class SourceRegistryTests(unittest.TestCase):

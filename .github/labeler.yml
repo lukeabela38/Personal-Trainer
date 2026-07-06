@@ -1,0 +1,67 @@
+# Auto-label PRs based on changed paths
+
+"area: snapshot":
+  - changed-files:
+      - any-glob-to-any-file:
+          - personal_trainer/src/personal_trainer/snapshot.py
+          - personal_trainer/src/personal_trainer/contracts.py
+          - personal_trainer/tests/test_snapshot.py
+
+"area: recommendation":
+  - changed-files:
+      - any-glob-to-any-file:
+          - personal_trainer/src/personal_trainer/recommendation.py
+          - personal_trainer/tests/test_recommendation.py
+          - personal_trainer/tests/test_integration.py
+
+"area: live-sources":
+  - changed-files:
+      - any-glob-to-any-file:
+          - personal_trainer/src/personal_trainer/live_sources.py
+          - personal_trainer/src/personal_trainer/live_cli.py
+          - personal_trainer/src/personal_trainer/live_smoke.py
+          - personal_trainer/src/personal_trainer/snapshot_assembler.py
+          - personal_trainer/src/personal_trainer/source_registry.py
+          - personal_trainer/src/personal_trainer/ingestion.py
+          - personal_trainer/tests/test_live_*.py
+          - personal_trainer/tests/test_snapshot_assembler.py
+          - personal_trainer/tests/test_source_registry.py
+
+"area: adapter-garmin":
+  - changed-files:
+      - any-glob-to-any-file:
+          - personal_trainer/src/personal_trainer/garmin_adapter.py
+          - personal_trainer/tests/test_garmin_adapter.py
+
+"area: adapter-hevy":
+  - changed-files:
+      - any-glob-to-any-file:
+          - personal_trainer/src/personal_trainer/hevy_adapter.py
+          - personal_trainer/tests/test_hevy_adapter.py
+
+"area: adapter-cronometer":
+  - changed-files:
+      - any-glob-to-any-file:
+          - personal_trainer/src/personal_trainer/cronometer_adapter.py
+          - personal_trainer/tests/test_cronometer_adapter.py
+
+"area: scripts":
+  - changed-files:
+      - any-glob-to-any-file:
+          - scripts/**/*.py
+          - tests/test_*.py
+
+"area: site":
+  - changed-files:
+      - any-glob-to-any-file:
+          - site/**/*
+
+"area: docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**/*
+
+"area: CI":
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**/*

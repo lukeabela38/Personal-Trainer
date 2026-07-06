@@ -17,18 +17,26 @@ class DailySnapshotRunnerTest(TestCase):
             snapshot_output = tmp_path / "snapshot.json"
             site_output = tmp_path / "dist"
 
-            with patch.object(
-                daily_snapshot_runner,
-                "_capture_live_sources",
-                return_value={
-                    "snapshot_date": "2026-07-06",
-                    "timezone": "Europe/Malta",
-                    "garmin": {"current_vo2max": 52, "recent_bests": []},
-                    "hevy": {"recent_bests": []},
-                    "cronometer": {"today": {}, "fueling_status": "adequate"},
-                    "manual_context": {"sleep_quality": "good", "motivation": "normal"},
-                },
-            ), patch.object(daily_snapshot_runner, "_build_site_artifacts") as build_site_artifacts:
+            with (
+                patch.object(
+                    daily_snapshot_runner,
+                    "_capture_live_sources",
+                    return_value={
+                        "snapshot_date": "2026-07-06",
+                        "timezone": "Europe/Malta",
+                        "garmin": {"current_vo2max": 52, "recent_bests": []},
+                        "hevy": {"recent_bests": []},
+                        "cronometer": {"today": {}, "fueling_status": "adequate"},
+                        "manual_context": {
+                            "sleep_quality": "good",
+                            "motivation": "normal",
+                        },
+                    },
+                ),
+                patch.object(
+                    daily_snapshot_runner, "_build_site_artifacts"
+                ) as build_site_artifacts,
+            ):
                 exit_code = daily_snapshot_runner.main(
                     [
                         "--sources-output",
@@ -49,4 +57,3 @@ class DailySnapshotRunnerTest(TestCase):
             saved_snapshot = json.loads(snapshot_output.read_text(encoding="utf-8"))
             self.assertEqual(saved_sources["garmin"]["current_vo2max"], 52)
             self.assertEqual(saved_snapshot["garmin"]["current_vo2max"], 52)
-

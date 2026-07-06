@@ -5,7 +5,6 @@ import asyncio
 import json
 import os
 import shlex
-import subprocess
 import sys
 import textwrap
 from datetime import UTC, datetime, timedelta
@@ -30,7 +29,10 @@ async def fetch() -> dict:
         try:
             return await _fetch_direct(garmin_email, garmin_password, today, month_ago)
         except Exception as e:
-            print(f"[garmin] direct fetch failed, falling back to MCP: {e}", file=sys.stderr)
+            print(
+                f"[garmin] direct fetch failed, falling back to MCP: {e}",
+                file=sys.stderr,
+            )
     return await _fetch_via_mcp(today, month_ago)
 
 
@@ -85,7 +87,8 @@ async def _fetch_direct(email: str, password: str, today: str, month_ago: str) -
             records = client.get_personal_records()
             if isinstance(records, list):
                 result["recent_bests"] = [
-                    {"record_type": r.get("record_type") or r.get("recordType") or r.get("name") or "",
+                    {
+        "record_type": r.get("record_type") or r.get("recordType") or r.get("name") or "",
                      "value": r.get("value") or r.get("displayValue"),
                      "date": r.get("date") or r.get("startDate")}
                     for r in records if isinstance(r, dict)
@@ -100,10 +103,14 @@ async def _fetch_direct(email: str, password: str, today: str, month_ago: str) -
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await asyncio.wait_for(proc.communicate(script.encode()), timeout=60)
+    stdout, stderr = await asyncio.wait_for(
+        proc.communicate(script.encode()), timeout=60
+    )
     if proc.returncode != 0:
         err = stderr.decode() if stderr else ""
-        raise RuntimeError(f"garminconnect subprocess failed (exit {proc.returncode}): {err[:500]}")
+        raise RuntimeError(
+            f"garminconnect subprocess failed (exit {proc.returncode}): {err[:500]}"
+        )
 
     data = json.loads(stdout.decode())
 
@@ -128,10 +135,17 @@ async def _fetch_direct(email: str, password: str, today: str, month_ago: str) -
             name = str(run.get("activityName", run.get("name", ""))).lower()
             rtype = str(run.get("activityType", run.get("type", ""))).lower()
             distance = _safe_float(run.get("distance") or run.get("distance_meters"))
-            if any(kw in name or kw in rtype for kw in ("interval", "tempo", "threshold", "quality")):
+            if any(
+                kw in name or kw in rtype
+                for kw in ("interval", "tempo", "threshold", "quality")
+            ):
                 if payload["last_quality_run"] is None:
                     payload["last_quality_run"] = _summarize_activity(run)
-            if "long" in name or "long" in rtype or (distance is not None and distance >= 15000):
+            if (
+                "long" in name
+                or "long" in rtype
+                or (distance is not None and distance >= 15000)
+            ):
                 if payload["last_long_run"] is None:
                     payload["last_long_run"] = _summarize_activity(run)
 
@@ -146,35 +160,53 @@ async def _fetch_via_mcp(today: str, month_ago: str) -> dict:
     payload = _empty_payload()
 
     try:
-        vo2max = await call_tool(GARMIN_COMMAND, "get_vo2max_trend", {"start_date": month_ago, "end_date": today})
+        vo2max = await call_tool(
+            GARMIN_COMMAND,
+            "get_vo2max_trend",
+            {"start_date": month_ago, "end_date": today},
+        )
         if isinstance(vo2max, dict):
             payload["current_vo2max"] = _safe_float(vo2max.get("latest_vo2_max"))
             change = vo2max.get("change", 0)
             if isinstance(change, (int, float)):
-                payload["vo2max_trend"] = "up" if change > 0 else "down" if change < 0 else "stable"
+                payload["vo2max_trend"] = (
+                    "up" if change > 0 else "down" if change < 0 else "stable"
+                )
     except McpError as e:
         print(f"[garmin] vo2max unavailable: {e}", file=sys.stderr)
 
     try:
-        activities = await call_tool(GARMIN_COMMAND, "get_activities", {"start": 0, "limit": 10})
+        activities = await call_tool(
+            GARMIN_COMMAND, "get_activities", {"start": 0, "limit": 10}
+        )
         if isinstance(activities, dict):
             items = activities.get("activities", [])
             if isinstance(items, list):
                 payload["recent_activities"] = items
-                payload["flags"] = sorted(set(payload["flags"] + _activity_flags(items)))
+                payload["flags"] = sorted(
+                    set(payload["flags"] + _activity_flags(items))
+                )
     except McpError as e:
         print(f"[garmin] activities unavailable: {e}", file=sys.stderr)
 
     try:
-        readiness = await call_tool(GARMIN_COMMAND, "get_training_readiness", {"date": today})
+        readiness = await call_tool(
+            GARMIN_COMMAND, "get_training_readiness", {"date": today}
+        )
         if isinstance(readiness, list) and readiness:
             payload["readiness"] = readiness[0]
-            payload["flags"] = sorted(set(payload["flags"] + _readiness_flags(readiness[0])))
+            payload["flags"] = sorted(
+                set(payload["flags"] + _readiness_flags(readiness[0]))
+            )
     except McpError as e:
         print(f"[garmin] readiness unavailable: {e}", file=sys.stderr)
 
     try:
-        load = await call_tool(GARMIN_COMMAND, "get_training_load_trend", {"start_date": month_ago, "end_date": today})
+        load = await call_tool(
+            GARMIN_COMMAND,
+            "get_training_load_trend",
+            {"start_date": month_ago, "end_date": today},
+        )
         if isinstance(load, dict):
             payload["training_load_trend"] = str(load.get("days_with_data", ""))
     except McpError as e:
@@ -182,8 +214,15 @@ async def _fetch_via_mcp(today: str, month_ago: str) -> dict:
 
     try:
         runs = await call_tool(
-            GARMIN_COMMAND, "get_activities_by_date",
-            {"start_date": month_ago, "end_date": today, "activity_type": "running", "page": 0, "page_size": 20},
+            GARMIN_COMMAND,
+            "get_activities_by_date",
+            {
+                "start_date": month_ago,
+                "end_date": today,
+                "activity_type": "running",
+                "page": 0,
+                "page_size": 20,
+            },
         )
         if isinstance(runs, dict):
             items = runs.get("activities", [])
@@ -193,10 +232,17 @@ async def _fetch_via_mcp(today: str, month_ago: str) -> dict:
                     name = str(run.get("name", "")).lower()
                     rtype = str(run.get("type", "")).lower()
                     distance = _safe_float(run.get("distance_meters"))
-                    if any(kw in name or kw in rtype for kw in ("interval", "tempo", "threshold", "quality")):
+                    if any(
+                        kw in name or kw in rtype
+                        for kw in ("interval", "tempo", "threshold", "quality")
+                    ):
                         if payload["last_quality_run"] is None:
                             payload["last_quality_run"] = _summarize_activity(run)
-                    if "long" in name or "long" in rtype or (distance is not None and distance >= 15000):
+                    if (
+                        "long" in name
+                        or "long" in rtype
+                        or (distance is not None and distance >= 15000)
+                    ):
                         if payload["last_long_run"] is None:
                             payload["last_long_run"] = _summarize_activity(run)
     except McpError as e:
@@ -207,10 +253,16 @@ async def _fetch_via_mcp(today: str, month_ago: str) -> dict:
         source = records if isinstance(records, list) else []
         if isinstance(source, list):
             payload["recent_bests"] = [
-                {"record_type": r.get("record_type") or r.get("recordType") or r.get("name") or "",
-                 "value": r.get("value") or r.get("displayValue"),
-                 "date": r.get("date") or r.get("startDate")}
-                for r in source if isinstance(r, dict)
+                {
+                    "record_type": r.get("record_type")
+                    or r.get("recordType")
+                    or r.get("name")
+                    or "",
+                    "value": r.get("value") or r.get("displayValue"),
+                    "date": r.get("date") or r.get("startDate"),
+                }
+                for r in source
+                if isinstance(r, dict)
             ]
     except McpError as e:
         print(f"[garmin] personal records unavailable: {e}", file=sys.stderr)
@@ -265,8 +317,17 @@ def _summarize_activity(run: dict) -> dict:
     return {
         "date": run.get("start_time") or run.get("startTimeLocal") or "",
         "distance_m": _safe_float(run.get("distance_meters") or run.get("distance")),
-        "duration_s": _safe_float(run.get("duration_seconds") or run.get("duration") or run.get("moving_duration")),
-        "type": run.get("type", "") or (run.get("activityType", {}).get("typeKey") if isinstance(run.get("activityType"), dict) else ""),
+        "duration_s": _safe_float(
+            run.get("duration_seconds")
+            or run.get("duration")
+            or run.get("moving_duration")
+        ),
+        "type": run.get("type", "")
+        or (
+            run.get("activityType", {}).get("typeKey")
+            if isinstance(run.get("activityType"), dict)
+            else ""
+        ),
     }
 
 
