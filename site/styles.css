@@ -78,8 +78,8 @@ input[type="file"] { display: none; }
 .status-banner { padding: 8px 12px; border-radius: 999px; background: rgba(127, 209, 185, 0.12); color: var(--accent); font-weight: 700; font-size: 0.9rem; }
 
 .stats { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-.stat { padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); }
-.stat-value { margin-top: 6px; font-size: 1rem; font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+.stat { padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; gap: 4px; }
+.stat-value { font-size: 1rem; font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
 
 .section-stack { margin-top: 18px; display: grid; gap: 14px; }
 .section-panel { padding: 0; overflow: hidden; }

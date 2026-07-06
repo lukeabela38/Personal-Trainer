@@ -73,18 +73,18 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const macros = recommendation.Macros ?? {};
   setText("priority", priority);
   setText("reason", reason);
-  setText("confidence", recommendation.Confidence ?? recommendation.confidence ?? "-");
-  setText("check-in", recommendation["Needs check-in"] ?? recommendation.needs_check_in ?? "-");
-  setText("data-quality", derived.data_quality ?? "-");
+  setText("confidence", formatStat(recommendation.Confidence ?? recommendation.confidence));
+  setText("check-in", formatStat(recommendation["Needs check-in"] ?? recommendation.needs_check_in));
+  setText("data-quality", formatStat(derived.data_quality));
   setText("calories", macros.calories ? `${macros.calories} kcal` : "-");
-  setText("protein", macros.protein_g ? `${macros.protein_g}g` : "-");
-  setText("carbs", macros.carbs_g ? `${macros.carbs_g}g` : "-");
-  setText("fat", macros.fat_g ? `${macros.fat_g}g` : "-");
-  setText("vo2max", formatValue(garmin.current_vo2max));
-  setText("fueling", formatValue(cronometer.fueling_status));
-  setText("remaining-kcal", formatValue(cronometer.today?.remaining_kcal));
-  setText("sleep", formatValue(manual.sleep_quality));
-  setText("motivation", formatValue(manual.motivation));
+  setText("protein", macros.protein_g ? `${macros.protein_g} g` : "-");
+  setText("carbs", macros.carbs_g ? `${macros.carbs_g} g` : "-");
+  setText("fat", macros.fat_g ? `${macros.fat_g} g` : "-");
+  setText("vo2max", formatStat(garmin.current_vo2max));
+  setText("fueling", formatStat(cronometer.fueling_status));
+  setText("remaining-kcal", formatStat(cronometer.today?.remaining_kcal, "kcal"));
+  setText("sleep", formatStat(manual.sleep_quality));
+  setText("motivation", formatStat(manual.motivation));
 
   statusBanner.textContent = `${sourceLabel} loaded`;
   sections.innerHTML = [
@@ -262,6 +262,12 @@ function formatRenderedValue(value) {
 
 function formatValue(value) {
   return shouldRenderValue(value) ? String(value) : "-";
+}
+
+function formatStat(value, unit) {
+  if (!shouldRenderValue(value)) return "-";
+  const s = unit ? `${value} ${unit}` : String(value);
+  return s;
 }
 
 function formatLabel(key, sectionTitle = "") {
