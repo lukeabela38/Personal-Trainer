@@ -73,8 +73,8 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const macros = recommendation.Macros ?? {};
   setText("priority", priority);
   setText("reason", reason);
-  setText("confidence", recommendation.confidence ?? recommendation.Confidence ?? "-");
-  setText("check-in", derived.check_in_required ?? derived.check_in ?? "-");
+  setText("confidence", recommendation.Confidence ?? recommendation.confidence ?? "-");
+  setText("check-in", recommendation["Needs check-in"] ?? recommendation.needs_check_in ?? "-");
   setText("data-quality", derived.data_quality ?? "-");
   setText("calories", macros.calories ? `${macros.calories} kcal` : "-");
   setText("protein", macros.protein_g ? `${macros.protein_g}g` : "-");
