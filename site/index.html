@@ -49,9 +49,6 @@
       <input id="live-input" type="file" accept="application/json" />
 
       <div id="welcome-overlay" class="welcome-overlay" hidden>
-        <script>
-          try { if (!localStorage.getItem('personal-trainer:welcome-dismissed')) document.currentScript.parentElement.removeAttribute('hidden'); } catch(e) {}
-        </script>
         <div class="welcome-card card">
           <h2>Welcome</h2>
           <p class="lede">Track your training, nutrition, and progress in one place.</p>
@@ -63,10 +60,11 @@
           </div>
           <div class="welcome-footer">
             <span class="muted">Load a snapshot via <strong>Actions → Load deployed snapshot</strong> or generate history data with the pipeline script.</span>
-            <button id="welcome-dismiss" class="button" type="button" onclick="var o=document.getElementById('welcome-overlay');if(o)o.remove();try{localStorage.setItem('personal-trainer:welcome-dismissed','1')}catch(e){}">Get started</button>
+            <button id="welcome-dismiss" class="button" type="button" onclick="try{localStorage.setItem('personal-trainer:welcome-dismissed','1')}catch(e){}document.getElementById('welcome-overlay')?.remove()">Get started</button>
           </div>
         </div>
       </div>
+      <script>try{if(!localStorage.getItem('personal-trainer:welcome-dismissed'))document.getElementById('welcome-overlay').removeAttribute('hidden')}catch(e){}</script>
 
       <div id="freshness-bar"></div>
 
