@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 import sys
+from datetime import UTC, datetime
 
 from scripts.mcp_client import McpError, call_tool
 
@@ -14,12 +15,19 @@ CRONOMETER_COMMAND = os.environ.get(
     "/opt/homebrew/bin/uvx cronometer-api-mcp",
 )
 
+
 _CALORIES_PER_G_PROTEIN = 4
 _CALORIES_PER_G_CARBS = 4
 _CALORIES_PER_G_FAT = 9
 
 
+def _is_error(result) -> bool:
+    return isinstance(result, dict) and result.get("status") == "error"
+
+
 async def fetch() -> dict:
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+
     payload: dict = {
         "freshness": "fresh",
         "today": {
@@ -40,40 +48,36 @@ async def fetch() -> dict:
     }
 
     try:
-        summary = await call_tool(CRONOMETER_COMMAND, "get_daily_nutrition_summary")
-        if isinstance(summary, dict):
-            today = payload["today"]
-            today["calories_consumed"] = _safe_float(summary.get("calories") or summary.get("energy") or summary.get("caloriesConsumed"))
-            today["calories_target"] = _safe_float(summary.get("caloriesTarget") or summary.get("energyTarget") or summary.get("targetCalories"))
-            today["protein_g"] = _safe_float(summary.get("protein") or summary.get("protein_g"))
-            today["carbs_g"] = _safe_float(summary.get("carbs") or summary.get("carbohydrates") or summary.get("carbs_g"))
-            today["fat_g"] = _safe_float(summary.get("fat") or summary.get("fat_g"))
-            today["fiber_g"] = _safe_float(summary.get("fiber") or summary.get("fiber_g"))
-            today["log_completeness"] = _compute_completeness(summary)
+        summary = await call_tool(CRONOMETER_COMMAND, "get_daily_nutrition", {"date": today})
+        if _is_error(summary):
+            print(f"[cronometer] API error: {summary.get('message')}", file=sys.stderr)
+        elif isinstance(summary, dict):
+            today_data = payload["today"]
+            today_data["calories_consumed"] = _safe_float(summary.get("calories") or summary.get("energy"))
+            today_data["calories_target"] = _safe_float(summary.get("caloriesTarget") or summary.get("energyTarget"))
+            today_data["protein_g"] = _safe_float(summary.get("protein") or summary.get("protein_g") or summary.get("protein_grams"))
+            today_data["carbs_g"] = _safe_float(summary.get("carbs") or summary.get("carbohydrates") or summary.get("carbs_g"))
+            today_data["fat_g"] = _safe_float(summary.get("fat") or summary.get("fat_g"))
+            today_data["fiber_g"] = _safe_float(summary.get("fiber") or summary.get("fiber_g"))
+            today_data["log_completeness"] = _compute_completeness(summary)
 
-            consumed = today["calories_consumed"]
-            target = today["calories_target"]
+            consumed = today_data["calories_consumed"]
+            target = today_data["calories_target"]
             if consumed is not None and target is not None:
-                today["remaining_kcal"] = round(target - consumed, 1)
+                today_data["remaining_kcal"] = round(target - consumed, 1)
 
-            payload["fueling_status"] = _fueling_status(today["calories_consumed"], today["calories_target"])
-            payload["protein_status"] = _protein_status(today["protein_g"], today["calories_target"])
-            payload["carb_availability"] = _carb_status(today["carbs_g"])
+            payload["fueling_status"] = _fueling_status(today_data["calories_consumed"], today_data["calories_target"])
+            payload["protein_status"] = _protein_status(today_data["protein_g"], today_data["calories_target"])
+            payload["carb_availability"] = _carb_status(today_data["carbs_g"])
     except McpError as e:
         print(f"[cronometer] daily summary unavailable: {e}", file=sys.stderr)
 
     try:
         targets = await call_tool(CRONOMETER_COMMAND, "get_macro_targets")
-        if isinstance(targets, dict):
-            today = payload["today"]
-            if today["calories_target"] is None:
-                today["calories_target"] = _safe_float(targets.get("calories") or targets.get("energy"))
-            if today["protein_g"] is None:
-                protein_target = _safe_float(targets.get("protein") or targets.get("protein_g"))
-            if today["carbs_g"] is None:
-                carbs_target = _safe_float(targets.get("carbs") or targets.get("carbs_g"))
-            if today["fat_g"] is None:
-                fat_target = _safe_float(targets.get("fat") or targets.get("fat_g"))
+        if not _is_error(targets) and isinstance(targets, dict):
+            td = payload["today"]
+            if td["calories_target"] is None:
+                td["calories_target"] = _safe_float(targets.get("calories") or targets.get("energy"))
     except McpError as e:
         print(f"[cronometer] macro targets unavailable: {e}", file=sys.stderr)
 
@@ -92,8 +96,7 @@ async def fetch() -> dict:
 
 
 def _compute_completeness(summary: dict) -> str:
-    cal = _safe_float(summary.get("calories") or summary.get("energy") or summary.get("caloriesConsumed"))
-    protein = _safe_float(summary.get("protein") or summary.get("protein_g"))
+    cal = _safe_float(summary.get("calories") or summary.get("energy"))
     if cal is not None and cal > 0:
         return "complete"
     if cal is not None:

@@ -14,6 +14,17 @@ HEVY_COMMAND = os.environ.get(
     "/opt/homebrew/bin/npx -y -p node@26 -p hevy-mcp hevy-mcp",
 )
 
+_TRACKED_EXERCISES = [
+    ("Squat (Barbell)", "D04AC939"),
+    ("Bench Press (Barbell)", "79D0BB3A"),
+    ("Chin Up", "29083183"),
+    ("Triceps Dip", "28BB4A95"),
+    ("Push Up", "392887AA"),
+    ("Dumbbell Row", "F1E57334"),
+    ("Sumo Squat (Kettlebell)", "5E10D0E6"),
+    ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
+]
+
 
 async def fetch() -> dict:
     payload: dict = {
@@ -63,22 +74,7 @@ async def fetch() -> dict:
         except McpError as e:
             print(f"[hevy] exercise history for {exercise_name} unavailable: {e}", file=sys.stderr)
 
-    if payload["recent_bests"]:
-        payload["strength_trend"] = _compute_strength_trend(payload["recent_bests"])
-
     return payload
-
-
-_TRACKED_EXERCISES = [
-    ("Squat (Barbell)", "D04AC939"),
-    ("Bench Press (Barbell)", "79D0BB3A"),
-    ("Chin Up", "29083183"),
-    ("Triceps Dip", "28BB4A95"),
-    ("Push Up", "392887AA"),
-    ("Dumbbell Row", "F1E57334"),
-    ("Sumo Squat (Kettlebell)", "5E10D0E6"),
-    ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
-]
 
 
 def _summarize_workout(w: dict) -> dict:
@@ -104,18 +100,18 @@ def _infer_fatigue(workout: dict) -> dict:
         if not isinstance(ex, dict):
             continue
         tpid = str(ex.get("exerciseTemplateId") or "")
-        if tpid in ("D04AC939",):  # Squat
+        if tpid == "D04AC939":
             fatigue["legs"] = "high"
             fatigue["posterior_chain"] = "medium"
-        elif tpid in ("5E10D0E6",):  # Sumo Squat
+        elif tpid == "5E10D0E6":
             fatigue["legs"] = "high"
-        elif tpid in ("79D0BB3A", "28BB4A95", "392887AA"):  # Bench, Dips, Push Up
+        elif tpid in ("79D0BB3A", "28BB4A95", "392887AA"):
             fatigue["push"] = "high"
             fatigue["shoulders_arms"] = "medium"
-        elif tpid in ("29083183", "F1E57334"):  # Chin Up, Row
+        elif tpid in ("29083183", "F1E57334"):
             fatigue["pull"] = "high"
             fatigue["posterior_chain"] = "medium"
-        elif tpid in ("8347DFD1",):  # Tricep Extension
+        elif tpid == "8347DFD1":
             fatigue["shoulders_arms"] = "high"
     return fatigue
 
@@ -140,10 +136,6 @@ def _best_set(rows: list[dict]) -> dict | None:
                 "workout_title": str(row.get("workoutTitle") or row.get("title") or ""),
             }
     return best
-
-
-def _compute_strength_trend(bests: list[dict]) -> str:
-    return "unknown"
 
 
 def _safe_float(v) -> float | None:

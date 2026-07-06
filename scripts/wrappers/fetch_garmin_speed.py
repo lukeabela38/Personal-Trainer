@@ -28,7 +28,7 @@ async def fetch() -> dict:
     records = []
 
     try:
-        raw = await call_tool(GARMIN_COMMAND, "get_personal_records")
+        raw = await call_tool(GARMIN_COMMAND, "get_personal_record")
         source = raw if isinstance(raw, list) else raw.get("result", raw) if isinstance(raw, dict) else []
         if isinstance(source, str):
             source = json.loads(source)
@@ -36,15 +36,15 @@ async def fetch() -> dict:
             for entry in source:
                 if not isinstance(entry, dict):
                     continue
-                record_type = str(entry.get("record_type") or entry.get("recordType") or "")
+                record_type = str(entry.get("record_type") or entry.get("recordType") or entry.get("name") or "")
                 if record_type not in RUN_RECORD_TYPES:
                     continue
                 records.append({
                     "record_type": record_type,
                     "value": entry.get("value"),
-                    "date": entry.get("date"),
+                    "date": entry.get("date") or entry.get("start_date"),
                     "raw_value": entry.get("raw_value") or entry.get("rawValue"),
-                    "activity_id": entry.get("activity_id") or entry.get("activityId"),
+                    "activity_id": entry.get("activity_id") or entry.get("activityId") or entry.get("activityIdGarmin"),
                     "type_id": entry.get("type_id") or entry.get("typeId"),
                 })
     except McpError as e:
