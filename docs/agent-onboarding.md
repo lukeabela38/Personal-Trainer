@@ -25,6 +25,8 @@ Agents should optimize for small, independent cards that can be completed withou
 - `site/progress.html` compares the current snapshot against the previous snapshot.
 - `site/strength.html` shows Hevy PBs and estimated 1RMs.
 - `site/speed.html` shows Garmin running PBs.
+- `scripts/mcp_client.py` is the reusable MCP stdio client that starts servers and calls tools via JSON-RPC.
+- `scripts/wrappers/` contains per-source MCP wrapper scripts (`fetch_garmin.py`, `fetch_hevy.py`, `fetch_cronometer.py`, `fetch_manual.py`, `fetch_garmin_speed.py`, `fetch_hevy_strength.py`) that each emit source payload JSON to stdout.
 - `scripts/daily_snapshot_runner.py` is the local end-to-end capture and build entrypoint.
 - `.github/workflows/pages.yml` publishes the static site.
 
@@ -63,6 +65,12 @@ Wave order:
 - `./scripts/serve_site.sh`
 - `python3 ./scripts/build_site_artifacts.py`
 - `python3 ./scripts/daily_snapshot_runner.py`
+- `python3 ./scripts/wrappers/fetch_garmin.py`
+- `python3 ./scripts/wrappers/fetch_hevy.py`
+- `python3 ./scripts/wrappers/fetch_cronometer.py`
+- `python3 ./scripts/wrappers/fetch_manual.py`
+- `python3 ./scripts/wrappers/fetch_garmin_speed.py`
+- `python3 ./scripts/wrappers/fetch_hevy_strength.py`
 
 ## Handoff Notes
 

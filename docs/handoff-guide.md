@@ -33,6 +33,8 @@ This repository builds a personal performance system for Luke.
 - `site/progress.html` provides the progress comparison view.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
 - `personal_trainer/examples/snapshot-ready.json` is the deployed snapshot input.
+- `scripts/mcp_client.py` is the reusable async MCP stdio client for calling tools on Garmin, Hevy, and Cronometer MCP servers.
+- `scripts/wrappers/` contains per-source wrapper scripts that each call MCP tools and emit source payload JSON to stdout.
 - `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot.
 - `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle.
 
@@ -44,3 +46,16 @@ This repository builds a personal performance system for Luke.
 - `PERSONAL_TRAINER_SOURCES_COMMAND`
 - `personal_trainer.live_cli`
 - snapshot/recommendation generation
+
+## MCP Wrapper Scripts
+
+Per-source MCP wrapper scripts that connect to Garmin, Hevy, and Cronometer MCP servers and emit JSON in the expected source payload shape. Set the corresponding env vars to wire them into the daily pipeline:
+
+- `scripts/wrappers/fetch_garmin.py` → `PERSONAL_TRAINER_GARMIN_COMMAND`
+- `scripts/wrappers/fetch_hevy.py` → `PERSONAL_TRAINER_HEVY_COMMAND`
+- `scripts/wrappers/fetch_cronometer.py` → `PERSONAL_TRAINER_CRONOMETER_COMMAND`
+- `scripts/wrappers/fetch_manual.py` → `PERSONAL_TRAINER_MANUAL_COMMAND`
+- `scripts/wrappers/fetch_garmin_speed.py` → `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND`
+- `scripts/wrappers/fetch_hevy_strength.py` → `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND`
+
+Each wrapper uses `scripts/mcp_client.py` (reusable async MCP stdio client) to start the server, call tools via JSON-RPC, and format the result. Failures per source are logged to stderr with fallback defaults emitted.
