@@ -81,6 +81,16 @@ async def _fetch_direct(email: str, password: str, today: str, month_ago: str) -
             if isinstance(load, dict):
                 result["training_load_trend"] = str(load.get("days_with_data", ""))
         except Exception: pass
+        try:
+            records = client.get_personal_records()
+            if isinstance(records, list):
+                result["recent_bests"] = [
+                    {"record_type": r.get("record_type") or r.get("recordType") or r.get("name") or "",
+                     "value": r.get("value") or r.get("displayValue"),
+                     "date": r.get("date") or r.get("startDate")}
+                    for r in records if isinstance(r, dict)
+                ]
+        except Exception: pass
         print(json.dumps(result))
     """)
 
@@ -124,6 +134,10 @@ async def _fetch_direct(email: str, password: str, today: str, month_ago: str) -
             if "long" in name or "long" in rtype or (distance is not None and distance >= 15000):
                 if payload["last_long_run"] is None:
                     payload["last_long_run"] = _summarize_activity(run)
+
+    bests = data.get("recent_bests", [])
+    if isinstance(bests, list):
+        payload["recent_bests"] = bests
 
     return payload
 
@@ -188,6 +202,19 @@ async def _fetch_via_mcp(today: str, month_ago: str) -> dict:
     except McpError as e:
         print(f"[garmin] running history unavailable: {e}", file=sys.stderr)
 
+    try:
+        records = await call_tool(GARMIN_COMMAND, "get_personal_record")
+        source = records if isinstance(records, list) else []
+        if isinstance(source, list):
+            payload["recent_bests"] = [
+                {"record_type": r.get("record_type") or r.get("recordType") or r.get("name") or "",
+                 "value": r.get("value") or r.get("displayValue"),
+                 "date": r.get("date") or r.get("startDate")}
+                for r in source if isinstance(r, dict)
+            ]
+    except McpError as e:
+        print(f"[garmin] personal records unavailable: {e}", file=sys.stderr)
+
     return payload
 
 
@@ -203,6 +230,7 @@ def _empty_payload() -> dict:
         "recent_runs": [],
         "last_quality_run": None,
         "last_long_run": None,
+        "recent_bests": [],
         "flags": [],
     }
 
