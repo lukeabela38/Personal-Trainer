@@ -56,6 +56,7 @@ def _normalize_garmin(raw: SourcePayload) -> SourcePayload:
         "recent_runs": _list(raw.get("recent_runs")),
         "last_quality_run": raw.get("last_quality_run"),
         "last_long_run": raw.get("last_long_run"),
+        "recent_bests": _list(raw.get("recent_bests")),
         "flags": _unique_strings(raw.get("flags")),
     }
 

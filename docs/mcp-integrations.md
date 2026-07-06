@@ -173,6 +173,63 @@ Verified write commit:
 cd3c476a0cfa74c75b380eb2ffdc2d0292131cd4
 ```
 
+## Live Data Wrappers
+
+The `scripts/wrappers/` directory contains Python scripts that connect to each MCP server and emit JSON in the expected source payload shape.
+
+### Garmin — `scripts/wrappers/fetch_garmin.py`
+
+Calls Garmin MCP tools (`get_vo2max_trend`, `get_latest_activity_summaries`, `get_recovery_context`, `get_training_load_trend`, `get_running_activity_history`) and assembles a normalized source payload. Used by `PERSONAL_TRAINER_GARMIN_COMMAND`.
+
+### Garmin Speed — `scripts/wrappers/fetch_garmin_speed.py`
+
+Calls `get_personal_records` and filters for running records (1K, Mile, 5K, 10K, Half Marathon, Longest Run). Used by `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND`.
+
+### Hevy — `scripts/wrappers/fetch_hevy.py`
+
+Calls `get_latest_workout`, `get_workout_history`, and `get_exercise_history` for tracked exercises. Infers muscle group fatigue from the latest workout. Used by `PERSONAL_TRAINER_HEVY_COMMAND`.
+
+### Hevy Strength — `scripts/wrappers/fetch_hevy_strength.py`
+
+Calls `get_exercise_history` for all tracked template IDs and returns raw rows for the strength report. Used by `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND`.
+
+### Cronometer — `scripts/wrappers/fetch_cronometer.py`
+
+Calls `get_daily_nutrition_summary` and `get_macro_targets`. Computes fueling/protein/carb status and log completeness. Used by `PERSONAL_TRAINER_CRONOMETER_COMMAND`.
+
+### Manual Check-In — `scripts/wrappers/fetch_manual.py`
+
+Reads check-in data from `PERSONAL_TRAINER_MANUAL_COMMAND` (shell command emitting JSON), then `PERSONAL_TRAINER_MANUAL_FILE` (JSON file path), or falls back to a "missing freshness" default payload.
+
+### Environment Variables
+
+Copy `.env.example` to `.env` in the repo root and fill in your values:
+
+```bash
+cp .env.example .env
+# edit .env to set REPO_ROOT to your local path
+```
+
+`.env` is auto-loaded by `scripts/mcp_client.py` on import — no shell sourcing needed. Variables already set in your environment take precedence.
+
+Key variables at a glance:
+
+| Variable | Purpose |
+|---|---|
+| `REPO_ROOT` | Absolute path to the repository |
+| `PERSONAL_TRAINER_GARMIN_COMMAND` | Garmin source fetcher |
+| `PERSONAL_TRAINER_HEVY_COMMAND` | Hevy source fetcher |
+| `PERSONAL_TRAINER_CRONOMETER_COMMAND` | Cronometer source fetcher |
+| `PERSONAL_TRAINER_MANUAL_COMMAND` | Manual check-in |
+| `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND` | Garmin speed records |
+| `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND` | Hevy exercise history |
+| `PERSONAL_TRAINER_GARMIN_MCP_COMMAND` | (optional) override Garmin MCP server command |
+| `PERSONAL_TRAINER_HEVY_MCP_COMMAND` | (optional) override Hevy MCP server command |
+| `PERSONAL_TRAINER_CRONOMETER_MCP_COMMAND` | (optional) override Cronometer MCP server command |
+
+Each wrapper output is JSON to stdout and describes errors on stderr.
+MCP server startup latency is expected on first call (uvx/npx cache).
+
 ## Operational Notes
 
 Restart behavior:

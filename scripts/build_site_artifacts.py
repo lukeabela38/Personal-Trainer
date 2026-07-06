@@ -72,21 +72,81 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
         shutil.copy2(site_dir / name, output_dir / name)
 
 
+_EXERCISE_NAMES = {
+    "D04AC939": "Squat (Barbell)",
+    "79D0BB3A": "Bench Press (Barbell)",
+    "29083183": "Chin Up",
+    "28BB4A95": "Triceps Dip",
+    "392887AA": "Push Up",
+    "F1E57334": "Dumbbell Row",
+    "5E10D0E6": "Sumo Squat (Kettlebell)",
+    "8347DFD1": "Single Arm Tricep Extension (Dumbbell)",
+}
+
+_EXERCISE_CATEGORIES = {
+    "D04AC939": "Lower body",
+    "79D0BB3A": "Push",
+    "29083183": "Pull",
+    "28BB4A95": "Push",
+    "392887AA": "Push",
+    "F1E57334": "Pull",
+    "5E10D0E6": "Lower body",
+    "8347DFD1": "Accessory",
+}
+
+
 def _build_strength_view(snapshot: dict[str, Any]) -> dict[str, Any]:
     hevy = snapshot.get("hevy", {})
+    entries = []
+    for b in hevy.get("recent_bests", []):
+        if not isinstance(b, dict):
+            continue
+        tid = str(b.get("exercise_template_id", ""))
+        entries.append({
+            "name": _EXERCISE_NAMES.get(tid, tid),
+            "category": _EXERCISE_CATEGORIES.get(tid, "Strength"),
+            "best_set": {
+                "weight_kg": b.get("weight_kg"),
+                "reps": b.get("reps"),
+            },
+            "estimated_one_rm_kg": b.get("estimated_one_rm_kg"),
+        })
     return {
         "source": "Hevy exercise history",
         "snapshot_date": snapshot.get("snapshot_date"),
-        "entries": hevy.get("recent_bests", []),
+        "entries": entries,
     }
+
+
+_TRACKED_NAMES = {
+    "Fastest 1K": "Fastest 1K",
+    "Fastest Mile": "Fastest Mile",
+    "Fastest 5K": "Fastest 5K",
+    "Fastest 10K": "Fastest 10K",
+    "Fastest Half Marathon": "Fastest Half Marathon",
+    "Longest Run": "Longest Run",
+}
 
 
 def _build_speed_view(snapshot: dict[str, Any]) -> dict[str, Any]:
     garmin = snapshot.get("garmin", {})
+    entries = []
+    for b in garmin.get("recent_bests", []):
+        if not isinstance(b, dict):
+            continue
+        rtype = str(b.get("record_type") or b.get("name") or "")
+        if rtype not in _TRACKED_NAMES:
+            continue
+        entries.append({
+            "name": rtype,
+            "category": "Running",
+            "value": b.get("value"),
+            "date": b.get("date"),
+        })
     return {
         "source": "Garmin personal records",
         "snapshot_date": snapshot.get("snapshot_date"),
-        "entries": garmin.get("recent_bests", []),
+        "entries": entries,
     }
 
 
