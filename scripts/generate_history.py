@@ -52,6 +52,8 @@ def main():
     for tid in TEMPLATE_IDS:
         pb_dates[tid] = start - timedelta(days=random.randint(30, 90))
 
+    exercise_history: dict[str, list[dict]] = {tid: [] for tid in TEMPLATE_IDS}
+
     for i in range(days):
         current = start + timedelta(days=i)
         day_type = WEEKLY_PATTERN[current.weekday()]
@@ -121,6 +123,15 @@ def main():
 
         all_snapshots.append(source_payload)
 
+        for b in hevy_bests:
+            tid = b["exercise_template_id"]
+            exercise_history[tid].append({
+                "date": current.isoformat(),
+                "weight_kg": b.get("weight_kg"),
+                "reps": b.get("reps"),
+                "estimated_one_rm_kg": b.get("estimated_one_rm_kg"),
+            })
+
     output_dir = REPO_ROOT / "dist" / "history"
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -137,7 +148,13 @@ def main():
         d = s["snapshot_date"]
         (output_dir / f"{d}.json").write_text(json.dumps(s, indent=2))
 
+    ex_dir = output_dir / "exercises"
+    ex_dir.mkdir(parents=True, exist_ok=True)
+    for tid, entries in exercise_history.items():
+        (ex_dir / f"{tid}.json").write_text(json.dumps(entries, indent=2))
+
     print(f"Generated {days} snapshots ({start} → {current})")
+    print(f"  Per-exercise files: {len(exercise_history)}")
     print(f"Output: {output_dir}/")
 
     _merge_into_dist(all_snapshots, days)
