@@ -2,9 +2,12 @@ const deployedSnapshotPath = new URL("./data/snapshot.json", import.meta.url);
 const sections = document.getElementById("sections");
 const statGroups = document.getElementById("stat-groups");
 const statusBanner = document.getElementById("status-banner");
+const freshnessBar = document.getElementById("freshness-bar");
+const recActions = document.getElementById("rec-actions");
 const state = {
   currentPayload: null,
   previousSnapshot: readStoredSnapshot(),
+  completedSessions: readCompletedSessions(),
 };
 
 document.getElementById("file-input").addEventListener("change", (event) => handleFile(event, "snapshot"));
@@ -13,6 +16,13 @@ document.getElementById("load-sample").addEventListener("click", () => loadFromU
 document.getElementById("load-example").addEventListener("click", () => loadFromUrl(deployedSnapshotPath, "deployed snapshot"));
 document.getElementById("open-raw").addEventListener("click", openRawView);
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  const map = { "1": "./index.html", "2": "./strength.html", "3": "./speed.html", "4": "./progress.html" };
+  const url = map[e.key];
+  if (url) location.href = url;
+});
 
 async function handleFile(event, kind) {
   const file = event.target.files?.[0];
@@ -37,7 +47,9 @@ function renderPayload(payload, sourceLabel) {
 function renderEmptyState() {
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
+  freshnessBar.innerHTML = "";
   statGroups.innerHTML = renderStatGroupsEmpty();
+  recActions.innerHTML = "";
   sections.innerHTML = "";
   statusBanner.textContent = "No file loaded";
   state.currentPayload = null;
@@ -60,12 +72,13 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const macros = recommendation.Macros ?? {};
   const today = cronometer.today ?? {};
 
+  freshnessBar.innerHTML = renderFreshnessBar(snapshot);
   statGroups.innerHTML = [
     renderRecGroup(recommendation, derived),
     renderNutritionGroup(macros, today),
     renderRecoveryGroup(garmin, cronometer, manual, hevy),
   ].join("");
-
+  recActions.innerHTML = renderSessionLog(priority);
   sections.innerHTML = [
     renderFreshnessCard(snapshot),
     renderDeltaCard(state.previousSnapshot, snapshot),
@@ -79,6 +92,16 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     .join("");
   state.previousSnapshot = snapshot;
   persistSnapshot(snapshot);
+}
+
+/* ── Freshness bar ── */
+
+function renderFreshnessBar(snapshot) {
+  const sources = ["garmin", "hevy", "cronometer", "manual_context"];
+  const levels = sources.map((key) => snapshot[key]?.freshness ?? "missing");
+  const worst = levels.includes("missing") ? "missing" : levels.includes("stale") ? "stale" : levels.includes("partial") ? "stale" : "fresh";
+  const labels = { fresh: "All data sources fresh", stale: "Some data sources stale", missing: "Some data sources missing" };
+  return `<div class="freshness-bar ${worst}">${labels[worst]}</div>`;
 }
 
 /* ── Stat groups ── */
@@ -129,14 +152,7 @@ function renderNutritionGroup(macros, today) {
   const pro = macros.protein_g ? `${macros.protein_g} g` : "-";
   const car = macros.carbs_g ? `${macros.carbs_g} g` : "-";
   const fat = macros.fat_g ? `${macros.fat_g} g` : "-";
-
-  const statItems = [
-    statItem("Calories", cal),
-    statItem("Protein", pro),
-    statItem("Carbs", car),
-    statItem("Fat", fat),
-  ].join("");
-
+  const statItems = [statItem("Calories", cal), statItem("Protein", pro), statItem("Carbs", car), statItem("Fat", fat)].join("");
   const bars = renderMacroBars(macros, today);
   return groupCard("Nutrition Targets", statItems + (bars ? `<div class="macro-group">${bars}</div>` : ""));
 }
@@ -199,6 +215,36 @@ function macroBar(label, consumed, target) {
   `;
 }
 
+/* ── Session log ── */
+
+function renderSessionLog(priority) {
+  const today = new Date().toISOString().slice(0, 10);
+  const alreadyLogged = state.completedSessions.some((s) => s.date === today && s.priority === priority);
+  const recent = state.completedSessions.slice(-5).reverse();
+  const tags = recent
+    .map(
+      (s) =>
+        `<span class="session-tag">${escapeHtml(s.priority)} <span class="muted">${escapeHtml(s.date.slice(5))}</span></span>`,
+    )
+    .join("");
+  const btn = alreadyLogged
+    ? `<span class="button small secondary" style="pointer-events:none;opacity:0.5">&#10003; Completed</span>`
+    : `<button id="log-session" class="button small secondary" type="button">+ Log completed</button>`;
+  const history = recent.length ? `<div class="session-history">${tags}</div>` : "";
+  return `${btn}${history}`;
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.id === "log-session") {
+    const priority = document.getElementById("priority")?.textContent;
+    if (!priority || priority === "Import a snapshot") return;
+    const session = { priority, date: new Date().toISOString().slice(0, 10), time: Date.now() };
+    state.completedSessions.push(session);
+    persistCompletedSessions(state.completedSessions);
+    recActions.innerHTML = renderSessionLog(priority);
+  }
+});
+
 /* ── Freshness card ── */
 
 function renderFreshnessCard(snapshot) {
@@ -218,7 +264,6 @@ function renderFreshnessCard(snapshot) {
     })
     .filter(Boolean)
     .join("");
-
   if (!rows) return "";
   return `
     <details class="card section-panel" open>
@@ -254,7 +299,7 @@ function renderDeltaCard(previousSnapshot, currentSnapshot) {
             (row) => `
               <div class="item">
                 <span>${escapeHtml(row.label)}</span>
-                <strong>${escapeHtml(row.value)}</strong>
+                <strong class="${row.deltaClass ?? ""}">${escapeHtml(row.value)}</strong>
               </div>
             `,
           )
@@ -316,7 +361,13 @@ function summarizeBestCount(snapshot) {
 function addDeltaRow(rows, label, previous, current) {
   if (!shouldRenderValue(previous) && !shouldRenderValue(current)) return;
   if (previous === current) return;
-  rows.push({ label, value: `${formatDeltaValue(previous)} → ${formatDeltaValue(current)}` });
+  const pNum = Number(previous);
+  const cNum = Number(current);
+  let deltaClass = "";
+  if (!Number.isNaN(pNum) && !Number.isNaN(cNum) && pNum !== cNum) {
+    deltaClass = cNum > pNum ? "delta-up" : "delta-down";
+  }
+  rows.push({ label, value: `${formatDeltaValue(previous)} → ${formatDeltaValue(current)}`, deltaClass });
 }
 
 function formatDeltaValue(value) {
@@ -449,6 +500,8 @@ function openRawView() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/* ── Persistence ── */
+
 function persistSnapshot(snapshot) {
   try {
     localStorage.setItem("personal-trainer:last-snapshot", JSON.stringify(snapshot));
@@ -468,4 +521,21 @@ function clearStoredSnapshot() {
   try {
     localStorage.removeItem("personal-trainer:last-snapshot");
   } catch {}
+}
+
+function persistCompletedSessions(sessions) {
+  try {
+    const recent = sessions.slice(-50);
+    localStorage.setItem("personal-trainer:completed-sessions", JSON.stringify(recent));
+    state.completedSessions = recent;
+  } catch {}
+}
+
+function readCompletedSessions() {
+  try {
+    const raw = localStorage.getItem("personal-trainer:completed-sessions");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }

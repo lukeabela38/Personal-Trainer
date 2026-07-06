@@ -10,7 +10,9 @@ async function loadSpeed() {
     const response = await fetch(`${speedUrl.pathname}?v=${Date.now()}`);
     const payload = await response.json();
     sourceLabel.textContent = `${payload.source ?? "Garmin"} · ${payload.snapshot_date ?? "unknown date"}`;
+    sourceLabel.classList.remove("skeleton");
     statusBanner.textContent = `${payload.entries.length} bests`;
+    statusBanner.classList.remove("skeleton");
     renderTable(payload.entries);
   } catch {
     sourceLabel.textContent = "Unavailable";
@@ -25,6 +27,7 @@ function renderTable(entries) {
     return;
   }
 
+  table.innerHTML = "";
   const sorted = [...entries].sort((a, b) => {
     const order = ["Fastest 1K", "Fastest Mile", "Fastest 5K", "Fastest 10K", "Fastest Half Marathon", "Longest Run"];
     return order.indexOf(a.name) - order.indexOf(b.name);

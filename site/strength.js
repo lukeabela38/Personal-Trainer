@@ -5,10 +5,12 @@ const sourceLabel = document.getElementById("source-label");
 const controls = document.getElementById("strength-controls");
 const filterPills = document.getElementById("filter-pills");
 const sortButtons = document.querySelectorAll(".sort-btn");
+const searchInput = document.getElementById("strength-search");
 
 let entries = [];
 let activeCategory = "All";
 let activeSort = "date";
+let searchQuery = "";
 
 loadStrength();
 
@@ -17,7 +19,9 @@ async function loadStrength() {
     const response = await fetch(`${strengthUrl.pathname}?v=${Date.now()}`);
     const payload = await response.json();
     sourceLabel.textContent = `${payload.source ?? "Hevy"} · ${payload.snapshot_date ?? "unknown date"}`;
+    sourceLabel.classList.remove("skeleton");
     statusBanner.textContent = `${payload.entries.length} lifts`;
+    statusBanner.classList.remove("skeleton");
     entries = payload.entries;
     renderControls();
     renderGrid();
@@ -54,10 +58,21 @@ function renderControls() {
       renderGrid();
     });
   });
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      searchQuery = searchInput.value.toLowerCase().trim();
+      renderGrid();
+    });
+  }
 }
 
 function renderGrid() {
   let visible = activeCategory === "All" ? entries : entries.filter((e) => e.category === activeCategory);
+
+  if (searchQuery) {
+    visible = visible.filter((e) => e.name.toLowerCase().includes(searchQuery));
+  }
 
   visible = [...visible].sort((a, b) => {
     if (activeSort === "weight") {
@@ -71,7 +86,7 @@ function renderGrid() {
   });
 
   if (!visible.length) {
-    grid.innerHTML = `<div class="item"><span>Strength</span><strong>No exercises in this category</strong></div>`;
+    grid.innerHTML = `<div class="item"><span>Strength</span><strong>No exercises match your search</strong></div>`;
     return;
   }
 

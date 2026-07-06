@@ -4,9 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer</title>
-  <link rel="stylesheet" href="./styles.css?v=4" />
+  <link rel="stylesheet" href="./styles.css?v=5" />
 </head>
 <body>
+  <nav class="bottom-nav">
+    <a class="bottom-nav-item is-active" href="./index.html"><span class="bottom-nav-icon">&#9679;</span>Home</a>
+    <a class="bottom-nav-item" href="./strength.html"><span class="bottom-nav-icon">&#9651;</span>Strength</a>
+    <a class="bottom-nav-item" href="./speed.html"><span class="bottom-nav-icon">&#9654;</span>Speed</a>
+    <a class="bottom-nav-item" href="./progress.html"><span class="bottom-nav-icon">&#8645;</span>Progress</a>
+  </nav>
+
   <main class="shell">
     <header class="hero">
       <div>
@@ -40,6 +47,8 @@
       <input id="file-input" type="file" accept="application/json" />
       <input id="live-input" type="file" accept="application/json" />
 
+      <div id="freshness-bar"></div>
+
       <div class="rec-card" id="rec-card">
         <div class="rec-header">
           <p class="label">Today's Recommendation</p>
@@ -47,13 +56,25 @@
         </div>
         <h2 id="priority" class="rec-priority">Waiting for snapshot</h2>
         <p id="reason" class="rec-reason">Drop in a JSON snapshot file or live payload export to see the current recommendation.</p>
+        <div id="rec-actions" class="rec-actions"></div>
       </div>
 
-      <div id="stat-groups"></div>
+      <div id="stat-groups">
+        <div class="stat-group">
+          <div class="stat-group-title skeleton" style="width:130px;height:12px"></div>
+          <div class="stat-group-grid">
+            <div class="stat-item"><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line"></div></div>
+            <div class="stat-item"><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line"></div></div>
+            <div class="stat-item"><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line"></div></div>
+          </div>
+        </div>
+      </div>
 
-      <div id="sections" class="section-stack"></div>
+      <div id="sections" class="section-stack">
+        <div class="skeleton skeleton-card"></div>
+      </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=4"></script>
+  <script type="module" src="./app.js?v=5"></script>
 </body>
 </html>

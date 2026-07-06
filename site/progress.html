@@ -4,9 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer - Progress</title>
-  <link rel="stylesheet" href="./styles.css?v=4" />
+  <link rel="stylesheet" href="./styles.css?v=5" />
+  <link rel="stylesheet" href="./progress.css?v=2" />
 </head>
 <body>
+  <nav class="bottom-nav">
+    <a class="bottom-nav-item" href="./index.html"><span class="bottom-nav-icon">&#9679;</span>Home</a>
+    <a class="bottom-nav-item" href="./strength.html"><span class="bottom-nav-icon">&#9651;</span>Strength</a>
+    <a class="bottom-nav-item" href="./speed.html"><span class="bottom-nav-icon">&#9654;</span>Speed</a>
+    <a class="bottom-nav-item is-active" href="./progress.html"><span class="bottom-nav-icon">&#8645;</span>Progress</a>
+  </nav>
+
   <main class="shell">
     <header class="hero">
       <div>
@@ -14,7 +22,7 @@
         <h1>Progress</h1>
         <p class="lede">Current snapshot versus the last loaded snapshot, summarized without raw payload noise.</p>
       </div>
-      <div class="controls">
+      <div class="header-actions">
         <details class="nav-menu">
           <summary class="button secondary">Views</summary>
           <div class="nav-menu-panel">
@@ -27,17 +35,20 @@
       </div>
     </header>
 
-    <section class="card">
-      <div class="summary-header">
+    <section class="card shell-panel">
+      <div class="progress-header">
         <div>
           <p class="label">Source</p>
-          <h2 id="source-label">Loading…</h2>
+          <h2 id="source-label" class="skeleton" style="width:200px;height:16px">Loading…</h2>
         </div>
-        <div class="status-banner" id="status-banner">Waiting for data</div>
+        <span class="status-banner skeleton" id="status-banner" style="width:100px;height:28px">Waiting</span>
       </div>
-      <div id="progress-grid" class="grid"></div>
+
+      <div id="progress-trend" class="progress-trend"></div>
+
+      <div id="progress-grid" class="progress-grid"></div>
     </section>
   </main>
-  <script type="module" src="./progress.js?v=1"></script>
+  <script type="module" src="./progress.js?v=2"></script>
 </body>
 </html>
