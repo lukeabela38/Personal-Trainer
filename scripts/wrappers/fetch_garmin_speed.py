@@ -4,7 +4,10 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import shlex
+import subprocess
 import sys
+import textwrap
 
 from scripts.mcp_client import McpError, call_tool
 
@@ -25,32 +28,80 @@ RUN_RECORD_TYPES = {
 
 
 async def fetch() -> dict:
-    records = []
+    garmin_email = os.environ.get("GARMIN_EMAIL") or os.environ.get("GC_EMAIL")
+    garmin_password = os.environ.get("GARMIN_PASSWORD") or os.environ.get("GC_PASSWORD")
 
+    if garmin_email and garmin_password:
+        return await _fetch_direct(garmin_email, garmin_password)
+    return await _fetch_via_mcp()
+
+
+async def _fetch_direct(email: str, password: str) -> dict:
+    script = textwrap.dedent(f"""\
+        import json, sys
+        from garminconnect import Garmin
+        client = Garmin({json.dumps(email)}, {json.dumps(password)})
+        client.login()
+        try:
+            records = client.get_personal_records()
+            print(json.dumps(records if isinstance(records, list) else []))
+        except Exception as e:
+            print(json.dumps({{"error": str(e)}}))
+    """)
+
+    proc = await asyncio.create_subprocess_exec(
+        *shlex.split("/opt/homebrew/bin/uv run --with garminconnect -- python3 -c"),
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await asyncio.wait_for(proc.communicate(script.encode()), timeout=60)
+    if proc.returncode != 0:
+        err = stderr.decode()[:500]
+        print(f"[garmin-speed] direct fetch failed: {err}", file=sys.stderr)
+        return {"result": []}
+
+    raw = json.loads(stdout.decode())
+    if isinstance(raw, dict) and "error" in raw:
+        print(f"[garmin-speed] {raw['error']}", file=sys.stderr)
+        return {"result": []}
+
+    records = _extract_records(raw)
+    return {"result": records}
+
+
+async def _fetch_via_mcp() -> dict:
+    records = []
     try:
         raw = await call_tool(GARMIN_COMMAND, "get_personal_record")
         source = raw if isinstance(raw, list) else raw.get("result", raw) if isinstance(raw, dict) else []
         if isinstance(source, str):
             source = json.loads(source)
-        if isinstance(source, list):
-            for entry in source:
-                if not isinstance(entry, dict):
-                    continue
-                record_type = str(entry.get("record_type") or entry.get("recordType") or entry.get("name") or "")
-                if record_type not in RUN_RECORD_TYPES:
-                    continue
-                records.append({
-                    "record_type": record_type,
-                    "value": entry.get("value"),
-                    "date": entry.get("date") or entry.get("start_date"),
-                    "raw_value": entry.get("raw_value") or entry.get("rawValue"),
-                    "activity_id": entry.get("activity_id") or entry.get("activityId") or entry.get("activityIdGarmin"),
-                    "type_id": entry.get("type_id") or entry.get("typeId"),
-                })
+        records = _extract_records(source)
     except McpError as e:
         print(f"[garmin-speed] personal records unavailable: {e}", file=sys.stderr)
-
     return {"result": records}
+
+
+def _extract_records(source) -> list[dict]:
+    if not isinstance(source, list):
+        return []
+    results = []
+    for entry in source:
+        if not isinstance(entry, dict):
+            continue
+        record_type = str(entry.get("record_type") or entry.get("recordType") or entry.get("name") or entry.get("activityName") or "")
+        if record_type not in RUN_RECORD_TYPES:
+            continue
+        results.append({
+            "record_type": record_type,
+            "value": entry.get("value"),
+            "date": entry.get("date") or entry.get("start_date") or entry.get("startTimeLocal"),
+            "raw_value": entry.get("raw_value") or entry.get("rawValue"),
+            "activity_id": entry.get("activity_id") or entry.get("activityId") or entry.get("activityIdGarmin"),
+            "type_id": entry.get("type_id") or entry.get("typeId"),
+        })
+    return results
 
 
 def main() -> int:
