@@ -11,6 +11,7 @@ This repository builds a personal performance system for Luke.
 - Build all published artifacts from one captured snapshot so the data pages stay aligned.
 - Keep a dedicated progress page that compares the current snapshot with the previously loaded snapshot.
 - Prefer a single daily runner command for live capture, snapshot build, and site artifact generation.
+- Treat any work intended for review as a pull request by default.
 
 ## Where To Start
 

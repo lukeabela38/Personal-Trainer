@@ -45,6 +45,7 @@ Wave order:
 - Keep cards narrow enough that one agent can finish them independently.
 - Prefer one issue per behavior, source adapter, or page.
 - Add a short acceptance note to each card.
+- Any work intended for review must be delivered as a pull request, not a direct commit.
 - Do not combine contract changes with UI work unless the card is explicitly about integration.
 - Avoid duplicate cards; if scope overlaps, keep the sharper card and archive the broader one.
 
