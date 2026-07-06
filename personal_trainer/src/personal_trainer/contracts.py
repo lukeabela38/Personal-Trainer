@@ -22,12 +22,20 @@ ManualIntensity = Literal["low", "normal", "high", "unknown"]
 TableTennisState = Literal["none", "light", "training", "match", "unknown"]
 
 
+class Macros(TypedDict):
+    calories: int
+    protein_g: int
+    carbs_g: int
+    fat_g: int
+
+
 Recommendation = TypedDict(
     "Recommendation",
     {
         "Priority": Priority,
         "Session": str,
         "Nutrition": str,
+        "Macros": Macros,
         "Reason": str,
         "Guardrail": str,
         "Confidence": Confidence,

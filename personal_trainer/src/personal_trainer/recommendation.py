@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .contracts import Recommendation
+from .contracts import Macros, Recommendation
+from .macros import build_macros
 
 Snapshot = dict[str, Any]
 
@@ -13,6 +14,7 @@ class Decision:
     priority: str
     session: str
     nutrition: str
+    macros: Macros
     reason: str
     guardrail: str
     confidence: str
@@ -23,11 +25,21 @@ class Decision:
             "Priority": self.priority,
             "Session": self.session,
             "Nutrition": self.nutrition,
+            "Macros": self.macros,
             "Reason": self.reason,
             "Guardrail": self.guardrail,
             "Confidence": self.confidence,
             "Needs check-in": self.needs_check_in,
         }
+
+
+def _athlete_for_macros(snapshot: Snapshot) -> dict[str, Any]:
+    athlete = snapshot.get("athlete", {})
+    return {
+        "weight_kg": athlete.get("body_weight_kg", 83.5),
+        "height_cm": athlete.get("height_cm", 188),
+        "age": athlete.get("age", 28),
+    }
 
 
 def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
@@ -49,12 +61,14 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
 
     flags = _source_flags(garmin, hevy, cronometer)
     check_in_required = bool(derived.get("check_in_required"))
+    athlete_macros = _athlete_for_macros(snapshot)
 
     if _has_any(constraints, {"pain_risk", "poor_recovery"}) or _manual_high_fatigue(manual):
         return Decision(
             priority="recovery",
             session="rest, mobility, or an easy walk depending on soreness",
             nutrition="eat at maintenance or slight deficit only if protein is protected",
+            macros=build_macros(**athlete_macros, priority="recovery"),
             reason=_first_reason(
                 [
                     ("pain_risk" in constraints, "pain or movement-quality risk is present"),
@@ -72,6 +86,7 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
             priority="nutrition_repair",
             session="easy walk, light mobility, or rest",
             nutrition="close the calorie, protein, or carbohydrate gap before adding stress",
+            macros=build_macros(**athlete_macros, priority="nutrition_repair"),
             reason="recent fueling does not support another hard session",
             guardrail="avoid combining a large deficit with intensity",
             confidence=_confidence(snapshot, fallback="medium"),
@@ -83,6 +98,7 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
             priority="table_tennis_readiness",
             session="protect freshness; avoid grip-heavy, shoulder-heavy, or leg-depleting work",
             nutrition="normal fueling with protein protected",
+            macros=build_macros(**athlete_macros, priority="table_tennis_readiness"),
             reason="table tennis readiness is a meaningful constraint today",
             guardrail="do not add fatigue that reduces coordination or shoulder/arm quality",
             confidence=_confidence(snapshot, fallback="medium"),
@@ -98,6 +114,7 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
             priority="aerobic_quality",
             session="threshold, tempo, or VO2-focused run selected after warm-up readiness",
             nutrition="higher-carbohydrate day, protein target protected",
+            macros=build_macros(**athlete_macros, priority="aerobic_quality"),
             reason="aerobic block is active and no major constraint blocks quality work",
             guardrail="do not add heavy lower-body volume after the run",
             confidence=_confidence(snapshot, fallback="medium"),
@@ -109,6 +126,7 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
             priority="aerobic_base",
             session="easy aerobic work only, keeping legs fresh for the next quality session",
             nutrition="normal fueling; do not force a large deficit",
+            macros=build_macros(**athlete_macros, priority="aerobic_base"),
             reason="leg fatigue conflicts with hard running or heavy lower-body work",
             guardrail="keep the session easy enough to improve recovery, not compete with it",
             confidence=_confidence(snapshot, fallback="medium"),
@@ -120,6 +138,7 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
             priority="strength_progression",
             session="gym session with progression intent and controlled volume",
             nutrition="normal or slight surplus around training, protein target protected",
+            macros=build_macros(**athlete_macros, priority="strength_progression"),
             reason="recent training state supports productive strength work",
             guardrail="keep lower-body work compatible with the next quality run",
             confidence=_confidence(snapshot, fallback="medium"),
@@ -130,6 +149,7 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
         priority="aerobic_base",
         session="easy run, low-intensity cardio, or brisk walk",
         nutrition="normal fueling with protein protected",
+        macros=build_macros(**athlete_macros, priority="aerobic_base"),
         reason="no higher-priority hard session is clearly supported by the snapshot",
         guardrail="do not drift into a medium-hard session without a reason",
         confidence=_confidence(snapshot, fallback="low"),
