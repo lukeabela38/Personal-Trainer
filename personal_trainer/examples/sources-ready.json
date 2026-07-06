@@ -8,11 +8,19 @@
     "freshness": "fresh",
     "current_vo2max": 51,
     "vo2max_trend": "flat_or_rising",
+    "recent_bests": [
+      { "record_type": "Fastest 5K", "value": "19:42", "date": "2026-06-28" },
+      { "record_type": "Fastest 10K", "value": "41:15", "date": "2026-06-14" },
+      { "record_type": "Fastest Mile", "value": "5:58", "date": "2026-06-21" },
+      { "record_type": "Fastest 1K", "value": "3:32", "date": "2026-06-07" },
+      { "record_type": "Fastest Half Marathon", "value": "1:31:44", "date": "2026-05-10" },
+      { "record_type": "Longest Run", "value": "18.2 km", "date": "2026-05-10" }
+    ],
     "flags": []
   },
   "hevy": {
     "freshness": "fresh",
-    "strength_trend": "unknown",
+    "strength_trend": "improving",
     "muscle_group_fatigue": {
       "legs": "low",
       "posterior_chain": "low",
@@ -21,6 +29,16 @@
       "shoulders_arms": "low",
       "core": "low"
     },
+    "recent_bests": [
+      { "exercise_template_id": "D04AC939", "weight_kg": 100, "reps": 5, "estimated_one_rm_kg": 113, "workout_start_date": "2026-06-30" },
+      { "exercise_template_id": "79D0BB3A", "weight_kg": 75, "reps": 8, "estimated_one_rm_kg": 93, "workout_start_date": "2026-06-28" },
+      { "exercise_template_id": "29083183", "weight_kg": 88, "reps": 6, "estimated_one_rm_kg": 102, "workout_start_date": "2026-06-25" },
+      { "exercise_template_id": "28BB4A95", "weight_kg": 20, "reps": 12, "estimated_one_rm_kg": 28, "workout_start_date": "2026-06-28" },
+      { "exercise_template_id": "F1E57334", "weight_kg": 36, "reps": 10, "estimated_one_rm_kg": 48, "workout_start_date": "2026-06-25" },
+      { "exercise_template_id": "392887AA", "weight_kg": null, "reps": 40, "estimated_one_rm_kg": null, "workout_start_date": "2026-06-22" },
+      { "exercise_template_id": "5E10D0E6", "weight_kg": 32, "reps": 12, "estimated_one_rm_kg": 45, "workout_start_date": "2026-06-22" },
+      { "exercise_template_id": "8347DFD1", "weight_kg": 14, "reps": 15, "estimated_one_rm_kg": 22, "workout_start_date": "2026-06-30" }
+    ],
     "flags": []
   },
   "cronometer": {
