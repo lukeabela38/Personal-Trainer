@@ -32,7 +32,10 @@ async def fetch() -> dict:
     garmin_password = os.environ.get("GARMIN_PASSWORD") or os.environ.get("GC_PASSWORD")
 
     if garmin_email and garmin_password:
-        return await _fetch_direct(garmin_email, garmin_password)
+        try:
+            return await _fetch_direct(garmin_email, garmin_password)
+        except Exception as e:
+            print(f"[garmin-speed] direct fetch failed, falling back to MCP: {e}", file=sys.stderr)
     return await _fetch_via_mcp()
 
 
@@ -50,7 +53,7 @@ async def _fetch_direct(email: str, password: str) -> dict:
     """)
 
     proc = await asyncio.create_subprocess_exec(
-        *shlex.split("/opt/homebrew/bin/uv run --with garminconnect -- python3 -c"),
+        *shlex.split("/opt/homebrew/bin/uv run --with garminconnect -- python3 -"),
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -58,8 +61,7 @@ async def _fetch_direct(email: str, password: str) -> dict:
     stdout, stderr = await asyncio.wait_for(proc.communicate(script.encode()), timeout=60)
     if proc.returncode != 0:
         err = stderr.decode()[:500]
-        print(f"[garmin-speed] direct fetch failed: {err}", file=sys.stderr)
-        return {"result": []}
+        raise RuntimeError(f"garminconnect subprocess failed (exit {proc.returncode}): {err}")
 
     raw = json.loads(stdout.decode())
     if isinstance(raw, dict) and "error" in raw:

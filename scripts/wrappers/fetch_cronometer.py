@@ -48,38 +48,28 @@ async def fetch() -> dict:
     }
 
     try:
-        summary = await call_tool(CRONOMETER_COMMAND, "get_daily_nutrition", {"date": today})
-        if _is_error(summary):
-            print(f"[cronometer] API error: {summary.get('message')}", file=sys.stderr)
-        elif isinstance(summary, dict):
-            today_data = payload["today"]
-            today_data["calories_consumed"] = _safe_float(summary.get("calories") or summary.get("energy"))
-            today_data["calories_target"] = _safe_float(summary.get("caloriesTarget") or summary.get("energyTarget"))
-            today_data["protein_g"] = _safe_float(summary.get("protein") or summary.get("protein_g") or summary.get("protein_grams"))
-            today_data["carbs_g"] = _safe_float(summary.get("carbs") or summary.get("carbohydrates") or summary.get("carbs_g"))
-            today_data["fat_g"] = _safe_float(summary.get("fat") or summary.get("fat_g"))
-            today_data["fiber_g"] = _safe_float(summary.get("fiber") or summary.get("fiber_g"))
-            today_data["log_completeness"] = _compute_completeness(summary)
-
-            consumed = today_data["calories_consumed"]
-            target = today_data["calories_target"]
-            if consumed is not None and target is not None:
-                today_data["remaining_kcal"] = round(target - consumed, 1)
-
-            payload["fueling_status"] = _fueling_status(today_data["calories_consumed"], today_data["calories_target"])
-            payload["protein_status"] = _protein_status(today_data["protein_g"], today_data["calories_target"])
-            payload["carb_availability"] = _carb_status(today_data["carbs_g"])
-    except McpError as e:
-        print(f"[cronometer] daily summary unavailable: {e}", file=sys.stderr)
-
-    try:
-        targets = await call_tool(CRONOMETER_COMMAND, "get_macro_targets")
-        if not _is_error(targets) and isinstance(targets, dict):
+        food_log = await call_tool(CRONOMETER_COMMAND, "get_food_log", {"date": today})
+        if _is_error(food_log):
+            print(f"[cronometer] API error: {food_log.get('message')}", file=sys.stderr)
+        elif isinstance(food_log, dict):
+            energy = food_log.get("energy_summary") or {}
+            macros = food_log.get("nutrition_summary", {}).get("macros") or {}
             td = payload["today"]
-            if td["calories_target"] is None:
-                td["calories_target"] = _safe_float(targets.get("calories") or targets.get("energy"))
+
+            td["calories_consumed"] = _safe_float(energy.get("consumed_kcal") or macros.get("energy"))
+            td["calories_target"] = _safe_float(energy.get("total_target_kcal"))
+            td["remaining_kcal"] = _safe_float(energy.get("remaining_kcal"))
+            td["protein_g"] = _safe_float(macros.get("protein"))
+            td["carbs_g"] = _safe_float(macros.get("carbs") or macros.get("net_carbs"))
+            td["fat_g"] = _safe_float(macros.get("fat"))
+            td["fiber_g"] = _safe_float(macros.get("fiber"))
+            td["log_completeness"] = "complete" if td["calories_consumed"] and td["calories_consumed"] > 0 else "incomplete"
+
+            payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
+            payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
+            payload["carb_availability"] = _carb_status(td["carbs_g"])
     except McpError as e:
-        print(f"[cronometer] macro targets unavailable: {e}", file=sys.stderr)
+        print(f"[cronometer] food log unavailable: {e}", file=sys.stderr)
 
     flags = payload["flags"]
     if payload["fueling_status"] == "low":
@@ -93,15 +83,6 @@ async def fetch() -> dict:
     payload["flags"] = sorted(set(flags))
 
     return payload
-
-
-def _compute_completeness(summary: dict) -> str:
-    cal = _safe_float(summary.get("calories") or summary.get("energy"))
-    if cal is not None and cal > 0:
-        return "complete"
-    if cal is not None:
-        return "incomplete"
-    return "unknown"
 
 
 def _fueling_status(calories: float | None, target: float | None) -> str:

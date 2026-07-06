@@ -31,7 +31,7 @@ async def fetch() -> list[dict]:
 
     for name, template_id in _TRACKED_EXERCISES:
         try:
-            history = await call_tool(HEVY_COMMAND, "get_exercise_history", {"exerciseTemplateId": template_id, "page": 1, "pageSize": 50})
+            history = await call_tool(HEVY_COMMAND, "get-exercise-history", {"exerciseTemplateId": template_id, "page": 1, "pageSize": 50})
             rows = history if isinstance(history, list) else []
             for row in rows:
                 if isinstance(row, dict):

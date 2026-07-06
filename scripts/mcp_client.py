@@ -47,22 +47,28 @@ async def call_tool(
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
+    if hasattr(proc.stdout, "_limit"):
+        proc.stdout._limit = 1024 * 1024
 
     async def send(msg: dict) -> None:
         proc.stdin.write((json.dumps(msg, ensure_ascii=False) + "\n").encode())
         await proc.stdin.drain()
 
     async def recv(expected_id: int | None) -> dict:
+        buf = b""
         while True:
-            line = await asyncio.wait_for(proc.stdout.readline(), timeout=timeout)
-            if not line:
+            chunk = await asyncio.wait_for(proc.stdout.read(65536), timeout=timeout)
+            if not chunk:
                 stderr = (await proc.stderr.read()).decode() if proc.stderr else ""
                 raise McpError(
-                    f"MCP server closed stdout unexpectedly.\nstderr: {stderr}"
+                    f"MCP server closed stdout unexpectedly.\nstderr: {stderr[:500]}"
                 )
-            msg = json.loads(line)
-            if expected_id is None or msg.get("id") == expected_id:
-                return msg
+            buf += chunk
+            if b"\n" in buf:
+                line, _ = buf.split(b"\n", 1)
+                msg = json.loads(line.decode())
+                if expected_id is None or msg.get("id") == expected_id:
+                    return msg
 
     try:
         await send(

@@ -45,15 +45,16 @@ async def fetch() -> dict:
     }
 
     try:
-        latest = await call_tool(HEVY_COMMAND, "get_latest_workout")
-        if isinstance(latest, dict):
-            payload["last_workout"] = _summarize_workout(latest)
-            payload["muscle_group_fatigue"] = _infer_fatigue(latest)
+        workouts = await call_tool(HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 1})
+        if isinstance(workouts, list) and workouts:
+            w = workouts[0]
+            payload["last_workout"] = _summarize_workout(w)
+            payload["muscle_group_fatigue"] = _infer_fatigue(w)
     except McpError as e:
         print(f"[hevy] latest workout unavailable: {e}", file=sys.stderr)
 
     try:
-        history = await call_tool(HEVY_COMMAND, "get_workout_history", {"page": 1, "pageSize": 10})
+        history = await call_tool(HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 10})
         if isinstance(history, list):
             payload["recent_workouts"] = [_summarize_workout(w) for w in history if isinstance(w, dict)]
         elif isinstance(history, dict):
@@ -65,7 +66,7 @@ async def fetch() -> dict:
 
     for exercise_name, template_id in _TRACKED_EXERCISES:
         try:
-            history = await call_tool(HEVY_COMMAND, "get_exercise_history", {"exerciseTemplateId": template_id, "page": 1, "pageSize": 5})
+            history = await call_tool(HEVY_COMMAND, "get-exercise-history", {"exerciseTemplateId": template_id, "page": 1, "pageSize": 5})
             rows = history if isinstance(history, list) else []
             if rows:
                 best = _best_set(rows)
