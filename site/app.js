@@ -1,17 +1,11 @@
 const deployedSnapshotPath = new URL("./data/snapshot.json", import.meta.url);
 const sections = document.getElementById("sections");
+const statGroups = document.getElementById("stat-groups");
 const statusBanner = document.getElementById("status-banner");
 const state = {
   currentPayload: null,
   previousSnapshot: readStoredSnapshot(),
 };
-
-const VIEW_LINKS = [
-  ["Snapshot viewer", "./index.html"],
-  ["Strength", "./strength.html"],
-  ["Speed", "./speed.html"],
-  ["Progress", "./progress.html"],
-];
 
 document.getElementById("file-input").addEventListener("change", (event) => handleFile(event, "snapshot"));
 document.getElementById("live-input").addEventListener("change", (event) => handleFile(event, "live payload"));
@@ -43,18 +37,7 @@ function renderPayload(payload, sourceLabel) {
 function renderEmptyState() {
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
-  setText("confidence", "-");
-  setText("check-in", "-");
-  setText("data-quality", "-");
-  setText("calories", "-");
-  setText("protein", "-");
-  setText("carbs", "-");
-  setText("fat", "-");
-  setText("vo2max", "-");
-  setText("fueling", "-");
-  setText("remaining-kcal", "-");
-  setText("sleep", "-");
-  setText("motivation", "-");
+  statGroups.innerHTML = renderStatGroupsEmpty();
   sections.innerHTML = "";
   statusBanner.textContent = "No file loaded";
   state.currentPayload = null;
@@ -70,33 +53,22 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const priority = recommendation.Priority ?? recommendation.priority ?? "No recommendation";
   const reason = recommendation.Reason ?? recommendation.reason ?? "No explanation available.";
 
-  const macros = recommendation.Macros ?? {};
   setText("priority", priority);
   setText("reason", reason);
-  setText("confidence", formatStat(recommendation.Confidence ?? recommendation.confidence));
-  setText("check-in", formatStat(recommendation["Needs check-in"] ?? recommendation.needs_check_in));
-  setText("data-quality", formatStat(derived.data_quality));
-  setText("calories", macros.calories ? `${macros.calories} kcal` : "-");
-  setText("protein", macros.protein_g ? `${macros.protein_g} g` : "-");
-  setText("carbs", macros.carbs_g ? `${macros.carbs_g} g` : "-");
-  setText("fat", macros.fat_g ? `${macros.fat_g} g` : "-");
-  setText("vo2max", formatStat(garmin.current_vo2max));
-  setText("fueling", formatStat(cronometer.fueling_status));
-  setText("remaining-kcal", formatStat(cronometer.today?.remaining_kcal, "kcal"));
-  setText("sleep", formatStat(manual.sleep_quality));
-  setText("motivation", formatStat(manual.motivation));
-
   statusBanner.textContent = `${sourceLabel} loaded`;
+
+  const macros = recommendation.Macros ?? {};
+  const today = cronometer.today ?? {};
+
+  statGroups.innerHTML = [
+    renderRecGroup(recommendation, derived),
+    renderNutritionGroup(macros, today),
+    renderRecoveryGroup(garmin, cronometer, manual, hevy),
+  ].join("");
+
   sections.innerHTML = [
-    renderFocusCard("Trend", [
-      ["Current VO2 max", formatValue(garmin.current_vo2max)],
-      ["Fueling", formatValue(cronometer.fueling_status)],
-      ["Remaining kcal", formatValue(cronometer.today?.remaining_kcal)],
-      ["Strength trend", formatValue(hevy.strength_trend)],
-      ["Recovery", formatValue(manual.sleep_quality)],
-    ]),
+    renderFreshnessCard(snapshot),
     renderDeltaCard(state.previousSnapshot, snapshot),
-    renderCompactSection("Athlete", snapshot.athlete),
     renderCompactSection("Garmin", garmin),
     renderCompactSection("Hevy", hevy),
     renderCompactSection("Cronometer", cronometer),
@@ -109,32 +81,160 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   persistSnapshot(snapshot);
 }
 
-function renderFocusCard(title, rows) {
-  const items = rows
-    .filter(([, value]) => shouldRenderValue(value))
-    .map(
-      ([label, value]) => `
-        <div class="item">
-          <span>${escapeHtml(label)}</span>
-          <strong>${escapeHtml(value)}</strong>
-        </div>
-      `,
-    )
-    .join("");
+/* ── Stat groups ── */
 
-  if (!items) return "";
+function renderStatGroupsEmpty() {
   return `
-    <article class="focus-card card">
-      <div class="summary-header">
-        <div>
-          <p class="label">${escapeHtml(title)}</p>
-          <h2>What matters now</h2>
-        </div>
+    <div class="stat-group">
+      <div class="stat-group-title">Recommendation</div>
+      <div class="stat-group-grid">
+        ${statItem("Confidence", "-")}
+        ${statItem("Check-in", "-")}
+        ${statItem("Data quality", "-")}
       </div>
-      <div class="grid focus-grid">${items}</div>
-    </article>
+    </div>
+    <div class="stat-group">
+      <div class="stat-group-title">Nutrition</div>
+      <div class="stat-group-grid">
+        ${statItem("Calories", "-")}
+        ${statItem("Protein", "-")}
+        ${statItem("Carbs", "-")}
+        ${statItem("Fat", "-")}
+      </div>
+    </div>
+    <div class="stat-group">
+      <div class="stat-group-title">Recovery</div>
+      <div class="stat-group-grid">
+        ${statItem("Sleep", "-")}
+        ${statItem("Motivation", "-")}
+        ${statItem("VO2 max", "-")}
+        ${statItem("Fueling", "-")}
+        ${statItem("Remaining kcal", "-")}
+      </div>
+    </div>
   `;
 }
+
+function renderRecGroup(rec, derived) {
+  const items = [
+    statItem("Confidence", rec.Confidence ?? rec.confidence ?? "-"),
+    statItem("Check-in", rec["Needs check-in"] ?? rec.needs_check_in ?? "-"),
+    statItem("Data quality", derived.data_quality ?? "-"),
+  ].join("");
+  return groupCard("Recommendation", items);
+}
+
+function renderNutritionGroup(macros, today) {
+  const cal = macros.calories ? `${macros.calories} kcal` : "-";
+  const pro = macros.protein_g ? `${macros.protein_g} g` : "-";
+  const car = macros.carbs_g ? `${macros.carbs_g} g` : "-";
+  const fat = macros.fat_g ? `${macros.fat_g} g` : "-";
+
+  const statItems = [
+    statItem("Calories", cal),
+    statItem("Protein", pro),
+    statItem("Carbs", car),
+    statItem("Fat", fat),
+  ].join("");
+
+  const bars = renderMacroBars(macros, today);
+  return groupCard("Nutrition Targets", statItems + (bars ? `<div class="macro-group">${bars}</div>` : ""));
+}
+
+function renderRecoveryGroup(garmin, cronometer, manual, hevy) {
+  const items = [
+    statItem("Sleep", formatVal(manual.sleep_quality)),
+    statItem("Motivation", formatVal(manual.motivation)),
+    statItem("VO2 max", formatVal(garmin.current_vo2max)),
+    statItem("Fueling", formatVal(cronometer.fueling_status)),
+    statItem("Remaining kcal", formatVal(cronometer.today?.remaining_kcal, "kcal")),
+  ].join("");
+  return groupCard("Recovery & Vital Signs", items);
+}
+
+function groupCard(title, content) {
+  return `
+    <div class="stat-group">
+      <div class="stat-group-title">${escapeHtml(title)}</div>
+      <div class="stat-group-grid">${content}</div>
+    </div>
+  `;
+}
+
+function statItem(label, value) {
+  return `
+    <div class="stat-item">
+      <span class="stat-item-label">${escapeHtml(label)}</span>
+      <span class="stat-item-value">${escapeHtml(value)}</span>
+    </div>
+  `;
+}
+
+/* ── Macro progress bars ── */
+
+function renderMacroBars(macros, today) {
+  const rows = [
+    macroBar("Calories", today.calories_consumed, macros.calories),
+    macroBar("Protein", today.protein_g, macros.protein_g),
+    macroBar("Carbs", today.carbs_g, macros.carbs_g),
+    macroBar("Fat", today.fat_g, macros.fat_g),
+  ].filter(Boolean);
+  return rows.join("");
+}
+
+function macroBar(label, consumed, target) {
+  if (consumed == null || target == null || target <= 0) return "";
+  const pct = Math.min(Math.round((consumed / target) * 100), 100);
+  const cls = pct >= 90 ? "high" : pct >= 60 ? "medium" : "low";
+  return `
+    <div class="macro-row">
+      <div class="macro-row-header">
+        <span class="macro-row-label">${escapeHtml(label)}</span>
+        <span class="macro-row-numbers">${consumed} / ${target}</span>
+      </div>
+      <div class="macro-track">
+        <div class="macro-fill macro-fill-${cls}" style="width:${pct}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Freshness card ── */
+
+function renderFreshnessCard(snapshot) {
+  const sources = ["garmin", "hevy", "cronometer", "manual_context"];
+  const rows = sources
+    .map((key) => {
+      const source = snapshot[key];
+      if (!source) return null;
+      const freshness = source.freshness ?? "missing";
+      const label = key === "manual_context" ? "Manual context" : key.charAt(0).toUpperCase() + key.slice(1);
+      return `
+        <div class="item">
+          <span>${label}</span>
+          <strong><span class="freshness-dot ${freshness}"></span>${freshness}</strong>
+        </div>
+      `;
+    })
+    .filter(Boolean)
+    .join("");
+
+  if (!rows) return "";
+  return `
+    <details class="card section-panel" open>
+      <summary class="section-summary">
+        <div>
+          <p class="label">Freshness</p>
+          <h2>Data source freshness</h2>
+        </div>
+        <span class="section-count">${sources.length} sources</span>
+      </summary>
+      <div class="section-list">${rows}</div>
+    </details>
+  `;
+}
+
+/* ── Delta card ── */
 
 function renderDeltaCard(previousSnapshot, currentSnapshot) {
   const rows = buildDeltaRows(previousSnapshot ?? {}, currentSnapshot ?? {});
@@ -146,7 +246,7 @@ function renderDeltaCard(previousSnapshot, currentSnapshot) {
           <p class="label">Progress</p>
           <h2>Change since last snapshot</h2>
         </div>
-        <span class="status-banner">Show changes</span>
+        <span class="delta-banner">${rows.length} changes</span>
       </summary>
       <div class="section-list">
         ${rows
@@ -164,6 +264,8 @@ function renderDeltaCard(previousSnapshot, currentSnapshot) {
   `;
 }
 
+/* ── Compact section (raw data) ── */
+
 function renderCompactSection(title, value) {
   const entries = flattenEntries(value).filter((entry) => shouldRenderValue(entry.value));
   if (!entries.length) return "";
@@ -174,7 +276,7 @@ function renderCompactSection(title, value) {
           <p class="label">${escapeHtml(title)}</p>
           <h2>${escapeHtml(title)}</h2>
         </div>
-        <span class="status-banner">${entries.length} items</span>
+        <span class="section-count">${entries.length} fields</span>
       </summary>
       <div class="section-list">
         ${entries
@@ -192,6 +294,8 @@ function renderCompactSection(title, value) {
     </details>
   `;
 }
+
+/* ── Delta rows ── */
 
 function buildDeltaRows(previousSnapshot, currentSnapshot) {
   const rows = [];
@@ -219,6 +323,8 @@ function formatDeltaValue(value) {
   if (!shouldRenderValue(value)) return "-";
   return String(value);
 }
+
+/* ── Data helpers ── */
 
 function readNumber(snapshot, path) {
   const value = readPath(snapshot, path);
@@ -260,15 +366,12 @@ function formatRenderedValue(value) {
   return String(value);
 }
 
-function formatValue(value) {
-  return shouldRenderValue(value) ? String(value) : "-";
+function formatVal(value, unit) {
+  if (!shouldRenderValue(value)) return "-";
+  return unit ? `${value} ${unit}` : String(value);
 }
 
-function formatStat(value, unit) {
-  if (!shouldRenderValue(value)) return "-";
-  const s = unit ? `${value} ${unit}` : String(value);
-  return s;
-}
+/* ── Label formatting ── */
 
 function formatLabel(key, sectionTitle = "") {
   const normalized = String(key).replaceAll("_", " ").replaceAll("-", " ").trim().toLowerCase();
@@ -319,7 +422,6 @@ function formatLabel(key, sectionTitle = "") {
     "check in required": "Check-in Required",
     "check in questions": "Check-in Questions",
   };
-
   if (sectionTitle === "Hevy" && normalized === "estimated one rm kg") return "Estimated 1RM (kg)";
   return mapping[normalized] ?? normalized.split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
