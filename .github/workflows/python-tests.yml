@@ -58,7 +58,7 @@ jobs:
         run: docker build -t personal-trainer:ci .
 
       - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@v0.30.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: personal-trainer:ci
           format: sarif
@@ -74,7 +74,7 @@ jobs:
           category: docker-image
 
       - name: Run Trivy IaC scan on Dockerfile
-        uses: aquasecurity/trivy-action@v0.30.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
           scan-ref: Dockerfile
@@ -91,7 +91,7 @@ jobs:
           category: dockerfile
 
       - name: Scan filesystem for secrets
-        uses: aquasecurity/trivy-action@v0.30.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
