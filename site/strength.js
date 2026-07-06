@@ -122,6 +122,115 @@ function renderGrid() {
   }
 
   grid.innerHTML = visible.map(renderCard).join("");
+  renderInsights();
+}
+
+function renderInsights() {
+  const el = document.getElementById("insights");
+  if (!el || !gainsCache) return;
+
+  const withGain = entries
+    .map((e) => ({ entry: e, gain: gainsCache[findTemplateId(e.name)] }))
+    .filter((x) => x.gain?.current != null && x.gain?.peak != null);
+
+  if (withGain.length < 2) { el.hidden = true; return; }
+
+  /* Category health */
+  const catStats = {};
+  withGain.forEach(({ entry, gain }) => {
+    const cat = entry.category ?? "Other";
+    if (!catStats[cat]) catStats[cat] = { count: 0, totalPct: 0, totalGain: 0 };
+    catStats[cat].count += 1;
+    catStats[cat].totalPct += (gain.current / gain.peak) * 100;
+    catStats[cat].totalGain += gain.gain_pct;
+  });
+  const catHealth = Object.entries(catStats).map(([cat, s]) => ({
+    cat,
+    pct: Math.round(s.totalPct / s.count),
+    gain: (s.totalGain / s.count).toFixed(1),
+  }));
+
+  /* Stall detection */
+  const stalls = [];
+  withGain.forEach(({ entry, gain }) => {
+    if (gain.stalled && gain.current < gain.peak * 0.9) {
+      stalls.push({ name: entry.name, current: gain.current, peak: gain.peak });
+    }
+  });
+
+  /* Biggest gap */
+  const sorted = [...withGain].sort((a, b) => (a.gain.current / a.gain.peak) - (b.gain.current / b.gain.peak));
+  const biggestGap = sorted[0];
+
+  /* Render */
+  const parts = [];
+
+  if (catHealth.length) {
+    parts.push(`
+      <div class="stat-group">
+        <div class="stat-group-title">Category health — lower means more room to grow</div>
+        <div style="display:grid;gap:8px">
+          ${catHealth.sort((a, b) => a.pct - b.pct).map((c) => `
+            <div class="macro-row">
+              <div class="macro-row-header">
+                <span class="macro-row-label">${escapeHtml(c.cat)}</span>
+                <span class="macro-row-numbers">avg ${c.pct}% of peak · +${c.gain}% gain</span>
+              </div>
+              <div class="macro-track">
+                <div class="macro-fill macro-fill-${c.pct >= 80 ? "high" : c.pct >= 60 ? "medium" : "low"}" style="width:${c.pct}%"></div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `);
+  }
+
+  if (stalls.length) {
+    parts.push(`
+      <div class="stat-group">
+        <div class="stat-group-title">Stalled — no progress in 30+ days</div>
+        <div style="display:grid;gap:6px">
+          ${stalls.slice(0, 5).map((s) => `
+            <div class="item">
+              <span title="Hasn't improved in recent training">${escapeHtml(s.name)}</span>
+              <strong class="delta-down" title="Peak was ${s.peak} kg — currently at ${Math.round((s.current / s.peak) * 100)}%">${s.current} kg · ${Math.round((s.current / s.peak) * 100)}% of peak</strong>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `);
+  }
+
+  if (biggestGap) {
+    const bg = biggestGap.gain;
+    parts.push(`
+      <div class="stat-group">
+        <div class="stat-group-title">Biggest opportunity — far from your peak</div>
+        <div class="stat-group-grid">
+          <div class="stat-item">
+            <span class="stat-item-label">Exercise</span>
+            <span class="stat-item-value" title="Most room for improvement — only ${Math.round((bg.current / bg.peak) * 100)}% of peak">${escapeHtml(biggestGap.entry.name)}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-item-label">Current 1RM</span>
+            <span class="stat-item-value">${bg.current} kg</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-item-label">Peak 1RM</span>
+            <span class="stat-item-value">${bg.peak} kg</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-item-label">Gap</span>
+            <span class="stat-item-value delta-down">-${bg.peak - bg.current} kg</span>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  el.innerHTML = parts.join("");
+  el.removeAttribute("hidden");
 }
 
 function renderCard(entry) {

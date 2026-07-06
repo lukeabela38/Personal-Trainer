@@ -157,13 +157,16 @@ def main():
     for tid, entries in exercise_history.items():
         one_rms = [e["estimated_one_rm_kg"] for e in entries if e.get("estimated_one_rm_kg") is not None]
         if len(one_rms) < 2:
-            gains[tid] = {"start": None, "current": None, "peak": None, "gain_pct": 0}
+            gains[tid] = {"start": None, "current": None, "peak": None, "gain_pct": 0, "stalled": False}
             continue
+        recent = one_rms[-30:]
+        stalled = len(recent) > 5 and recent[-1] <= recent[0]
         gains[tid] = {
             "start": one_rms[0],
             "current": one_rms[-1],
             "peak": max(one_rms),
             "gain_pct": round(((one_rms[-1] - one_rms[0]) / one_rms[0]) * 100, 1) if one_rms[0] else 0,
+            "stalled": stalled,
         }
     (ex_dir / "_gains.json").write_text(json.dumps(gains, indent=2))
 
