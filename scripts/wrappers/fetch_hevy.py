@@ -5,9 +5,13 @@ import asyncio
 import json
 import os
 import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from scripts.mcp_client import McpError, call_tool
-
 
 HEVY_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_HEVY_MCP_COMMAND",
@@ -24,7 +28,6 @@ _TRACKED_EXERCISES = [
     ("Sumo Squat (Kettlebell)", "5E10D0E6"),
     ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
 ]
-
 
 async def fetch() -> dict:
     payload: dict = {
@@ -92,7 +95,6 @@ async def fetch() -> dict:
 
     return payload
 
-
 def _summarize_workout(w: dict) -> dict:
     return {
         "title": w.get("title") or w.get("name") or "",
@@ -102,7 +104,6 @@ def _summarize_workout(w: dict) -> dict:
             w.get("exercises", []) if isinstance(w.get("exercises"), list) else []
         ),
     }
-
 
 def _infer_fatigue(workout: dict) -> dict:
     fatigue = {
@@ -135,7 +136,6 @@ def _infer_fatigue(workout: dict) -> dict:
             fatigue["shoulders_arms"] = "high"
     return fatigue
 
-
 def _best_set(rows: list[dict]) -> dict | None:
     best = None
     best_score = 0
@@ -159,7 +159,6 @@ def _best_set(rows: list[dict]) -> dict | None:
             }
     return best
 
-
 def _safe_float(v) -> float | None:
     if v is None:
         return None
@@ -168,7 +167,6 @@ def _safe_float(v) -> float | None:
     except (ValueError, TypeError):
         return None
 
-
 def _safe_int(v) -> int | None:
     if v is None:
         return None
@@ -176,7 +174,6 @@ def _safe_int(v) -> int | None:
         return int(v)
     except (ValueError, TypeError):
         return None
-
 
 def main() -> int:
     try:
@@ -187,7 +184,6 @@ def main() -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

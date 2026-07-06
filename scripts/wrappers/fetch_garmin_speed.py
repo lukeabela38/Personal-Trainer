@@ -8,8 +8,16 @@ import shlex
 import sys
 import textwrap
 
-from scripts.mcp_client import McpError, call_tool
+import sys
 
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.mcp_client import McpError, call_tool
 
 GARMIN_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_GARMIN_MCP_COMMAND",
@@ -25,7 +33,6 @@ RUN_RECORD_TYPES = {
     "Longest Run",
 }
 
-
 async def fetch() -> dict:
     garmin_email = os.environ.get("GARMIN_EMAIL") or os.environ.get("GC_EMAIL")
     garmin_password = os.environ.get("GARMIN_PASSWORD") or os.environ.get("GC_PASSWORD")
@@ -39,7 +46,6 @@ async def fetch() -> dict:
                 file=sys.stderr,
             )
     return await _fetch_via_mcp()
-
 
 async def _fetch_direct(email: str, password: str) -> dict:
     script = textwrap.dedent(f"""\
@@ -77,7 +83,6 @@ async def _fetch_direct(email: str, password: str) -> dict:
     records = _extract_records(raw)
     return {"result": records}
 
-
 async def _fetch_via_mcp() -> dict:
     records = []
     try:
@@ -95,7 +100,6 @@ async def _fetch_via_mcp() -> dict:
     except McpError as e:
         print(f"[garmin-speed] personal records unavailable: {e}", file=sys.stderr)
     return {"result": records}
-
 
 def _extract_records(source) -> list[dict]:
     if not isinstance(source, list):
@@ -129,7 +133,6 @@ def _extract_records(source) -> list[dict]:
         )
     return results
 
-
 def main() -> int:
     try:
         payload = asyncio.run(fetch())
@@ -139,7 +142,6 @@ def main() -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

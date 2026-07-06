@@ -9,14 +9,21 @@ import sys
 import textwrap
 from datetime import UTC, datetime, timedelta
 
-from scripts.mcp_client import McpError, call_tool
+import sys
 
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.mcp_client import McpError, call_tool
 
 GARMIN_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_GARMIN_MCP_COMMAND",
     "/opt/homebrew/bin/uvx --python 3.12 --from git+https://github.com/Taxuspt/garmin_mcp garmin-mcp",
 )
-
 
 async def fetch() -> dict:
     today = datetime.now(UTC).strftime("%Y-%m-%d")
@@ -34,7 +41,6 @@ async def fetch() -> dict:
                 file=sys.stderr,
             )
     return await _fetch_via_mcp(today, month_ago)
-
 
 async def _fetch_direct(email: str, password: str, today: str, month_ago: str) -> dict:
     script = textwrap.dedent(f"""\
@@ -155,7 +161,6 @@ async def _fetch_direct(email: str, password: str, today: str, month_ago: str) -
 
     return payload
 
-
 async def _fetch_via_mcp(today: str, month_ago: str) -> dict:
     payload = _empty_payload()
 
@@ -269,7 +274,6 @@ async def _fetch_via_mcp(today: str, month_ago: str) -> dict:
 
     return payload
 
-
 def _empty_payload() -> dict:
     return {
         "freshness": "fresh",
@@ -286,7 +290,6 @@ def _empty_payload() -> dict:
         "flags": [],
     }
 
-
 def _activity_flags(activities: list) -> list[str]:
     flags = []
     for act in activities[:3]:
@@ -297,7 +300,6 @@ def _activity_flags(activities: list) -> list[str]:
         if "rest" in rtype or "recovery" in rtype:
             flags.append("recovery_day")
     return flags
-
 
 def _readiness_flags(r: dict) -> list[str]:
     flags = []
@@ -311,7 +313,6 @@ def _readiness_flags(r: dict) -> list[str]:
     if isinstance(sleep_score, (int, float)) and 0 < sleep_score < 60:
         flags.append("sleep_poor")
     return flags
-
 
 def _summarize_activity(run: dict) -> dict:
     return {
@@ -330,7 +331,6 @@ def _summarize_activity(run: dict) -> dict:
         ),
     }
 
-
 def _safe_float(v) -> float | None:
     if v is None:
         return None
@@ -338,7 +338,6 @@ def _safe_float(v) -> float | None:
         return float(v)
     except (ValueError, TypeError):
         return None
-
 
 def main() -> int:
     try:
@@ -349,7 +348,6 @@ def main() -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

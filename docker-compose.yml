@@ -1,0 +1,30 @@
+services:
+  app:
+    build: .
+    image: personal-trainer:latest
+    container_name: personal-trainer
+    env_file: .env
+    volumes:
+      - ./dist:/app/dist
+      - ./.env:/app/.env:ro
+    command: python3 scripts/daily_snapshot_runner.py
+
+  site:
+    build: .
+    image: personal-trainer:latest
+    container_name: personal-trainer-site
+    ports:
+      - "4173:4173"
+    volumes:
+      - ./dist:/app/dist:ro
+    working_dir: /app/dist
+    command: python3 -m http.server 4173
+
+  generate-history:
+    build: .
+    image: personal-trainer:latest
+    container_name: personal-trainer-gen
+    volumes:
+      - ./dist:/app/dist
+      - ./personal_trainer/examples:/app/personal_trainer/examples
+    command: python3 scripts/generate_history.py
