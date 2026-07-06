@@ -9,7 +9,11 @@ from typing import Any
 
 
 def load_dotenv() -> None:
-    """Load .env from the repo root into os.environ (if present)."""
+    """Load .env from the repo root into os.environ (if present).
+
+    Expands $VAR and ${VAR} references in values using existing env vars
+    (e.g. REPO_ROOT=/path then COMMAND=python3 $REPO_ROOT/script.py).
+    """
     start = Path(__file__).resolve().parent
     for ancestor in [start] + list(start.parents):
         candidate = ancestor / ".env"
@@ -21,7 +25,7 @@ def load_dotenv() -> None:
                 key, _, val = line.partition("=")
                 key, val = key.strip(), val.strip().strip("\"'")
                 if key not in os.environ:
-                    os.environ[key] = val
+                    os.environ[key] = os.path.expandvars(val)
             return
 
 
