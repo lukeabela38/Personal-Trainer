@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+# Create non-root user
+RUN groupadd --system appgroup && \
+    useradd --system --gid appgroup --create-home --home-dir /app appuser
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -7,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv (provides uvx for Garmin and Cronometer MCP servers)
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:${PATH}"
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/.local sh
+ENV PATH="/app/.local/bin:${PATH}"
 
 # Install Node.js 26 for Hevy MCP server
 RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - \
@@ -31,6 +35,10 @@ RUN pip install -e personal_trainer/ --quiet \
 RUN uvx --python 3.12 --from git+https://github.com/Taxuspt/garmin_mcp garmin-mcp --help > /dev/null 2>&1 || true
 RUN npx -y -p node@26 -p hevy-mcp hevy-mcp --help > /dev/null 2>&1 || true
 RUN uvx cronometer-api-mcp --help > /dev/null 2>&1 || true
+
+# Set ownership and switch to non-root user
+RUN chown -R appuser:appgroup /app /app/.local
+USER appuser
 
 # Default command: build the site from example data
 CMD ["python3", "scripts/daily_snapshot_runner.py", "--sources-file", "personal_trainer/examples/sources-ready.json"]
