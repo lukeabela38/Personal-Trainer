@@ -243,6 +243,21 @@ def _dedupe(values: list[Any]) -> list[Any]:
     return deduped
 
 
+_VALID_FRESHNESS = frozenset({"fresh", "stale", "missing", "partial"})
+_VALID_DATA_QUALITY = frozenset({"high", "medium", "low"})
+_VALID_HARD_SESSION = frozenset({"yes", "no", "conditional", "unknown"})
+_VALID_MUSCLE_FATIGUE = frozenset({"low", "moderate", "high", "unknown"})
+_VALID_NUTRITION_STATUS = frozenset({"adequate", "low", "high", "unknown", "incomplete_log"})
+_VALID_SLEEP_QUALITY = frozenset({"poor", "okay", "good", "great", "unknown"})
+_VALID_MOTIVATION = frozenset({"low", "normal", "high", "unknown"})
+_VALID_MENTAL_FATIGUE = frozenset({"low", "moderate", "high", "unknown"})
+_VALID_TABLE_TENNIS = frozenset({"none", "light", "training", "match", "unknown"})
+_VALID_SORENESS = frozenset({
+    "calves", "hamstrings", "quads", "hips", "back", "shoulders", "elbows", "wrists",
+})
+_VALID_FRESHNESS_SOURCES = frozenset({"garmin", "hevy", "cronometer", "manual_context"})
+
+
 def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
     required_top_level = ("snapshot_date", "timezone", "athlete", "garmin", "hevy", "cronometer", "manual_context", "derived")
     missing = [key for key in required_top_level if key not in snapshot]
@@ -253,12 +268,21 @@ def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
         if not isinstance(snapshot.get(section), dict):
             raise ValueError(f"snapshot section '{section}' must be a JSON object")
 
+    if not isinstance(snapshot.get("snapshot_date"), str):
+        raise ValueError("snapshot_date must be a string")
+    if not isinstance(snapshot.get("timezone"), str):
+        raise ValueError("timezone must be a string")
+
     derived = snapshot["derived"]
     required_derived = ("data_quality", "hard_session_allowed", "primary_constraints", "likely_conflicts", "check_in_required", "check_in_questions")
     missing_derived = [key for key in required_derived if key not in derived]
     if missing_derived:
         raise ValueError(f"derived snapshot missing required fields: {', '.join(missing_derived)}")
 
+    _check_in(derived["data_quality"], _VALID_DATA_QUALITY, "derived.data_quality")
+    _check_in(derived["hard_session_allowed"], _VALID_HARD_SESSION, "derived.hard_session_allowed")
+    if not isinstance(derived.get("check_in_required"), bool):
+        raise ValueError("derived.check_in_required must be a bool")
     if not isinstance(derived.get("primary_constraints"), list):
         raise ValueError("derived.primary_constraints must be a list")
     if not isinstance(derived.get("likely_conflicts"), list):
@@ -266,4 +290,66 @@ def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
     if not isinstance(derived.get("check_in_questions"), list):
         raise ValueError("derived.check_in_questions must be a list")
 
+    for source in _VALID_FRESHNESS_SOURCES:
+        freshness = snapshot.get(source, {}).get("freshness")
+        if freshness is not None:
+            _check_in(freshness, _VALID_FRESHNESS, f"{source}.freshness")
+
+    garmin = snapshot.get("garmin", {})
+    if not isinstance(garmin.get("recent_activities"), list):
+        raise ValueError("garmin.recent_activities must be a list")
+    if not isinstance(garmin.get("recent_runs"), list):
+        raise ValueError("garmin.recent_runs must be a list")
+    if not isinstance(garmin.get("recent_bests"), list):
+        raise ValueError("garmin.recent_bests must be a list")
+    if not isinstance(garmin.get("flags"), list):
+        raise ValueError("garmin.flags must be a list")
+
+    hevy = snapshot.get("hevy", {})
+    if not isinstance(hevy.get("recent_workouts"), list):
+        raise ValueError("hevy.recent_workouts must be a list")
+    if not isinstance(hevy.get("recent_bests"), list):
+        raise ValueError("hevy.recent_bests must be a list")
+    if not isinstance(hevy.get("flags"), list):
+        raise ValueError("hevy.flags must be a list")
+    muscle_fatigue = hevy.get("muscle_group_fatigue", {})
+    if not isinstance(muscle_fatigue, dict):
+        raise ValueError("hevy.muscle_group_fatigue must be a dict")
+    for mg, val in muscle_fatigue.items():
+        if val is not None:
+            _check_in(val, _VALID_MUSCLE_FATIGUE, f"hevy.muscle_group_fatigue.{mg}")
+
+    cronometer = snapshot.get("cronometer", {})
+    for status_field in ("fueling_status", "protein_status", "carb_availability"):
+        val = cronometer.get(status_field)
+        if val is not None:
+            _check_in(val, _VALID_NUTRITION_STATUS, f"cronometer.{status_field}")
+    if not isinstance(cronometer.get("flags"), list):
+        raise ValueError("cronometer.flags must be a list")
+
+    manual = snapshot.get("manual_context", {})
+    sleep_val = manual.get("sleep_quality")
+    if sleep_val is not None:
+        _check_in(sleep_val, _VALID_SLEEP_QUALITY, "manual_context.sleep_quality")
+    mot_val = manual.get("motivation")
+    if mot_val is not None:
+        _check_in(mot_val, _VALID_MOTIVATION, "manual_context.motivation")
+    fatigue_val = manual.get("mental_fatigue")
+    if fatigue_val is not None:
+        _check_in(fatigue_val, _VALID_MENTAL_FATIGUE, "manual_context.mental_fatigue")
+    tt_val = manual.get("table_tennis_today")
+    if tt_val is not None:
+        _check_in(tt_val, _VALID_TABLE_TENNIS, "manual_context.table_tennis_today")
+    if not isinstance(manual.get("soreness"), list):
+        raise ValueError("manual_context.soreness must be a list")
+    if not isinstance(manual.get("pain"), list):
+        raise ValueError("manual_context.pain must be a list")
+    if not isinstance(manual.get("constraints"), list):
+        raise ValueError("manual_context.constraints must be a list")
+
     return snapshot
+
+
+def _check_in(value: str, valid: frozenset[str], path: str) -> None:
+    if value not in valid:
+        raise ValueError(f"{path} must be one of {sorted(valid)}, got {value!r}")
