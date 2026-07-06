@@ -1,5 +1,5 @@
 import { loadLastDays, extractVo2, extractBodyWeight, weeklySummary } from "./history.js";
-import { renderSparkline } from "./goals.js";
+import { renderSparkline, fmtNum } from "./goals.js";
 
 const snapshotUrl = new URL("./data/snapshot.json", import.meta.url);
 const grid = document.getElementById("progress-grid");
@@ -66,13 +66,13 @@ async function loadHistoryTrends() {
         parts.push(`
           <div class="stat-group">
             <div class="stat-group-title">VO2 max (${vo2.length} days)</div>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="VO2 max ${vo2Dir} by ${Math.abs(vo2Delta).toFixed(1)} over ${vo2.length} days">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="VO2 max ${vo2Dir} by ${fmtNum(Math.abs(vo2Delta))} over ${vo2.length} days">
               ${renderSparkline(vals, 240, 56)}
               <div style="display:grid;gap:2px">
                 <span class="stat-item-label">Start</span>
-                <span class="stat-item-value">${vals[0]}</span>
+                <span class="stat-item-value">${fmtNum(vals[0])}</span>
                 <span class="stat-item-label">Current</span>
-                <span class="stat-item-value">${vals[vals.length - 1]}</span>
+                <span class="stat-item-value">${fmtNum(vals[vals.length - 1])}</span>
               </div>
             </div>
           </div>
@@ -85,13 +85,13 @@ async function loadHistoryTrends() {
         parts.push(`
           <div class="stat-group">
             <div class="stat-group-title">Body weight (${bw.length} days)</div>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir} by ${Math.abs(bwDelta).toFixed(1)} kg over ${bw.length} days">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir} by ${fmtNum(Math.abs(bwDelta))} kg over ${bw.length} days">
               ${renderSparkline(vals, 240, 56)}
               <div style="display:grid;gap:2px">
                 <span class="stat-item-label">Start</span>
-                <span class="stat-item-value">${vals[0]} kg</span>
+                <span class="stat-item-value">${fmtNum(vals[0])} kg</span>
                 <span class="stat-item-label">Current</span>
-                <span class="stat-item-value">${vals[vals.length - 1]} kg</span>
+                <span class="stat-item-value">${fmtNum(vals[vals.length - 1])} kg</span>
               </div>
             </div>
           </div>

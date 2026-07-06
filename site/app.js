@@ -1,5 +1,5 @@
 import { loadLastDays, weeklySummary, extractBodyWeight } from "./history.js";
-import { loadGoals, updateGoalCurrent, goalProgress, renderSparkline } from "./goals.js";
+import { loadGoals, updateGoalCurrent, goalProgress, renderSparkline, fmtNum } from "./goals.js";
 
 const deployedSnapshotPath = new URL("./data/snapshot.json", import.meta.url);
 const sections = document.getElementById("sections");
@@ -586,13 +586,13 @@ function renderSparklineCard(bw) {
   return `
     <div class="stat-group">
       <div class="stat-group-title">Body weight trend (${bw.length} days)</div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir}: ${first} → ${latest} kg">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir}: ${fmtNum(first)} → ${fmtNum(latest)} kg">
         ${renderSparkline(values, 180, 48)}
         <div style="display:grid;gap:4px">
           <span class="stat-item-label">Start</span>
-          <span class="stat-item-value">${first} kg</span>
+          <span class="stat-item-value">${fmtNum(first)} kg</span>
           <span class="stat-item-label">Current</span>
-          <span class="stat-item-value">${latest} kg</span>
+          <span class="stat-item-value">${fmtNum(latest)} kg</span>
         </div>
       </div>
     </div>
