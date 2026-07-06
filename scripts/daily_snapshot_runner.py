@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +13,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "personal_trainer" / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.mcp_client import load_dotenv as _load_dotenv
+_load_dotenv()
 
 from personal_trainer import build_snapshot
 
@@ -71,12 +77,23 @@ def _load_sources(path: Path | None, date: str | None, timezone: str) -> dict[st
     return _capture_live_sources(date, timezone)
 
 
+def _with_pythonpath() -> dict[str, str]:
+    env = os.environ.copy()
+    pythonpath = env.get("PYTHONPATH", "")
+    root_str = str(REPO_ROOT)
+    if pythonpath:
+        env["PYTHONPATH"] = f"{root_str}:{pythonpath}"
+    else:
+        env["PYTHONPATH"] = root_str
+    return env
+
+
 def _capture_live_sources(date: str | None, timezone: str) -> dict[str, Any]:
     command = [sys.executable, str(REPO_ROOT / "scripts" / "live_sources.py")]
     if date:
         command.extend(["--date", date])
     command.extend(["--timezone", timezone])
-    completed = subprocess.run(command, check=True, capture_output=True, text=True)
+    completed = subprocess.run(command, check=True, capture_output=True, text=True, env=_with_pythonpath())
     payload = json.loads(completed.stdout)
     if not isinstance(payload, dict):
         raise ValueError("live sources payload must be a JSON object")
@@ -92,7 +109,7 @@ def _build_site_artifacts(snapshot_path: Path, site_output: Path) -> None:
         "--output-dir",
         str(site_output),
     ]
-    subprocess.run(command, check=True)
+    subprocess.run(command, check=True, env=_with_pythonpath())
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
