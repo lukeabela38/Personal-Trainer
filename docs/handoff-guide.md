@@ -20,6 +20,7 @@ This repository builds a personal performance system for Luke.
 - [Daily recommendation contract](./daily-recommendation-contract.md)
 - [MCP integrations](./mcp-integrations.md)
 - [Repository README](../README.md)
+- [Zero-cost fitness app IaC brief](./zero-cost-fitness-app-iac-brief.md)
 
 ## Current Working Shape
 

@@ -13,7 +13,7 @@ This repository documents a personal performance system using training, nutritio
 ## How Fits Together
 
 - `personal_trainer/src/personal_trainer/` contains normalization, recommendation, and live-data seam code.
-- `site/` contains the static browser UI, including the main snapshot viewer and dedicated `/strength` and `/speed` pages.
+- `site/` contains static browser UI, including the main snapshot viewer and dedicated `/strength` and `/speed` pages.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
 
 ## Local Run
@@ -51,3 +51,4 @@ Open:
 - [Data snapshot contract](docs/data-snapshot-contract.md)
 - [MCP integrations](docs/mcp-integrations.md)
 - [Handoff guide](docs/handoff-guide.md)
+- [Zero-cost fitness app IaC brief](docs/zero-cost-fitness-app-iac-brief.md)
