@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .contracts import Recommendation
+
 Snapshot = dict[str, Any]
 
 
@@ -88,8 +89,10 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
             needs_check_in=_yes_no(check_in_required),
         ).as_dict()
 
-    if _hard_session_allowed(snapshot) and _aerobic_block(snapshot) and not _has_any(
-        constraints, {"leg_fatigue", "under_fueled"}
+    if (
+        _hard_session_allowed(snapshot)
+        and _aerobic_block(snapshot)
+        and not _has_any(constraints, {"leg_fatigue", "under_fueled"})
     ):
         return Decision(
             priority="aerobic_quality",

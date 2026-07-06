@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-
 Snapshot = dict[str, Any]
 SourcePayload = dict[str, Any]
 
@@ -252,14 +251,32 @@ _VALID_SLEEP_QUALITY = frozenset({"poor", "okay", "good", "great", "unknown"})
 _VALID_MOTIVATION = frozenset({"low", "normal", "high", "unknown"})
 _VALID_MENTAL_FATIGUE = frozenset({"low", "moderate", "high", "unknown"})
 _VALID_TABLE_TENNIS = frozenset({"none", "light", "training", "match", "unknown"})
-_VALID_SORENESS = frozenset({
-    "calves", "hamstrings", "quads", "hips", "back", "shoulders", "elbows", "wrists",
-})
+_VALID_SORENESS = frozenset(
+    {
+        "calves",
+        "hamstrings",
+        "quads",
+        "hips",
+        "back",
+        "shoulders",
+        "elbows",
+        "wrists",
+    }
+)
 _VALID_FRESHNESS_SOURCES = frozenset({"garmin", "hevy", "cronometer", "manual_context"})
 
 
 def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
-    required_top_level = ("snapshot_date", "timezone", "athlete", "garmin", "hevy", "cronometer", "manual_context", "derived")
+    required_top_level = (
+        "snapshot_date",
+        "timezone",
+        "athlete",
+        "garmin",
+        "hevy",
+        "cronometer",
+        "manual_context",
+        "derived",
+    )
     missing = [key for key in required_top_level if key not in snapshot]
     if missing:
         raise ValueError(f"snapshot missing required fields: {', '.join(missing)}")
@@ -274,7 +291,14 @@ def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
         raise ValueError("timezone must be a string")
 
     derived = snapshot["derived"]
-    required_derived = ("data_quality", "hard_session_allowed", "primary_constraints", "likely_conflicts", "check_in_required", "check_in_questions")
+    required_derived = (
+        "data_quality",
+        "hard_session_allowed",
+        "primary_constraints",
+        "likely_conflicts",
+        "check_in_required",
+        "check_in_questions",
+    )
     missing_derived = [key for key in required_derived if key not in derived]
     if missing_derived:
         raise ValueError(f"derived snapshot missing required fields: {', '.join(missing_derived)}")

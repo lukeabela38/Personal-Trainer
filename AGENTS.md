@@ -130,7 +130,31 @@ PYTHONPATH=personal_trainer/src python3 -m personal_trainer.live_cli personal_tr
 - Tests use `EXAMPLES_DIR` pattern: `Path(__file__).resolve().parents[1] / "examples"`
 - Live-source tests save/restore `PERSONAL_TRAINER_SOURCES_FILE` and `PERSONAL_TRAINER_SOURCES_COMMAND` env vars
 - `personal_trainer/tests/test_live_sources_script.py` subprocesses `scripts/live_sources.py` - heavier integration test
-- No linter, formatter, or typechecker config exists (no ruff, flake8, mypy, etc.)
+
+## Linting
+
+- **ruff** is configured in `personal_trainer/pyproject.toml` under `[tool.ruff]`
+- Install: `pip install "personal_trainer.[lint]"` or `pip install ruff`
+- Run: `ruff check src tests` and `ruff format --check src tests` from `personal_trainer/`
+- Rules selected: F (pyflakes), E/W (pycodestyle), I (isort), UP (pyupgrade), TID (tidy-imports)
+- E501 (line length) is ignored — handled by ruff formatter at 120 chars
+- Scripts (`scripts/`) with `sys.path.insert` pattern are exempt from E402
+
+## CI / PR Review Pipeline
+
+Three workflows in `.github/workflows/`:
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| `python-tests.yml` | Push to main, any PR | Lint (ruff format + check), package unit tests, script integration tests |
+| `pr-review.yml` | PR events (`pull_request_target`) | Auto-label by area (`.github/labeler.yml`), size-based labels (xs/s/m/l/xl), branch name convention check |
+| `pages.yml` | Push to main (path-filtered) | Build static site & deploy to GitHub Pages |
+
+Contributors should follow `.github/PULL_REQUEST_TEMPLATE.md` and use issue templates in `.github/ISSUE_TEMPLATE/`.
+
+## Non-conventions
+
+- No formatter or typechecker beyond ruff is required.
 
 ## Environment
 

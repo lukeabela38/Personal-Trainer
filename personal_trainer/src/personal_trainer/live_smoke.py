@@ -10,7 +10,6 @@ from typing import Any
 from .snapshot import build_snapshot
 from .source_registry import build_source_adapter_registry, collect_source_payloads
 
-
 DEFAULT_SOURCE_NAMES = ("garmin", "hevy", "cronometer", "manual_context")
 
 
@@ -25,9 +24,7 @@ def run_live_smoke(live_module: ModuleType, source_names: tuple[str, ...] = DEFA
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Run a manual live-data smoke test and print the assembled snapshot."
-    )
+    parser = argparse.ArgumentParser(description="Run a manual live-data smoke test and print the assembled snapshot.")
     parser.add_argument(
         "--live-module",
         default="personal_trainer.live_sources",

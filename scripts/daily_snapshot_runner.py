@@ -17,6 +17,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.mcp_client import load_dotenv as _load_dotenv
+
 _load_dotenv()
 
 from personal_trainer import build_snapshot
@@ -58,12 +59,19 @@ def main(argv: list[str] | None = None) -> int:
         sources = _load_sources(args.sources_file, args.date, args.timezone)
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
-        snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
+        snapshot = build_snapshot(
+            sources, snapshot_date=args.date, timezone=args.timezone
+        )
         _write_json(args.snapshot_output, snapshot)
         _build_site_artifacts(args.snapshot_output, args.site_output)
         print(args.site_output)
         return 0
-    except (OSError, json.JSONDecodeError, ValueError, subprocess.CalledProcessError) as exc:
+    except (
+        OSError,
+        json.JSONDecodeError,
+        ValueError,
+        subprocess.CalledProcessError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
@@ -93,7 +101,9 @@ def _capture_live_sources(date: str | None, timezone: str) -> dict[str, Any]:
     if date:
         command.extend(["--date", date])
     command.extend(["--timezone", timezone])
-    completed = subprocess.run(command, check=True, capture_output=True, text=True, env=_with_pythonpath())
+    completed = subprocess.run(
+        command, check=True, capture_output=True, text=True, env=_with_pythonpath()
+    )
     payload = json.loads(completed.stdout)
     if not isinstance(payload, dict):
         raise ValueError("live sources payload must be a JSON object")

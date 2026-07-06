@@ -56,17 +56,27 @@ async def fetch() -> dict:
             macros = food_log.get("nutrition_summary", {}).get("macros") or {}
             td = payload["today"]
 
-            td["calories_consumed"] = _safe_float(energy.get("consumed_kcal") or macros.get("energy"))
+            td["calories_consumed"] = _safe_float(
+                energy.get("consumed_kcal") or macros.get("energy")
+            )
             td["calories_target"] = _safe_float(energy.get("total_target_kcal"))
             td["remaining_kcal"] = _safe_float(energy.get("remaining_kcal"))
             td["protein_g"] = _safe_float(macros.get("protein"))
             td["carbs_g"] = _safe_float(macros.get("carbs") or macros.get("net_carbs"))
             td["fat_g"] = _safe_float(macros.get("fat"))
             td["fiber_g"] = _safe_float(macros.get("fiber"))
-            td["log_completeness"] = "complete" if td["calories_consumed"] and td["calories_consumed"] > 0 else "incomplete"
+            td["log_completeness"] = (
+                "complete"
+                if td["calories_consumed"] and td["calories_consumed"] > 0
+                else "incomplete"
+            )
 
-            payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
-            payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
+            payload["fueling_status"] = _fueling_status(
+                td["calories_consumed"], td["calories_target"]
+            )
+            payload["protein_status"] = _protein_status(
+                td["protein_g"], td["calories_target"]
+            )
             payload["carb_availability"] = _carb_status(td["carbs_g"])
     except McpError as e:
         print(f"[cronometer] food log unavailable: {e}", file=sys.stderr)

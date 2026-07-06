@@ -1,0 +1,83 @@
+name: PR review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          sync-labels: true
+
+  size-label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: diff } = await github.rest.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: context.payload.pull_request.base.sha,
+              head: context.payload.pull_request.head.sha,
+            });
+            const additions = diff.files.reduce((sum, f) => sum + (f.additions || 0), 0);
+            const deletions = diff.files.reduce((sum, f) => sum + (f.deletions || 0), 0);
+            const total = additions + deletions;
+            const label = total < 50 ? "size/xs"
+              : total < 200 ? "size/s"
+              : total < 500 ? "size/m"
+              : total < 1000 ? "size/l"
+              : "size/xl";
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const sizeLabels = currentLabels.map(l => l.name).filter(n => n.startsWith("size/"));
+            const toRemove = sizeLabels.filter(n => n !== label);
+            const toAdd = sizeLabels.includes(label) ? [] : [label];
+            if (toRemove.length) {
+              for (const l of toRemove) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  name: l,
+                }).catch(() => {});
+              }
+            }
+            if (toAdd.length) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: toAdd,
+              });
+            }
+            core.summary.addHeading('PR size');
+            core.summary.addRaw(`${additions} additions, ${deletions} deletions (${total} total) — labeled **${label}**`);
+            await core.summary.write();
+
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ref = context.payload.pull_request.head.ref;
+            const allowed = /^(feature|fix|chore|docs|ci)\/[a-z0-9._-]+$/;
+            if (!allowed.test(ref)) {
+              core.warning(`Branch name "${ref}" does not match pattern feature|fix|chore|docs|ci/<description>`);
+            }

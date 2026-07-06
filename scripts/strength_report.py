@@ -3,10 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import subprocess
 import sys
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -35,7 +33,9 @@ ALIASES = {
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Build site/strength.json from Hevy history.")
+    parser = argparse.ArgumentParser(
+        description="Build site/strength.json from Hevy history."
+    )
     parser.add_argument("--output", type=Path, default=Path("site/strength.json"))
     parser.add_argument("--source", type=Path, default=None)
     args = parser.parse_args(argv)
@@ -57,7 +57,9 @@ def _load_from_command() -> Any:
     command = os.environ.get("PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND")
     if not command:
         raise ValueError("set PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND or pass --source")
-    completed = subprocess.run(command.split(), check=True, capture_output=True, text=True)
+    completed = subprocess.run(
+        command.split(), check=True, capture_output=True, text=True
+    )
     return json.loads(completed.stdout)
 
 

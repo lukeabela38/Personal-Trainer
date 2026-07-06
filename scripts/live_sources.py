@@ -19,13 +19,24 @@ load_dotenv()
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Emit a live Personal Trainer source payload.")
+    parser = argparse.ArgumentParser(
+        description="Emit a live Personal Trainer source payload."
+    )
     parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
     parser.add_argument("--timezone", default="Europe/Malta", help="Snapshot timezone")
-    parser.add_argument("--garmin-command", default=os.environ.get("PERSONAL_TRAINER_GARMIN_COMMAND"))
-    parser.add_argument("--hevy-command", default=os.environ.get("PERSONAL_TRAINER_HEVY_COMMAND"))
-    parser.add_argument("--cronometer-command", default=os.environ.get("PERSONAL_TRAINER_CRONOMETER_COMMAND"))
-    parser.add_argument("--manual-command", default=os.environ.get("PERSONAL_TRAINER_MANUAL_COMMAND"))
+    parser.add_argument(
+        "--garmin-command", default=os.environ.get("PERSONAL_TRAINER_GARMIN_COMMAND")
+    )
+    parser.add_argument(
+        "--hevy-command", default=os.environ.get("PERSONAL_TRAINER_HEVY_COMMAND")
+    )
+    parser.add_argument(
+        "--cronometer-command",
+        default=os.environ.get("PERSONAL_TRAINER_CRONOMETER_COMMAND"),
+    )
+    parser.add_argument(
+        "--manual-command", default=os.environ.get("PERSONAL_TRAINER_MANUAL_COMMAND")
+    )
     args = parser.parse_args(argv)
 
     garmin, hevy, cronometer, manual = {}, {}, {}, _manual_default()
@@ -80,7 +91,9 @@ def _manual_default() -> dict[str, Any]:
 
 def _load_payload(command: str | None, source_name: str) -> dict[str, Any]:
     if not command:
-        raise ValueError(f"missing command for {source_name}; set PERSONAL_TRAINER_{source_name.upper()}_COMMAND")
+        raise ValueError(
+            f"missing command for {source_name}; set PERSONAL_TRAINER_{source_name.upper()}_COMMAND"
+        )
 
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")

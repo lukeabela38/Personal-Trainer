@@ -10,7 +10,30 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["playwright>=1.54.0"]
 
+[project.optional-dependencies]
+lint = ["ruff>=0.11.0"]
+
 [project.scripts]
 personal-trainer = "personal_trainer.cli:main"
 personal-trainer-snapshot = "personal_trainer.snapshot_cli:main"
 personal-trainer-live = "personal_trainer.live_cli:main"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+  "F",   # pyflakes — unused imports, undefined names
+  "E",   # pycodestyle — spacing, line length
+  "W",   # pycodestyle warnings
+  "I",   # isort — import order
+  "UP",  # pyupgrade — modern syntax
+  "TID", # flake8-tidy-imports — banned imports
+]
+ignore = [
+  "E501", # line length — handled by ruff formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["F401"]

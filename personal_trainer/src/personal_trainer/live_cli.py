@@ -11,9 +11,7 @@ from .snapshot import build_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Build a snapshot and daily recommendation from live source exports."
-    )
+    parser = argparse.ArgumentParser(description="Build a snapshot and daily recommendation from live source exports.")
     parser.add_argument(
         "sources",
         nargs="?",

@@ -7,9 +7,7 @@ from personal_trainer.cronometer_adapter import CronometerLiveAdapter, build_cro
 
 class CronometerAdapterTests(unittest.TestCase):
     def test_fetch_uses_injected_callable(self):
-        adapter = CronometerLiveAdapter(
-            fetch_cronometer_payload=lambda: {"freshness": "fresh", "flags": []}
-        )
+        adapter = CronometerLiveAdapter(fetch_cronometer_payload=lambda: {"freshness": "fresh", "flags": []})
 
         payload = adapter.fetch()
 

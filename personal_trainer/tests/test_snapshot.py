@@ -6,7 +6,6 @@ from pathlib import Path
 
 from personal_trainer.snapshot import _validate_snapshot, build_snapshot
 
-
 EXAMPLES_DIR = Path(__file__).resolve().parents[1] / "examples"
 
 

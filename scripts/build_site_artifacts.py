@@ -42,7 +42,9 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(snapshot, indent=2),
         encoding="utf-8",
     )
-    (output_dir / "raw.json").write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+    (output_dir / "raw.json").write_text(
+        json.dumps(snapshot, indent=2), encoding="utf-8"
+    )
     (output_dir / "strength.json").write_text(
         json.dumps(_build_strength_view(snapshot), indent=2),
         encoding="utf-8",
@@ -102,15 +104,17 @@ def _build_strength_view(snapshot: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(b, dict):
             continue
         tid = str(b.get("exercise_template_id", ""))
-        entries.append({
-            "name": _EXERCISE_NAMES.get(tid, tid),
-            "category": _EXERCISE_CATEGORIES.get(tid, "Strength"),
-            "best_set": {
-                "weight_kg": b.get("weight_kg"),
-                "reps": b.get("reps"),
-            },
-            "estimated_one_rm_kg": b.get("estimated_one_rm_kg"),
-        })
+        entries.append(
+            {
+                "name": _EXERCISE_NAMES.get(tid, tid),
+                "category": _EXERCISE_CATEGORIES.get(tid, "Strength"),
+                "best_set": {
+                    "weight_kg": b.get("weight_kg"),
+                    "reps": b.get("reps"),
+                },
+                "estimated_one_rm_kg": b.get("estimated_one_rm_kg"),
+            }
+        )
     return {
         "source": "Hevy exercise history",
         "snapshot_date": snapshot.get("snapshot_date"),
@@ -137,12 +141,14 @@ def _build_speed_view(snapshot: dict[str, Any]) -> dict[str, Any]:
         rtype = str(b.get("record_type") or b.get("name") or "")
         if rtype not in _TRACKED_NAMES:
             continue
-        entries.append({
-            "name": rtype,
-            "category": "Running",
-            "value": b.get("value"),
-            "date": b.get("date"),
-        })
+        entries.append(
+            {
+                "name": rtype,
+                "category": "Running",
+                "value": b.get("value"),
+                "date": b.get("date"),
+            }
+        )
     return {
         "source": "Garmin personal records",
         "snapshot_date": snapshot.get("snapshot_date"),

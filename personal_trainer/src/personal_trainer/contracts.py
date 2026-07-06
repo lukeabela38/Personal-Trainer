@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Literal, TypedDict
 
-
 Priority = Literal[
     "aerobic_quality",
     "aerobic_base",
@@ -36,14 +35,11 @@ Recommendation = TypedDict(
     },
 )
 
-DerivedContext = TypedDict(
-    "DerivedContext",
-    {
-        "data_quality": Literal["high", "medium", "low"],
-        "hard_session_allowed": HardSessionAllowed,
-        "primary_constraints": list[str],
-        "likely_conflicts": list[str],
-        "check_in_required": bool,
-        "check_in_questions": list[str],
-    },
-)
+
+class DerivedContext(TypedDict):
+    data_quality: Literal["high", "medium", "low"]
+    hard_session_allowed: HardSessionAllowed
+    primary_constraints: list[str]
+    likely_conflicts: list[str]
+    check_in_required: bool
+    check_in_questions: list[str]
