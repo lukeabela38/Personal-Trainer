@@ -65,7 +65,7 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
           exit-code: 1
-          args: --ignore-unfixed
+          ignore-unfixed: true
 
       - name: Upload Trivy results to GitHub Security
         if: always()
