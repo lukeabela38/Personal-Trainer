@@ -105,6 +105,18 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
             needs_check_in=_yes_no(check_in_required),
         ).as_dict()
 
+    if _power_available(snapshot, hevy, manual):
+        return Decision(
+            priority="power_and_athleticism",
+            session="low-volume explosive work, speed, jumps, or throws with full recoveries",
+            nutrition="normal fueling or slight surplus around training, protein target protected",
+            macros=build_macros(**athlete_macros, priority="power_and_athleticism"),
+            reason="the current block and strength trend support a power-focused day",
+            guardrail="keep the volume low enough to preserve speed and the next run quality",
+            confidence=_confidence(snapshot, fallback="medium"),
+            needs_check_in=_yes_no(check_in_required),
+        ).as_dict()
+
     if (
         _hard_session_allowed(snapshot)
         and _aerobic_block(snapshot)
@@ -215,6 +227,16 @@ def _strength_available(flags: set[str], hevy: dict[str, Any]) -> bool:
     if "strength_progression_available" in flags:
         return True
     return hevy.get("strength_trend") in {"improving", "stable"}
+
+
+def _power_available(snapshot: Snapshot, hevy: dict[str, Any], manual: dict[str, Any]) -> bool:
+    athlete = snapshot.get("athlete", {})
+    if athlete.get("current_block") != "strength_focus":
+        return False
+    if manual.get("table_tennis_today") in {"training", "match"}:
+        return False
+    flags = _source_flags(hevy)
+    return _strength_available(flags, hevy) and not _manual_high_fatigue(manual)
 
 
 def _first_reason(options: list[tuple[bool, str]]) -> str:

@@ -82,6 +82,17 @@ class RecommendationTests(unittest.TestCase):
         self.assertEqual(recommendation["Priority"], "strength_progression")
         self.assertIn("progression", recommendation["Session"])
 
+    def test_power_and_athleticism_when_strength_focus_block_is_ready(self):
+        snapshot = base_snapshot()
+        snapshot["athlete"]["current_block"] = "strength_focus"
+        snapshot["hevy"]["strength_trend"] = "stable"
+
+        recommendation = build_daily_recommendation(snapshot)
+
+        self.assertEqual(recommendation["Priority"], "power_and_athleticism")
+        self.assertIn("explosive", recommendation["Session"])
+        self.assertEqual(recommendation["Needs check-in"], "no")
+
     def test_low_quality_snapshot_requests_check_in(self):
         snapshot = base_snapshot()
         snapshot["derived"]["data_quality"] = "low"
