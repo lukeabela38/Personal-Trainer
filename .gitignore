@@ -6,3 +6,4 @@ __pycache__/
 site/data/
 .venv/
 .env
+.cache/

@@ -34,6 +34,25 @@ class DailySnapshotRunnerTest(TestCase):
                     },
                 ),
                 patch.object(
+                    daily_snapshot_runner,
+                    "build_daily_recommendation",
+                    return_value={
+                        "Priority": "aerobic_quality",
+                        "Session": "threshold",
+                        "Nutrition": "higher-carbohydrate day",
+                        "Macros": {
+                            "calories": 3094,
+                            "protein_g": 184,
+                            "carbs_g": 421,
+                            "fat_g": 75,
+                        },
+                        "Reason": "testing",
+                        "Guardrail": "testing",
+                        "Confidence": "high",
+                        "Needs check-in": "no",
+                    },
+                ),
+                patch.object(
                     daily_snapshot_runner, "_build_site_artifacts"
                 ) as build_site_artifacts,
             ):
@@ -57,3 +76,4 @@ class DailySnapshotRunnerTest(TestCase):
             saved_snapshot = json.loads(snapshot_output.read_text(encoding="utf-8"))
             self.assertEqual(saved_sources["garmin"]["current_vo2max"], 52)
             self.assertEqual(saved_snapshot["garmin"]["current_vo2max"], 52)
+            self.assertEqual(saved_snapshot["recommendation"]["Priority"], "aerobic_quality")
