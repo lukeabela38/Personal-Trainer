@@ -10,6 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 _API_BASE = "https://mobile.cronometer.com/api/v2"
+_SESSION_FILE_ENV = "CRONOMETER_SESSION_FILE"
+_DEFAULT_SESSION_FILE = Path.home() / ".cronometer_session.json"
 
 _CALORIES_PER_G_PROTEIN = 4
 _CALORIES_PER_G_CARBS = 4
@@ -21,6 +23,52 @@ _APP_AUTH_TEMPLATE = {
     "build": "2807",
     "flavour": "free",
 }
+
+
+class CronometerAPIError(RuntimeError):
+    def __init__(self, code: int, path: str, body_text: str):
+        super().__init__(f"Cronometer API {code} for {path}: {body_text}")
+        self.code = code
+
+
+def _session_file_path() -> Path:
+    configured = os.environ.get(_SESSION_FILE_ENV)
+    if configured:
+        return Path(configured).expanduser()
+    return _DEFAULT_SESSION_FILE
+
+
+def _load_cached_session(path: Path | None = None) -> tuple[int, str] | None:
+    session_file = path or _session_file_path()
+    try:
+        if not session_file.is_file():
+            return None
+        data = json.loads(session_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    user_id = data.get("userId")
+    token = data.get("sessionKey")
+    if user_id is None or not token:
+        return None
+
+    try:
+        return int(user_id), str(token)
+    except (TypeError, ValueError):
+        return None
+
+
+def _save_cached_session(user_id: int, token: str, path: Path | None = None) -> None:
+    session_file = path or _session_file_path()
+    session_file.parent.mkdir(parents=True, exist_ok=True)
+    session_file.write_text(
+        json.dumps({"userId": user_id, "sessionKey": token}, indent=2),
+        encoding="utf-8",
+    )
+    try:
+        session_file.chmod(0o600)
+    except OSError:
+        pass
 
 
 def _login() -> tuple[int, str]:
@@ -69,7 +117,7 @@ def _post(user_id: int, token: str, path: str, payload: dict) -> dict:
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as e:
         body_text = e.read().decode()[:200] if e.fp else ""
-        raise RuntimeError(f"Cronometer API {e.code} for {path}: {body_text}")
+        raise CronometerAPIError(e.code, path, body_text)
 
 
 def fetch() -> dict:
@@ -95,8 +143,20 @@ def fetch() -> dict:
     }
 
     try:
-        user_id, token = _login()
-        diary = _post(user_id, token, "/get_diary", {"day": today})
+        diary = None
+        cached_session = _load_cached_session()
+        if cached_session is not None:
+            try:
+                diary = _post(cached_session[0], cached_session[1], "/get_diary", {"day": today})
+            except CronometerAPIError as e:
+                if e.code not in {401, 403}:
+                    raise
+                diary = None
+
+        if diary is None:
+            user_id, token = _login()
+            _save_cached_session(user_id, token)
+            diary = _post(user_id, token, "/get_diary", {"day": today})
 
         summary = (diary or {}).get("summary") or {}
         target = (summary.get("macros") or {}).get("energy")

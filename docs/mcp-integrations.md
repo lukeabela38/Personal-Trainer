@@ -196,6 +196,7 @@ Calls `get_exercise_history` for all tracked template IDs and returns raw rows f
 ### Cronometer — `scripts/wrappers/fetch_cronometer.py`
 
 Calls `get_daily_nutrition_summary` and `get_macro_targets`. Computes fueling/protein/carb status and log completeness. Used by `PERSONAL_TRAINER_CRONOMETER_COMMAND`.
+The wrapper caches Cronometer session state in `~/.cronometer_session.json` by default and reuses it before falling back to a fresh login. The Docker pipeline mounts that file into `/app/.cronometer_session.json` so the token survives repeated `docker compose run` invocations.
 
 ### Manual Check-In — `scripts/wrappers/fetch_manual.py`
 

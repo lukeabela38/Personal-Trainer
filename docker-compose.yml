@@ -7,6 +7,7 @@ services:
     volumes:
       - ./dist:/app/dist
       - ./.env:/app/.env:ro
+      - ${HOME}/.cronometer_session.json:/app/.cronometer_session.json
     command: python3 scripts/daily_snapshot_runner.py
 
   site:
