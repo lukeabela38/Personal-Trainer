@@ -97,6 +97,16 @@ The snapshot should not decide the recommendation by itself. It should provide t
 }
 ```
 
+## Athlete Fields
+
+The normalized `athlete` object should always include:
+
+- `age` as an integer
+- `height_cm` as an integer
+- `body_weight_kg` as a number
+- `current_block` as one of `hybrid_aggressive`, `hybrid_balanced`, `run_focus`, `strength_focus`, or `recovery`
+- `current_vo2max_waypoint` as an integer
+
 ## Freshness Values
 
 Each source should include a `freshness` field:
@@ -250,6 +260,14 @@ Use these values:
 ### Garmin Recent Bests
 
 The Garmin snapshot may expose `recent_bests` for running and related endurance bests. The dedicated `/speed` page should use the Garmin personal-record shape and prefer these records when the live Garmin source provides them.
+
+## Validation Boundary
+
+The snapshot should be validated before it reaches recommendation or static-site rendering:
+
+- `personal_trainer.cli` validates the snapshot before building a recommendation
+- `scripts/build_site_artifacts.py` validates the snapshot before writing `dist/`
+- `build_snapshot()` should be the normal path for constructing a compliant snapshot from source payloads
 
 ## Validation Questions
 

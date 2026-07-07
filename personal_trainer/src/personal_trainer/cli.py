@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .recommendation import build_daily_recommendation
+from .snapshot import _validate_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -16,6 +17,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         snapshot = _load_json(args.snapshot)
+        _validate_snapshot(snapshot)
         recommendation = build_daily_recommendation(snapshot)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
