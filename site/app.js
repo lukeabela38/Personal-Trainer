@@ -16,10 +16,7 @@ const state = {
   goals: loadGoals(),
 };
 
-document.getElementById("file-input").addEventListener("change", (event) => handleFile(event, "snapshot"));
-document.getElementById("live-input").addEventListener("change", (event) => handleFile(event, "live payload"));
-document.getElementById("load-sample").addEventListener("click", () => loadFromUrl(deployedSnapshotPath, "deployed snapshot"));
-document.getElementById("load-example").addEventListener("click", () => loadFromUrl(deployedSnapshotPath, "deployed snapshot"));
+document.getElementById("file-input").addEventListener("change", handleFile);
 document.getElementById("open-raw").addEventListener("click", openRawView);
 document.getElementById("load-history").addEventListener("click", loadHistory);
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
@@ -78,10 +75,11 @@ document.addEventListener("keydown", (e) => {
   if (url) location.href = url;
 });
 
-async function handleFile(event, kind) {
+async function handleFile(event) {
   const file = event.target.files?.[0];
   if (!file) return;
   const payload = JSON.parse(await file.text());
+  const kind = payload.recommendation ? "snapshot" : "live payload";
   renderPayload(payload, `${kind}: ${file.name}`);
   event.target.value = "";
 }

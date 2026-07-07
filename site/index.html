@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer</title>
-  <link rel="stylesheet" href="./styles.css?v=7" />
+  <link rel="stylesheet" href="./styles.css?v=8" />
 </head>
 <body>
   <nav class="bottom-nav">
@@ -24,10 +24,7 @@
         <details class="nav-menu">
           <summary class="button secondary">Actions</summary>
           <div class="nav-menu-panel">
-            <label class="button secondary" for="file-input">Load snapshot</label>
-            <label class="button secondary" for="live-input">Load live payload</label>
-            <button id="load-sample" class="button secondary" type="button">Load sample</button>
-            <button id="load-example" class="button secondary" type="button">Load deployed snapshot</button>
+            <label class="button secondary" for="file-input">Load file...</label>
             <button id="load-history" class="button secondary" type="button">Load 30-day history</button>
             <button id="open-raw" class="button secondary" type="button">Open raw JSON</button>
           </div>
@@ -37,7 +34,6 @@
 
     <section class="card shell-panel">
       <input id="file-input" type="file" accept="application/json" />
-      <input id="live-input" type="file" accept="application/json" />
 
       <div id="welcome-overlay" class="welcome-overlay">
         <div class="welcome-card card">
