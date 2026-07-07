@@ -3,6 +3,7 @@ import { loadGoals, updateGoalCurrent, goalProgress } from "./goals.js";
 const speedUrl = new URL("./speed.json", import.meta.url);
 const table = document.getElementById("speed-table");
 const goalsContainer = document.getElementById("speed-goals");
+const summaryEl = document.getElementById("speed-summary");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
 
@@ -16,11 +17,13 @@ async function loadSpeed() {
     sourceLabel.classList.remove("skeleton");
     statusBanner.textContent = `${payload.entries.length} bests`;
     statusBanner.classList.remove("skeleton");
+    renderSummary(payload.entries);
     renderTable(payload.entries);
     renderSpeedGoals(payload);
   } catch {
     sourceLabel.textContent = "Unavailable";
     statusBanner.textContent = "Could not load speed data";
+    if (summaryEl) summaryEl.innerHTML = "";
     table.innerHTML = `<div class="speed-empty">Failed to load speed data.</div>`;
   }
 }
@@ -32,10 +35,7 @@ function renderTable(entries) {
   }
 
   table.innerHTML = "";
-  const sorted = [...entries].sort((a, b) => {
-    const order = ["Fastest 1K", "Fastest Mile", "Fastest 5K", "Fastest 10K", "Fastest Half Marathon", "Longest Run"];
-    return order.indexOf(a.name) - order.indexOf(b.name);
-  });
+  const sorted = sortEntries(entries);
 
   table.innerHTML = sorted
     .map(
@@ -51,6 +51,60 @@ function renderTable(entries) {
       `,
     )
     .join("");
+}
+
+function renderSummary(entries) {
+  if (!summaryEl) return;
+  if (!entries.length) {
+    summaryEl.innerHTML = "";
+    return;
+  }
+
+  const sorted = sortEntries(entries);
+  const fastest = sorted[0];
+  const longest = sorted.at(-1);
+  const latest = [...entries]
+    .filter((entry) => entry.date)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+    .at(-1);
+
+  summaryEl.innerHTML = [
+    {
+      label: "Records",
+      value: `${entries.length}`,
+      subvalue: "Loaded from Garmin history",
+    },
+    {
+      label: "Fastest",
+      value: fastest?.name ?? "Unknown",
+      subvalue: fastest?.value ?? "Top current race effort",
+    },
+    {
+      label: "Longest",
+      value: longest?.name ?? "Unknown",
+      subvalue: longest?.value ?? "Best endurance marker",
+    },
+    {
+      label: "Latest PB",
+      value: latest?.date ?? "Unknown date",
+      subvalue: latest?.name ?? "Most recent best",
+    },
+  ]
+    .map(
+      (tile) => `
+        <div class="summary-tile">
+          <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
+          <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function sortEntries(entries) {
+  const order = ["Fastest 1K", "Fastest Mile", "Fastest 5K", "Fastest 10K", "Fastest Half Marathon", "Longest Run"];
+  return [...entries].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 }
 
 function renderSpeedGoals(payload) {

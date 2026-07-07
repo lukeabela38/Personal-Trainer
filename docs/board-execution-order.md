@@ -29,6 +29,10 @@ Project 7 is intended to be a multi-agent queue. Use the wave labels to keep wor
 
 - `Deployment: zero-cost static site and GitHub Pages hardening`
 
+## Status
+
+All five waves are complete. The project board now contains additional items beyond the original build plan — primarily live-data integration (Cronometer session caching, Garmin auth), UI polish, and data-view sync (progress, strength, speed).
+
 ## Notes
 
 - Wave 1 must land before any downstream agent depends on the snapshot shape.

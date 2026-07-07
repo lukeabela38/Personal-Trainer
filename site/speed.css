@@ -3,6 +3,9 @@
 .speed-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
 .speed-header h2 { font-size: 1rem; font-weight: 600; }
 
+.speed-summary { margin-bottom: 14px; }
+.speed-summary .summary-tile-value { font-size: 1rem; }
+
 .speed-table {
   display: grid;
   gap: 1px;
@@ -24,6 +27,7 @@
 .speed-row:first-child { padding-top: 16px; }
 
 .speed-row-name { font-weight: 700; font-size: 0.95rem; }
+.speed-row-name, .speed-row-value, .speed-row-date { min-width: 0; }
 .speed-row-value {
   font-weight: 700;
   font-size: 1.1rem;
@@ -56,4 +60,5 @@
 
 @media (max-width: 480px) {
   .speed-row { padding: 12px 14px; }
+  .speed-summary .summary-tile { padding: 10px 12px; }
 }

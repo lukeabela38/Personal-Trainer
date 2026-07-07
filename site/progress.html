@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer - Progress</title>
-  <link rel="stylesheet" href="./styles.css?v=6" />
-  <link rel="stylesheet" href="./progress.css?v=2" />
+  <link rel="stylesheet" href="./styles.css?v=7" />
+  <link rel="stylesheet" href="./progress.css?v=3" />
 </head>
 <body>
   <nav class="bottom-nav">
@@ -22,17 +22,6 @@
         <h1>Progress</h1>
         <p class="lede">Current snapshot versus the last loaded snapshot, summarized without raw payload noise.</p>
       </div>
-      <div class="header-actions">
-        <details class="nav-menu">
-          <summary class="button secondary">Views</summary>
-          <div class="nav-menu-panel">
-            <a class="button secondary" href="./index.html">Dashboard</a>
-            <a class="button secondary" href="./strength.html">Strength</a>
-            <a class="button secondary" href="./speed.html">Speed</a>
-            <a class="button secondary" href="./progress.html">Progress</a>
-          </div>
-        </details>
-      </div>
     </header>
 
     <section class="card shell-panel">
@@ -43,6 +32,8 @@
         </div>
         <span class="status-banner skeleton" id="status-banner" style="width:100px;height:28px">Waiting</span>
       </div>
+
+      <div id="progress-summary" class="summary-strip progress-summary"></div>
 
       <div class="progress-pickers" id="progress-pickers">
         <div class="progress-picker">
@@ -66,6 +57,6 @@
       navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
   </script>
-  <script type="module" src="./progress.js?v=3"></script>
+  <script type="module" src="./progress.js?v=4"></script>
 </body>
 </html>

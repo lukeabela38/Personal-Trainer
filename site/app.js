@@ -7,6 +7,7 @@ const historySections = document.getElementById("history-sections");
 const statGroups = document.getElementById("stat-groups");
 const statusBanner = document.getElementById("status-banner");
 const freshnessBar = document.getElementById("freshness-bar");
+const dashboardSummary = document.getElementById("dashboard-summary");
 const recActions = document.getElementById("rec-actions");
 const state = {
   currentPayload: null,
@@ -101,6 +102,7 @@ function renderEmptyState() {
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
   freshnessBar.innerHTML = "";
+  if (dashboardSummary) dashboardSummary.innerHTML = "";
   statGroups.innerHTML = renderStatGroupsEmpty();
   recActions.innerHTML = "";
   sections.innerHTML = "";
@@ -115,7 +117,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const cronometer = snapshot.cronometer ?? {};
   const manual = snapshot.manual_context ?? {};
   const derived = snapshot.derived ?? {};
-  const priority = recommendation.Priority ?? recommendation.priority ?? "No recommendation";
+  const priority = formatPriorityLabel(recommendation.Priority ?? recommendation.priority ?? "No recommendation");
   const reason = recommendation.Reason ?? recommendation.reason ?? "No explanation available.";
 
   setText("priority", priority);
@@ -126,6 +128,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const today = cronometer.today ?? {};
 
   freshnessBar.innerHTML = renderFreshnessBar(snapshot);
+  renderDashboardSummary(snapshot, recommendation, derived);
   statGroups.innerHTML = [
     renderRecGroup(recommendation, derived),
     renderNutritionGroup(macros, today),
@@ -145,6 +148,28 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     .join("");
   state.previousSnapshot = snapshot;
   persistSnapshot(snapshot);
+}
+
+function renderDashboardSummary(snapshot, recommendation, derived) {
+  if (!dashboardSummary) return;
+  const rec = recommendation ?? {};
+  const tiles = [
+    { label: "Priority", value: formatDisplayValue(rec.Priority ?? rec.priority ?? "Unknown"), subvalue: snapshot.snapshot_date ?? "Latest snapshot" },
+    { label: "Check-in", value: formatDisplayValue(rec["Needs check-in"] ?? rec.needs_check_in ?? "-"), subvalue: "Decision data" },
+    { label: "Data quality", value: formatDisplayValue(derived.data_quality ?? "-"), subvalue: "Snapshot completeness" },
+    { label: "Confidence", value: formatDisplayValue(rec.Confidence ?? rec.confidence ?? "-"), subvalue: "Recommendation strength" },
+  ];
+  dashboardSummary.innerHTML = tiles
+    .map(
+      (tile) => `
+        <div class="summary-tile">
+          <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
+          <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+        </div>
+      `,
+    )
+    .join("");
 }
 
 /* ── Freshness bar ── */
@@ -234,7 +259,7 @@ function statItem(label, value) {
   return `
     <div class="stat-item">
       <span class="stat-item-label">${escapeHtml(label)}</span>
-      <span class="stat-item-value">${escapeHtml(value)}</span>
+      <span class="stat-item-value">${escapeHtml(formatDisplayValue(value))}</span>
     </div>
   `;
 }
@@ -277,7 +302,7 @@ function renderSessionLog(priority) {
   const tags = recent
     .map(
       (s) =>
-        `<span class="session-tag">${escapeHtml(s.priority)} <span class="muted">${escapeHtml(s.date.slice(5))}</span></span>`,
+        `<span class="session-tag">${escapeHtml(formatPriorityLabel(s.priority))} <span class="muted">${escapeHtml(s.date.slice(5))}</span></span>`,
     )
     .join("");
   const btn = alreadyLogged
@@ -323,7 +348,7 @@ function renderFreshnessCard(snapshot) {
       return `
         <div class="item">
           <span>${label}</span>
-          <strong><span class="freshness-dot ${freshness}"></span>${freshness}</strong>
+          <strong><span class="freshness-dot ${freshness}"></span>${formatDisplayValue(freshness)}</strong>
         </div>
       `;
     })
@@ -437,7 +462,7 @@ function addDeltaRow(rows, label, previous, current) {
 
 function formatDeltaValue(value) {
   if (!shouldRenderValue(value)) return "-";
-  return String(value);
+  return formatDisplayValue(value);
 }
 
 /* ── Data helpers ── */
@@ -479,15 +504,34 @@ function shouldRenderValue(value) {
 function formatRenderedValue(value) {
   if (Array.isArray(value)) return value.map((item) => formatRenderedValue(item)).join(", ");
   if (value && typeof value === "object") return JSON.stringify(value);
-  return String(value);
+  return formatDisplayValue(value);
 }
 
 function formatVal(value, unit) {
   if (!shouldRenderValue(value)) return "-";
-  return unit ? `${value} ${unit}` : String(value);
+  return unit ? `${formatDisplayValue(value)} ${unit}` : formatDisplayValue(value);
 }
 
 /* ── Label formatting ── */
+
+function formatPriorityLabel(value) {
+  return formatDisplayValue(value);
+}
+
+function formatDisplayValue(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "Unknown";
+  if (text === "-") return "-";
+  if (/^[A-Za-z0-9 _-]+$/.test(text)) {
+    return text
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .replace(/\s+/g, " ")
+      .toLowerCase()
+      .replace(/(^|\s)\S/g, (match) => match.toUpperCase());
+  }
+  return text;
+}
 
 function formatLabel(key, sectionTitle = "") {
   const normalized = String(key).replaceAll("_", " ").replaceAll("-", " ").trim().toLowerCase();
@@ -564,10 +608,10 @@ function renderDailyDiff(snapshots) {
   const cSleep = curr.manual_context?.sleep_quality;
 
   const diffs = [];
-  if (pPriority !== cPriority) diffs.push(`priority: ${pPriority} → ${cPriority}`);
+  if (pPriority !== cPriority) diffs.push(`priority: ${formatDisplayValue(pPriority)} → ${formatDisplayValue(cPriority)}`);
   if (pVo2 !== cVo2 && pVo2 != null && cVo2 != null) diffs.push(`VO2: ${fmtNum(pVo2)} → ${fmtNum(cVo2)}`);
   if (pBw !== cBw && pBw != null && cBw != null) diffs.push(`weight: ${fmtNum(pBw)} → ${fmtNum(cBw)} kg`);
-  if (pSleep !== cSleep && pSleep != null && cSleep != null) diffs.push(`sleep: ${pSleep} → ${cSleep}`);
+  if (pSleep !== cSleep && pSleep != null && cSleep != null) diffs.push(`sleep: ${formatDisplayValue(pSleep)} → ${formatDisplayValue(cSleep)}`);
 
   if (!diffs.length) return "";
   return `

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer</title>
-  <link rel="stylesheet" href="./styles.css?v=6" />
+  <link rel="stylesheet" href="./styles.css?v=7" />
 </head>
 <body>
   <nav class="bottom-nav">
@@ -21,15 +21,6 @@
         <h1>Dashboard</h1>
       </div>
       <div class="header-actions">
-        <details class="nav-menu">
-          <summary class="button secondary">Views</summary>
-          <div class="nav-menu-panel">
-            <a class="button secondary" href="./index.html">Dashboard</a>
-            <a class="button secondary" href="./strength.html">Strength</a>
-            <a class="button secondary" href="./speed.html">Speed</a>
-            <a class="button secondary" href="./progress.html">Progress</a>
-          </div>
-        </details>
         <details class="nav-menu">
           <summary class="button secondary">Actions</summary>
           <div class="nav-menu-panel">
@@ -68,6 +59,8 @@
 
       <div id="freshness-bar"></div>
 
+      <div id="dashboard-summary" class="summary-strip"></div>
+
       <div class="rec-card" id="rec-card">
         <div class="rec-header">
           <p class="label">Today's Recommendation</p>
@@ -101,6 +94,6 @@
       navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
   </script>
-  <script type="module" src="./app.js?v=6"></script>
+  <script type="module" src="./app.js?v=9"></script>
 </body>
 </html>

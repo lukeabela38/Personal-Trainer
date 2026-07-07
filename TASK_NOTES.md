@@ -4,7 +4,7 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Set up durable context files to reduce repeated repo analysis.
+Issues 25, 26, 27, and 28: broad UI pass across progress, strength, speed, and dashboard views.
 
 ## Findings
 
@@ -12,6 +12,12 @@ Set up durable context files to reduce repeated repo analysis.
 - All 15 Python source files, 7 scripts, 6 wrappers, 14 tests, and 15 site files were inspected during onboarding.
 - The project has well-documented canonical docs in `docs/` — 7 markdown files covering charter, contracts, MCP, agent onboarding, handoff, and board execution order.
 - No linter/formatter/typechecker config exists — just `unittest` for testing.
+- `garminconnect.Garmin.login(tokenstore=...)` loads session tokens from a directory; `garth.Client.dump(dir)` writes `oauth1_token.json` and `oauth2_token.json`.
+- Docker now needs to mount a Garmin token directory and set `GARMINTOKENS` so the cached session survives repeated `docker compose run` calls.
+- Snapshot validation now rejects malformed athlete values and site/recommendation entrypoints validate before consuming snapshot JSON.
+- Recommendation v1 now has an explicit `power_and_athleticism` branch when the athlete is in a strength-focused block and the strength trend is stable or improving.
+- The UI now has a shared summary-strip pattern that can be reused across dashboard, progress, strength, and speed views without changing the underlying data model.
+- Recommendation priority labels are now humanized in the dashboard, including the session-history tags, so snake_case values read like normal copy.
 
 ## Files Inspected
 

@@ -52,6 +52,15 @@ Wave order:
 - Do not combine contract changes with UI work unless the card is explicitly about integration.
 - Avoid duplicate cards; if scope overlaps, keep the sharper card and archive the broader one.
 
+## Live Data Reporting
+
+When a task touches live external data, keep the report tied to the exact command and time that produced it.
+
+- Do not generalize from stale artifacts such as `dist/` outputs or older turns.
+- Re-run the source command before claiming a live value has changed.
+- If a source is flaky, rate-limited, or falls back to cached data, say that directly.
+- When quoting a live field, pair it with the fresh pull that produced it.
+
 ## Start Here For New Work
 
 1. Read the charter and snapshot contract first.
