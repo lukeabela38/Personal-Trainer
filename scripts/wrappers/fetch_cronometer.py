@@ -1,34 +1,78 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
+import urllib.request
+import urllib.error
 from datetime import UTC, datetime
-
-
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-
-from scripts.mcp_client import McpError, call_tool
-
-CRONOMETER_COMMAND = os.environ.get(
-    "PERSONAL_TRAINER_CRONOMETER_MCP_COMMAND",
-    "/opt/homebrew/bin/uvx cronometer-api-mcp",
-)
+_API_BASE = "https://mobile.cronometer.com/api/v2"
 
 _CALORIES_PER_G_PROTEIN = 4
 _CALORIES_PER_G_CARBS = 4
 _CALORIES_PER_G_FAT = 9
 
-def _is_error(result) -> bool:
-    return isinstance(result, dict) and result.get("status") == "error"
+_APP_AUTH_TEMPLATE = {
+    "api": 3,
+    "os": "Android",
+    "build": "2807",
+    "flavour": "free",
+}
 
-async def fetch() -> dict:
+
+def _login() -> tuple[int, str]:
+    email = os.environ.get("CRONOMETER_USERNAME")
+    password = os.environ.get("CRONOMETER_PASSWORD")
+    if not email or not password:
+        raise RuntimeError("CRONOMETER_USERNAME and CRONOMETER_PASSWORD must be set")
+
+    data = json.dumps({"email": email, "password": password}).encode()
+    req = urllib.request.Request(
+        f"{_API_BASE}/login",
+        data=data,
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode()[:200] if e.fp else ""
+        raise RuntimeError(f"Cronometer login HTTP {e.code}: {body_text}")
+
+    user_id = body.get("id")
+    token = body.get("sessionKey")
+    if not user_id or not token:
+        raise RuntimeError(f"Cronometer login failed: {body.get('error', 'unknown')}")
+
+    return user_id, token
+
+
+def _post(user_id: int, token: str, path: str, payload: dict) -> dict:
+    payload["auth"] = {
+        "userId": user_id,
+        "token": token,
+        **_APP_AUTH_TEMPLATE,
+    }
+    payload.setdefault("lastSeen", 0)
+
+    body = json.dumps(payload).encode()
+    req = urllib.request.Request(
+        f"{_API_BASE}{path}",
+        data=body,
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode()[:200] if e.fp else ""
+        raise RuntimeError(f"Cronometer API {e.code} for {path}: {body_text}")
+
+
+def fetch() -> dict:
     today = datetime.now(UTC).strftime("%Y-%m-%d")
 
     payload: dict = {
@@ -51,38 +95,33 @@ async def fetch() -> dict:
     }
 
     try:
-        food_log = await call_tool(CRONOMETER_COMMAND, "get_food_log", {"date": today})
-        if _is_error(food_log):
-            print(f"[cronometer] API error: {food_log.get('message')}", file=sys.stderr)
-        elif isinstance(food_log, dict):
-            energy = food_log.get("energy_summary") or {}
-            macros = food_log.get("nutrition_summary", {}).get("macros") or {}
-            td = payload["today"]
+        user_id, token = _login()
+        diary = _post(user_id, token, "/get_diary", {"day": today})
 
-            td["calories_consumed"] = _safe_float(
-                energy.get("consumed_kcal") or macros.get("energy")
-            )
-            td["calories_target"] = _safe_float(energy.get("total_target_kcal"))
-            td["remaining_kcal"] = _safe_float(energy.get("remaining_kcal"))
-            td["protein_g"] = _safe_float(macros.get("protein"))
-            td["carbs_g"] = _safe_float(macros.get("carbs") or macros.get("net_carbs"))
-            td["fat_g"] = _safe_float(macros.get("fat"))
-            td["fiber_g"] = _safe_float(macros.get("fiber"))
-            td["log_completeness"] = (
-                "complete"
-                if td["calories_consumed"] and td["calories_consumed"] > 0
-                else "incomplete"
-            )
+        summary = (diary or {}).get("summary") or {}
+        target = (summary.get("macros") or {}).get("energy")
+        consumed = (summary.get("consumed") or {}).get("total")
 
-            payload["fueling_status"] = _fueling_status(
-                td["calories_consumed"], td["calories_target"]
-            )
-            payload["protein_status"] = _protein_status(
-                td["protein_g"], td["calories_target"]
-            )
-            payload["carb_availability"] = _carb_status(td["carbs_g"])
-    except McpError as e:
-        print(f"[cronometer] food log unavailable: {e}", file=sys.stderr)
+        td = payload["today"]
+        if target is not None:
+            td["calories_target"] = _safe_float(target)
+        if consumed is not None:
+            td["calories_consumed"] = _safe_float(consumed)
+            td["remaining_kcal"] = _safe_float(target - consumed) if target is not None else None
+            td["log_completeness"] = "complete" if consumed > 0 else "incomplete"
+
+        entry_macros = (summary.get("macros") or {})
+        td["protein_g"] = _safe_float(entry_macros.get("protein"))
+        td["carbs_g"] = _safe_float(entry_macros.get("carbs") or entry_macros.get("net_carbs"))
+        td["fat_g"] = _safe_float(entry_macros.get("fat"))
+        td["fiber_g"] = _safe_float(entry_macros.get("fiber"))
+
+        payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
+        payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
+        payload["carb_availability"] = _carb_status(td["carbs_g"])
+
+    except Exception as e:
+        print(f"[cronometer] nutrition unavailable: {e}", file=sys.stderr)
 
     flags = payload["flags"]
     if payload["fueling_status"] == "low":
@@ -97,6 +136,7 @@ async def fetch() -> dict:
 
     return payload
 
+
 def _fueling_status(calories: float | None, target: float | None) -> str:
     if calories is None or target is None:
         return "unknown"
@@ -104,8 +144,9 @@ def _fueling_status(calories: float | None, target: float | None) -> str:
     if ratio < 0.6:
         return "low"
     if ratio < 0.85:
-        return "moderate"
-    return "adequate"
+        return "adequate"
+    return "high"
+
 
 def _protein_status(protein_g: float | None, target_cal: float | None) -> str:
     if protein_g is None or target_cal is None:
@@ -117,8 +158,9 @@ def _protein_status(protein_g: float | None, target_cal: float | None) -> str:
     if ratio < 0.5:
         return "low"
     if ratio < 0.8:
-        return "moderate"
-    return "adequate"
+        return "adequate"
+    return "high"
+
 
 def _carb_status(carbs_g: float | None) -> str:
     if carbs_g is None:
@@ -126,8 +168,9 @@ def _carb_status(carbs_g: float | None) -> str:
     if carbs_g < 100:
         return "low"
     if carbs_g < 200:
-        return "moderate"
-    return "adequate"
+        return "adequate"
+    return "high"
+
 
 def _safe_float(v) -> float | None:
     if v is None:
@@ -137,15 +180,17 @@ def _safe_float(v) -> float | None:
     except (ValueError, TypeError):
         return None
 
+
 def main() -> int:
     try:
-        payload = asyncio.run(fetch())
+        payload = fetch()
         json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         return 0
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -59,7 +59,7 @@ async def _fetch_direct(email: str, password: str) -> dict:
     """)
 
     proc = await asyncio.create_subprocess_exec(
-        *shlex.split("/opt/homebrew/bin/uv run --with garminconnect -- python3 -"),
+        *shlex.split("uv run --with garminconnect -- python3 -"),
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
