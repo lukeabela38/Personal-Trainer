@@ -85,6 +85,19 @@ class CronometerWrapperTests(unittest.TestCase):
             self.assertEqual(payload["today"]["calories_consumed"], 1500.0)
             self.assertEqual(payload["fueling_status"], "adequate")
 
+    def test_fetch_uses_explicit_date(self) -> None:
+        with (
+            patch.object(cronometer, "_login", return_value=(12, "cached-token")) as login,
+            patch.object(cronometer, "_load_cached_session", return_value=None),
+            patch.object(cronometer, "_save_cached_session"),
+            patch.object(cronometer, "_post", return_value=_diary_payload()) as post,
+        ):
+            cronometer.fetch("2026-07-04")
+
+        login.assert_called_once()
+        self.assertEqual(post.call_args.args[:3], (12, "cached-token", "/get_diary"))
+        self.assertEqual(post.call_args.args[3], {"day": "2026-07-04"})
+
 
 if __name__ == "__main__":
     unittest.main()

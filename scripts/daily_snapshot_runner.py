@@ -20,6 +20,7 @@ from scripts.mcp_client import load_dotenv as _load_dotenv
 
 _load_dotenv()
 
+from personal_trainer import build_daily_recommendation
 from personal_trainer import build_snapshot
 
 
@@ -62,7 +63,8 @@ def main(argv: list[str] | None = None) -> int:
         snapshot = build_snapshot(
             sources, snapshot_date=args.date, timezone=args.timezone
         )
-        _write_json(args.snapshot_output, snapshot)
+        recommendation = build_daily_recommendation(snapshot)
+        _write_json(args.snapshot_output, {**snapshot, "recommendation": recommendation})
         _build_site_artifacts(args.snapshot_output, args.site_output)
         print(args.site_output)
         return 0

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -120,8 +121,8 @@ def _post(user_id: int, token: str, path: str, payload: dict) -> dict:
         raise CronometerAPIError(e.code, path, body_text)
 
 
-def fetch() -> dict:
-    today = datetime.now(UTC).strftime("%Y-%m-%d")
+def fetch(date_str: str | None = None) -> dict:
+    day = date_str or datetime.now(UTC).strftime("%Y-%m-%d")
 
     payload: dict = {
         "freshness": "fresh",
@@ -147,7 +148,7 @@ def fetch() -> dict:
         cached_session = _load_cached_session()
         if cached_session is not None:
             try:
-                diary = _post(cached_session[0], cached_session[1], "/get_diary", {"day": today})
+                diary = _post(cached_session[0], cached_session[1], "/get_diary", {"day": day})
             except CronometerAPIError as e:
                 if e.code not in {401, 403}:
                     raise
@@ -156,7 +157,7 @@ def fetch() -> dict:
         if diary is None:
             user_id, token = _login()
             _save_cached_session(user_id, token)
-            diary = _post(user_id, token, "/get_diary", {"day": today})
+            diary = _post(user_id, token, "/get_diary", {"day": day})
 
         summary = (diary or {}).get("summary") or {}
         target = (summary.get("macros") or {}).get("energy")
@@ -243,7 +244,11 @@ def _safe_float(v) -> float | None:
 
 def main() -> int:
     try:
-        payload = fetch()
+        parser = argparse.ArgumentParser(description="Emit a live Cronometer source payload.")
+        parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
+        args = parser.parse_args()
+
+        payload = fetch(args.date)
         json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         return 0

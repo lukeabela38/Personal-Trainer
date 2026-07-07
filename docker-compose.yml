@@ -4,10 +4,12 @@ services:
     image: personal-trainer:latest
     container_name: personal-trainer
     env_file: .env
+    environment:
+      CRONOMETER_SESSION_FILE: /app/.cronometer_session/session.json
     volumes:
       - ./dist:/app/dist
       - ./.env:/app/.env:ro
-      - ${HOME}/.cronometer_session.json:/app/.cronometer_session.json
+      - ./.cache/cronometer:/app/.cronometer_session
     command: python3 scripts/daily_snapshot_runner.py
 
   site:
