@@ -4,12 +4,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from .ingestion import SourceAdapter
+
 SourcePayload = dict[str, Any]
 FetchHevyPayload = Callable[[], SourcePayload]
 
 
 @dataclass(frozen=True)
-class HevyLiveAdapter:
+class HevyLiveAdapter(SourceAdapter):
     """Hevy source adapter backed by an injected live fetch function."""
 
     source_name: str = "hevy"
