@@ -16,6 +16,16 @@ try:
 except ImportError:
     Garmin = None
 
+_TOKENSTORE_ENV = "GARMINTOKENS"
+_DEFAULT_TOKENSTORE = Path.home() / ".garminconnect"
+
+
+def _tokenstore_path() -> Path:
+    configured = os.environ.get(_TOKENSTORE_ENV)
+    if configured:
+        return Path(configured).expanduser()
+    return _DEFAULT_TOKENSTORE
+
 
 def fetch() -> dict:
     today = datetime.now(UTC).strftime("%Y-%m-%d")
@@ -23,19 +33,53 @@ def fetch() -> dict:
 
     garmin_email = os.environ.get("GARMIN_EMAIL") or os.environ.get("GC_EMAIL")
     garmin_password = os.environ.get("GARMIN_PASSWORD") or os.environ.get("GC_PASSWORD")
+    tokenstore = _tokenstore_path()
 
-    if garmin_email and garmin_password and Garmin is not None:
+    if Garmin is not None and ((garmin_email and garmin_password) or tokenstore.exists()):
         try:
-            return _fetch_direct(garmin_email, garmin_password, today, month_ago)
+            return _fetch_direct(
+                garmin_email,
+                garmin_password,
+                today,
+                month_ago,
+                tokenstore,
+            )
         except Exception as e:
             print(f"[garmin] direct fetch failed: {e}", file=sys.stderr)
 
     return _empty_payload()
 
 
-def _fetch_direct(email: str, password: str, today: str, month_ago: str) -> dict:
+def _fetch_direct(
+    email: str | None,
+    password: str | None,
+    today: str,
+    month_ago: str,
+    tokenstore: Path | None,
+) -> dict:
     client = Garmin(email, password)
-    client.login()
+
+    logged_in = False
+    if tokenstore is not None and tokenstore.exists():
+        try:
+            client.login(tokenstore=str(tokenstore))
+            logged_in = True
+        except Exception as e:
+            print(f"[garmin] cached session failed, refreshing: {e}", file=sys.stderr)
+
+    if not logged_in:
+        if not email or not password:
+            raise RuntimeError(
+                f"{_TOKENSTORE_ENV} cache unavailable and GARMIN_EMAIL/GARMIN_PASSWORD are not set"
+            )
+        client.login()
+        logged_in = True
+
+        if tokenstore is not None:
+            try:
+                client.garth.dump(str(tokenstore))
+            except Exception as e:
+                print(f"[garmin] failed to save session cache: {e}", file=sys.stderr)
 
     payload = _empty_payload()
 

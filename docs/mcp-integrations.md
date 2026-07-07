@@ -42,6 +42,11 @@ The Garmin auth tool stores reusable token data under:
 ~/.garminconnect
 ```
 
+The direct Garmin wrapper also reuses `GARMINTOKENS` when present, defaulting
+to `~/.garminconnect`. The Docker pipeline mounts `./.cache/garminconnect` to
+`/app/.garminconnect` and sets `GARMINTOKENS=/app/.garminconnect` so cached
+tokens survive repeated container runs.
+
 No Garmin email or password should be stored in `config.toml`.
 
 Verified Garmin capabilities include:

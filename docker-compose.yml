@@ -5,10 +5,12 @@ services:
     container_name: personal-trainer
     env_file: .env
     environment:
+      GARMINTOKENS: /app/.garminconnect
       CRONOMETER_SESSION_FILE: /app/.cronometer_session/session.json
     volumes:
       - ./dist:/app/dist
       - ./.env:/app/.env:ro
+      - ./.cache/garminconnect:/app/.garminconnect
       - ./.cache/cronometer:/app/.cronometer_session
     command: python3 scripts/daily_snapshot_runner.py
 
