@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
+import urllib.request
+import urllib.error
+from collections import defaultdict
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-
-from scripts.mcp_client import McpError, call_tool
-
-HEVY_COMMAND = os.environ.get(
-    "PERSONAL_TRAINER_HEVY_MCP_COMMAND",
-    "/opt/homebrew/bin/npx -y -p node@26 -p hevy-mcp hevy-mcp",
-)
+_API_BASE = "https://api.hevyapp.com/v1"
 
 _TRACKED_EXERCISES = [
     ("Squat (Barbell)", "D04AC939"),
@@ -29,7 +22,29 @@ _TRACKED_EXERCISES = [
     ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
 ]
 
-async def fetch() -> dict:
+
+def _api_key() -> str:
+    key = os.environ.get("HEVY_API_KEY")
+    if not key:
+        raise RuntimeError("HEVY_API_KEY not set")
+    return key
+
+
+def _get(path: str) -> dict:
+    req = urllib.request.Request(f"{_API_BASE}{path}")
+    req.add_header("api-key", _api_key())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode() if e.fp else ""
+        raise RuntimeError(f"Hevy API {e.code} for {path}: {body[:200]}")
+
+
+def fetch() -> dict:
+    tracked_ids = {tid for _, tid in _TRACKED_EXERCISES}
+    per_exercise_sets: dict[str, list[dict]] = defaultdict(list)
+
     payload: dict = {
         "freshness": "fresh",
         "recent_workouts": [],
@@ -48,62 +63,66 @@ async def fetch() -> dict:
     }
 
     try:
-        workouts = await call_tool(
-            HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 1}
-        )
-        if isinstance(workouts, list) and workouts:
-            w = workouts[0]
-            payload["last_workout"] = _summarize_workout(w)
-            payload["muscle_group_fatigue"] = _infer_fatigue(w)
-    except McpError as e:
-        print(f"[hevy] latest workout unavailable: {e}", file=sys.stderr)
+        data = _get("/workouts?page=1&pageSize=10")
+        workouts = data.get("workouts", [])
+        if not isinstance(workouts, list):
+            raise RuntimeError("unexpected response shape")
 
-    try:
-        history = await call_tool(
-            HEVY_COMMAND, "get-workouts", {"page": 1, "pageSize": 10}
-        )
-        if isinstance(history, list):
-            payload["recent_workouts"] = [
-                _summarize_workout(w) for w in history if isinstance(w, dict)
-            ]
-        elif isinstance(history, dict):
-            workouts = history.get("workouts") or history.get("data") or []
-            if isinstance(workouts, list):
-                payload["recent_workouts"] = [
-                    _summarize_workout(w) for w in workouts if isinstance(w, dict)
-                ]
-    except McpError as e:
-        print(f"[hevy] workout history unavailable: {e}", file=sys.stderr)
+        recent = []
+        for w in workouts:
+            if not isinstance(w, dict):
+                continue
+            recent.append(_summarize_workout(w))
+            for ex in w.get("exercises", []):
+                if not isinstance(ex, dict):
+                    continue
+                tid = ex.get("exercise_template_id", "")
+                if tid in tracked_ids:
+                    for s in ex.get("sets", []):
+                        if not isinstance(s, dict):
+                            continue
+                        weight = _safe_float(s.get("weight_kg"))
+                        reps = _safe_int(s.get("reps"))
+                        if weight is None or reps is None or reps == 0:
+                            continue
+                        per_exercise_sets[tid].append({
+                            "weight": weight,
+                            "reps": reps,
+                            "exerciseTemplateId": tid,
+                            "workoutStartTime": w.get("start_time", ""),
+                            "workoutTitle": w.get("title", ""),
+                        })
 
-    for exercise_name, template_id in _TRACKED_EXERCISES:
-        try:
-            history = await call_tool(
-                HEVY_COMMAND,
-                "get-exercise-history",
-                {"exerciseTemplateId": template_id, "page": 1, "pageSize": 5},
-            )
-            rows = history if isinstance(history, list) else []
-            if rows:
-                best = _best_set(rows)
-                if best:
-                    payload["recent_bests"].append(best)
-        except McpError as e:
-            print(
-                f"[hevy] exercise history for {exercise_name} unavailable: {e}",
-                file=sys.stderr,
-            )
+        if recent:
+            payload["last_workout"] = recent[0]
+            payload["recent_workouts"] = recent
+            payload["muscle_group_fatigue"] = _infer_fatigue(workouts[0])
+
+    except Exception as e:
+        print(f"[hevy] workouts unavailable: {e}", file=sys.stderr)
+
+    bests = []
+    for tid in tracked_ids:
+        rows = per_exercise_sets.get(tid, [])
+        if rows:
+            best = _best_set(rows)
+            if best:
+                bests.append(best)
+    payload["recent_bests"] = bests
 
     return payload
+
 
 def _summarize_workout(w: dict) -> dict:
     return {
         "title": w.get("title") or w.get("name") or "",
-        "start_time": w.get("startTime") or w.get("start_time") or "",
-        "end_time": w.get("endTime") or w.get("end_time") or "",
+        "start_time": w.get("start_time") or w.get("start_time") or "",
+        "end_time": w.get("end_time") or w.get("end_time") or "",
         "exercise_count": len(
             w.get("exercises", []) if isinstance(w.get("exercises"), list) else []
         ),
     }
+
 
 def _infer_fatigue(workout: dict) -> dict:
     fatigue = {
@@ -120,7 +139,7 @@ def _infer_fatigue(workout: dict) -> dict:
     for ex in exercises:
         if not isinstance(ex, dict):
             continue
-        tpid = str(ex.get("exerciseTemplateId") or "")
+        tpid = str(ex.get("exercise_template_id") or "")
         if tpid == "D04AC939":
             fatigue["legs"] = "high"
             fatigue["posterior_chain"] = "medium"
@@ -135,6 +154,7 @@ def _infer_fatigue(workout: dict) -> dict:
         elif tpid == "8347DFD1":
             fatigue["shoulders_arms"] = "high"
     return fatigue
+
 
 def _best_set(rows: list[dict]) -> dict | None:
     best = None
@@ -159,6 +179,7 @@ def _best_set(rows: list[dict]) -> dict | None:
             }
     return best
 
+
 def _safe_float(v) -> float | None:
     if v is None:
         return None
@@ -166,6 +187,7 @@ def _safe_float(v) -> float | None:
         return float(v)
     except (ValueError, TypeError):
         return None
+
 
 def _safe_int(v) -> int | None:
     if v is None:
@@ -175,15 +197,17 @@ def _safe_int(v) -> int | None:
     except (ValueError, TypeError):
         return None
 
+
 def main() -> int:
     try:
-        payload = asyncio.run(fetch())
+        payload = fetch()
         json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         return 0
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

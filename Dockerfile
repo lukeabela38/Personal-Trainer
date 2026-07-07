@@ -16,12 +16,6 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/.local sh
 ENV PATH="/app/.local:${PATH}"
 
-# Install Node.js 26 for Hevy MCP server
-RUN curl -fsSL https://deb.nodesource.com/setup_26.x -o /tmp/nodesetup.sh \
-    && bash /tmp/nodesetup.sh \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/* /tmp/nodesetup.sh
-
 WORKDIR /app
 
 # Copy and install the personal_trainer package
@@ -34,10 +28,7 @@ COPY Makefile Makefile
 RUN pip install -e personal_trainer/ --quiet \
     && pip install ruff garminconnect --quiet
 
-# Pre-cache MCP environments for faster first use
-RUN uvx --python 3.12 --from git+https://github.com/Taxuspt/garmin_mcp garmin-mcp --help > /dev/null 2>&1 || true
-RUN npx -y -p node@26 -p hevy-mcp hevy-mcp --help > /dev/null 2>&1 || true
-RUN uvx cronometer-api-mcp --help > /dev/null 2>&1 || true
+# Pre-cache for pip (no MCP servers needed — all wrappers use direct APIs)
 
 # Set ownership and switch to non-root user
 RUN chown -R appuser:appgroup /app /app/.local
