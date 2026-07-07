@@ -13,7 +13,13 @@ def _valid_snapshot() -> dict:
     return {
         "snapshot_date": "2026-07-06",
         "timezone": "Europe/Malta",
-        "athlete": {"age": 28, "height_cm": 188},
+        "athlete": {
+            "age": 28,
+            "height_cm": 188,
+            "body_weight_kg": 83.5,
+            "current_block": "hybrid_aggressive",
+            "current_vo2max_waypoint": 52,
+        },
         "garmin": {
             "freshness": "fresh",
             "current_vo2max": 51,
@@ -83,7 +89,13 @@ class SnapshotContractTests(unittest.TestCase):
                 {
                     "snapshot_date": "2026-07-02",
                     "timezone": "Europe/Malta",
-                    "athlete": {},
+                    "athlete": {
+                        "age": 28,
+                        "height_cm": 188,
+                        "body_weight_kg": 83.5,
+                        "current_block": "hybrid_aggressive",
+                        "current_vo2max_waypoint": 52,
+                    },
                     "garmin": {},
                     "hevy": {},
                     "cronometer": {},
@@ -183,6 +195,18 @@ class SnapshotContractTests(unittest.TestCase):
         snap = _valid_snapshot()
         snap["snapshot_date"] = 20260706
         with self.assertRaisesRegex(ValueError, "snapshot_date"):
+            _validate_snapshot(snap)
+
+    def test_rejects_invalid_athlete_block(self) -> None:
+        snap = _valid_snapshot()
+        snap["athlete"]["current_block"] = "marathon_peak"
+        with self.assertRaisesRegex(ValueError, "athlete.current_block"):
+            _validate_snapshot(snap)
+
+    def test_rejects_non_numeric_athlete_weight(self) -> None:
+        snap = _valid_snapshot()
+        snap["athlete"]["body_weight_kg"] = "eighty-three"
+        with self.assertRaisesRegex(ValueError, "athlete.body_weight_kg"):
             _validate_snapshot(snap)
 
     def test_allows_nullable_nutrition_fields(self) -> None:

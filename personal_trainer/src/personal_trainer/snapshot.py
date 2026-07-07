@@ -15,6 +15,16 @@ DEFAULT_ATHLETE = {
     "current_vo2max_waypoint": 52,
 }
 
+_VALID_ATHLETE_BLOCKS = frozenset(
+    {
+        "hybrid_aggressive",
+        "hybrid_balanced",
+        "run_focus",
+        "strength_focus",
+        "recovery",
+    }
+)
+
 
 def build_snapshot(
     sources: dict[str, SourcePayload],
@@ -24,7 +34,7 @@ def build_snapshot(
     athlete: dict[str, Any] | None = None,
 ) -> Snapshot:
     """Normalize source payloads into the data snapshot contract."""
-    normalized_athlete = DEFAULT_ATHLETE | (athlete or sources.get("athlete", {}))
+    normalized_athlete = _normalize_athlete(athlete or sources.get("athlete", {}))
     garmin = _normalize_garmin(sources.get("garmin", {}))
     hevy = _normalize_hevy(sources.get("hevy", {}))
     cronometer = _normalize_cronometer(sources.get("cronometer", {}))
@@ -41,6 +51,26 @@ def build_snapshot(
         "derived": derived,
     }
     return _validate_snapshot(snapshot)
+
+
+def _normalize_athlete(raw: SourcePayload) -> SourcePayload:
+    athlete = DEFAULT_ATHLETE | raw
+    if not isinstance(athlete.get("age"), int) or isinstance(athlete.get("age"), bool):
+        raise ValueError("athlete.age must be an integer")
+    if not isinstance(athlete.get("height_cm"), int) or isinstance(athlete.get("height_cm"), bool):
+        raise ValueError("athlete.height_cm must be an integer")
+    if not isinstance(athlete.get("body_weight_kg"), (int, float)) or isinstance(
+        athlete.get("body_weight_kg"), bool
+    ):
+        raise ValueError("athlete.body_weight_kg must be a number")
+    if not isinstance(athlete.get("current_block"), str):
+        raise ValueError("athlete.current_block must be a string")
+    _check_in(athlete["current_block"], _VALID_ATHLETE_BLOCKS, "athlete.current_block")
+    if not isinstance(athlete.get("current_vo2max_waypoint"), int) or isinstance(
+        athlete.get("current_vo2max_waypoint"), bool
+    ):
+        raise ValueError("athlete.current_vo2max_waypoint must be an integer")
+    return athlete
 
 
 def _normalize_garmin(raw: SourcePayload) -> SourcePayload:
@@ -289,6 +319,18 @@ def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
         raise ValueError("snapshot_date must be a string")
     if not isinstance(snapshot.get("timezone"), str):
         raise ValueError("timezone must be a string")
+
+    athlete = snapshot["athlete"]
+    for key in ("age", "height_cm", "current_vo2max_waypoint"):
+        if not isinstance(athlete.get(key), int) or isinstance(athlete.get(key), bool):
+            raise ValueError(f"athlete.{key} must be an integer")
+    if not isinstance(athlete.get("body_weight_kg"), (int, float)) or isinstance(
+        athlete.get("body_weight_kg"), bool
+    ):
+        raise ValueError("athlete.body_weight_kg must be a number")
+    if not isinstance(athlete.get("current_block"), str):
+        raise ValueError("athlete.current_block must be a string")
+    _check_in(athlete["current_block"], _VALID_ATHLETE_BLOCKS, "athlete.current_block")
 
     derived = snapshot["derived"]
     required_derived = (

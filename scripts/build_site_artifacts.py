@@ -4,8 +4,15 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 from pathlib import Path
 from typing import Any
+
+_PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "personal_trainer" / "src"
+if str(_PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PACKAGE_ROOT))
+
+from personal_trainer.snapshot import _validate_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -32,27 +39,33 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    snapshot = _load_json(args.snapshot)
-    output_dir = args.output_dir
-    output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / "data").mkdir(parents=True, exist_ok=True)
+    try:
+        snapshot = _load_json(args.snapshot)
+        _validate_snapshot(snapshot)
+        output_dir = args.output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "data").mkdir(parents=True, exist_ok=True)
 
-    _copy_site_shell(args.site_dir, output_dir)
-    (output_dir / "data" / "snapshot.json").write_text(
-        json.dumps(snapshot, indent=2),
-        encoding="utf-8",
-    )
-    (output_dir / "raw.json").write_text(
-        json.dumps(snapshot, indent=2), encoding="utf-8"
-    )
-    (output_dir / "strength.json").write_text(
-        json.dumps(_build_strength_view(snapshot), indent=2),
-        encoding="utf-8",
-    )
-    (output_dir / "speed.json").write_text(
-        json.dumps(_build_speed_view(snapshot), indent=2),
-        encoding="utf-8",
-    )
+        _copy_site_shell(args.site_dir, output_dir)
+        (output_dir / "data" / "snapshot.json").write_text(
+            json.dumps(snapshot, indent=2),
+            encoding="utf-8",
+        )
+        (output_dir / "raw.json").write_text(
+            json.dumps(snapshot, indent=2), encoding="utf-8"
+        )
+        (output_dir / "strength.json").write_text(
+            json.dumps(_build_strength_view(snapshot), indent=2),
+            encoding="utf-8",
+        )
+        (output_dir / "speed.json").write_text(
+            json.dumps(_build_speed_view(snapshot), indent=2),
+            encoding="utf-8",
+        )
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
     print(output_dir)
     return 0
 
