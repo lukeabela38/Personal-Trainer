@@ -25,7 +25,7 @@ Implications:
 Decision:
 
 - The daily recommendation uses explicit decision rules in `recommendation.py`, not a learned model or weighted scoring system.
-- Priority order: recovery > nutrition_repair > table_tennis_readiness > aerobic_quality > aerobic_base > strength_progression.
+- Priority order: recovery > nutrition_repair > table_tennis_readiness > power_and_athleticism > aerobic_quality > aerobic_base > strength_progression.
 
 Reason:
 

@@ -180,6 +180,7 @@ Contributors should follow `.github/PULL_REQUEST_TEMPLATE.md` and use issue temp
 - Keep cards narrow: one behavior, one source adapter, or one page per card
 - Do not combine contract changes with UI work unless the card is explicitly about integration
 - Avoid committing personal raw data, API keys, tokens, or `.garminconnect` files
+- When reporting live external data, treat every result as time-stamped and source-specific; do not generalize from stale artifacts or older runs, and re-run the source command before claiming current state changed.
 
 ## Project Board
 

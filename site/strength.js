@@ -4,6 +4,7 @@ const strengthUrl = new URL("./strength.json", import.meta.url);
 const grid = document.getElementById("strength-grid");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
+const summaryEl = document.getElementById("strength-summary");
 const controls = document.getElementById("strength-controls");
 const filterPills = document.getElementById("filter-pills");
 const sortButtons = document.querySelectorAll(".sort-btn");
@@ -28,11 +29,16 @@ async function loadStrength() {
     statusBanner.classList.remove("skeleton");
     entries = payload.entries;
     renderControls();
-    loadGains().then(() => renderGrid());
+    renderSummary();
+    loadGains().then(() => {
+      renderSummary();
+      renderGrid();
+    });
     controls.removeAttribute("hidden");
   } catch {
     sourceLabel.textContent = "Unavailable";
     statusBanner.textContent = "Could not load strength data";
+    if (summaryEl) summaryEl.innerHTML = "";
     grid.innerHTML = `<div class="item"><span>Strength</span><strong>Failed to load data</strong></div>`;
   }
 }
@@ -82,6 +88,59 @@ function renderControls() {
       renderGrid();
     });
   }
+}
+
+function renderSummary() {
+  if (!summaryEl) return;
+  if (!entries.length) {
+    summaryEl.innerHTML = "";
+    return;
+  }
+
+  const categories = new Set(entries.map((e) => e.category).filter(Boolean));
+  const topEntry = [...entries].reduce((best, entry) => {
+    const current = entry.estimated_one_rm_kg ?? entry.best_set?.weight_kg ?? 0;
+    const bestValue = best?.estimated_one_rm_kg ?? best?.best_set?.weight_kg ?? 0;
+    return current > bestValue ? entry : best;
+  }, entries[0]);
+  const latestDate = [...entries]
+    .map((entry) => entry.best_set?.workout_start_date ?? "")
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+
+  summaryEl.innerHTML = [
+    {
+      label: "Exercises",
+      value: `${entries.length}`,
+      subvalue: "Loaded from Hevy history",
+    },
+    {
+      label: "Categories",
+      value: `${categories.size}`,
+      subvalue: "Push, pull, lower, accessory",
+    },
+    {
+      label: "Top 1RM",
+      value: `${fmtNum(topEntry?.estimated_one_rm_kg ?? topEntry?.best_set?.weight_kg ?? 0)} kg`,
+      subvalue: topEntry?.name ?? "Highest current estimate",
+    },
+    {
+      label: "Latest record",
+      value: latestDate ?? "Unknown date",
+      subvalue: "Most recent best set",
+    },
+  ]
+    .map(
+      (tile) => `
+        <div class="summary-tile">
+          <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
+          <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+        </div>
+      `,
+    )
+    .join("");
 }
 
 function toggleView() {

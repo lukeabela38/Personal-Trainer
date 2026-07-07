@@ -82,17 +82,10 @@
   min-width: 0;
   cursor: pointer;
 }
-  border-radius: 16px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border);
-  transition: border-color 0.15s, background 0.15s;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-.exercise-card:hover { background: rgba(255, 255, 255, 0.04); }
+.exercise-card:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(127, 209, 185, 0.22); }
+
+.strength-summary { margin-bottom: 14px; }
+.strength-summary .summary-tile-value { font-size: 1rem; }
 
 .exercise-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .exercise-name { font-size: 0.95rem; font-weight: 700; line-height: 1.3; }

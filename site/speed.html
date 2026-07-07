@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer - Speed</title>
-  <link rel="stylesheet" href="./styles.css?v=6" />
-  <link rel="stylesheet" href="./speed.css?v=4" />
+  <link rel="stylesheet" href="./styles.css?v=7" />
+  <link rel="stylesheet" href="./speed.css?v=5" />
 </head>
 <body>
   <nav class="bottom-nav">
@@ -22,17 +22,6 @@
         <h1>Speed</h1>
         <p class="lede">Personal bests for running, surfaced from Garmin data.</p>
       </div>
-      <div class="header-actions">
-        <details class="nav-menu">
-          <summary class="button secondary">Views</summary>
-          <div class="nav-menu-panel">
-            <a class="button secondary" href="./index.html">Dashboard</a>
-            <a class="button secondary" href="./strength.html">Strength</a>
-            <a class="button secondary" href="./speed.html">Speed</a>
-            <a class="button secondary" href="./progress.html">Progress</a>
-          </div>
-        </details>
-      </div>
     </header>
 
     <section class="card shell-panel">
@@ -43,6 +32,8 @@
         </div>
         <span class="status-banner skeleton" id="status-banner" style="width:80px;height:28px">Waiting</span>
       </div>
+
+      <div id="speed-summary" class="summary-strip speed-summary"></div>
 
       <div id="speed-goals" class="stat-groups" hidden></div>
 
@@ -57,6 +48,6 @@
       navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
   </script>
-  <script type="module" src="./speed.js?v=5"></script>
+  <script type="module" src="./speed.js?v=6"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@ import { renderSparkline, fmtNum } from "./goals.js";
 const snapshotUrl = new URL("./data/snapshot.json", import.meta.url);
 const grid = document.getElementById("progress-grid");
 const trendEl = document.getElementById("progress-trend");
+const summaryEl = document.getElementById("progress-summary");
 const sourceLabel = document.getElementById("source-label");
 const statusBanner = document.getElementById("status-banner");
 const dateFrom = document.getElementById("date-from");
@@ -25,6 +26,7 @@ async function loadProgress() {
   } catch {
     sourceLabel.textContent = "Unavailable";
     statusBanner.textContent = "Could not load snapshot data";
+    if (summaryEl) summaryEl.innerHTML = "";
     grid.innerHTML = `<div class="item"><span>Progress</span><strong>Failed to load data</strong></div>`;
   }
 }
@@ -121,6 +123,13 @@ function renderProgress(snapshot) {
     deltaRow("Running bests", summarizeBests(previous), summarizeBests(snapshot)),
   ].filter(Boolean);
 
+  renderSummaryStrip([
+    summaryTile("Latest", snapshot.snapshot_date ?? "Unknown date", snapshot.source ?? "Snapshot"),
+    summaryTile("Baseline", previous.snapshot_date ?? "Previous snapshot", previous.snapshot_date ? "Stored locally" : "No prior snapshot"),
+    summaryTile("Changes", rows.length ? `${rows.length} changed` : "No changes", rows.length ? "Compared with previous snapshot" : "Nothing moved"),
+    summaryTile("Running bests", summarizeBests(snapshot), "Strength / running"),
+  ]);
+
   statusBanner.textContent = rows.length ? `${rows.length} changes` : "No changes detected";
   grid.innerHTML = rows.length
     ? rows.map((row) => `
@@ -186,7 +195,31 @@ function shouldRenderValue(value) {
 
 function formatValue(value) {
   if (!shouldRenderValue(value)) return "-";
-  return String(value);
+  return String(value)
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replace(/(^|\s)\S/g, (match) => match.toUpperCase());
+}
+
+function summaryTile(label, value, subvalue) {
+  return { label, value, subvalue };
+}
+
+function renderSummaryStrip(tiles) {
+  if (!summaryEl) return;
+  summaryEl.innerHTML = tiles
+    .map(
+      (tile) => `
+        <div class="summary-tile">
+          <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
+          <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+        </div>
+      `,
+    )
+    .join("");
 }
 
 async function setupDatePickers() {
@@ -225,6 +258,12 @@ function renderComparison(fromDate, snapA, toDate, snapB) {
     deltaRow("Remaining kcal", readNumber(prev, ["cronometer", "today", "remaining_kcal"]), readNumber(current, ["cronometer", "today", "remaining_kcal"])),
     deltaRow("Strength trend", readText(prev, ["hevy", "strength_trend"]), readText(current, ["hevy", "strength_trend"])),
   ].filter(Boolean);
+  renderSummaryStrip([
+    summaryTile("Range", `${fromDate} → ${toDate}`, "Selected comparison window"),
+    summaryTile("Baseline", prev.snapshot_date ?? fromDate, prev.snapshot_date ? "Earlier snapshot" : "Selected start date"),
+    summaryTile("Changes", rows.length ? `${rows.length} changed` : "No changes", rows.length ? "Differences detected" : "Matched exactly"),
+    summaryTile("Running bests", summarizeBests(current), "Current snapshot"),
+  ]);
   statusBanner.textContent = rows.length ? `${rows.length} changes` : "No changes";
   grid.innerHTML = rows.length
     ? rows.map((row) => `
