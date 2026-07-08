@@ -6,6 +6,12 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 Dockerized full pipeline run with Python 3.12.
 
+## Food Logging Shell
+
+- Added a compact food logging shell with item, timestamp, timing tags, and a barcode placeholder.
+- Food entries persist locally and render a short today summary so later fueling rules can reason about timing windows.
+- Validation passed with `node --check site/app.js`, `git diff --check`, and `docker compose run --rm app python3 scripts/build_site_artifacts.py`.
+
 ## Milestone 1
 
 - Built the daily guidance shell on the home screen so the recommendation is now presented as a compact focus card with next action, fueling, confidence, and check-in cues.

@@ -7,6 +7,13 @@ const historySections = document.getElementById("history-sections");
 const statGroups = document.getElementById("stat-groups");
 const statusBanner = document.getElementById("status-banner");
 const freshnessBar = document.getElementById("freshness-bar");
+const foodSummary = document.getElementById("food-summary");
+const foodHelp = document.getElementById("food-help");
+const foodStatus = document.getElementById("food-status");
+const foodList = document.getElementById("food-list");
+const foodItem = document.getElementById("food-item");
+const foodTime = document.getElementById("food-time");
+const foodBarcode = document.getElementById("food-barcode");
 const sessionSummary = document.getElementById("session-summary");
 const sessionHelp = document.getElementById("session-help");
 const sessionStatus = document.getElementById("session-status");
@@ -23,6 +30,8 @@ const state = {
   currentPriority: null,
   previousSnapshot: readStoredSnapshot(),
   completedSessions: readCompletedSessions(),
+  foodEntries: readFoodEntries(),
+  foodTiming: readFoodTiming(),
   sessionContext: readSessionContext(),
   goals: loadGoals(),
 };
@@ -30,8 +39,12 @@ const state = {
 document.getElementById("file-input").addEventListener("change", handleFile);
 document.getElementById("open-raw").addEventListener("click", openRawView);
 document.getElementById("load-history").addEventListener("click", loadHistory);
+document.getElementById("add-food-entry").addEventListener("click", addFoodEntry);
+document.getElementById("reset-food-form").addEventListener("click", resetFoodForm);
+document.getElementById("scan-barcode").addEventListener("click", focusBarcodeInput);
 if (sessionTime) sessionTime.addEventListener("change", handleSessionTimeChange);
 renderSessionShell();
+renderFoodShell();
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
 
 async function loadHistory() {
@@ -110,6 +123,7 @@ function renderPayload(payload, sourceLabel) {
 }
 
 function renderEmptyState() {
+  renderFoodShell();
   renderSessionShell();
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
@@ -127,6 +141,60 @@ function renderEmptyState() {
   state.currentPayload = null;
   state.currentPriority = null;
   clearStoredSnapshot();
+}
+
+function renderFoodShell() {
+  const entries = state.foodEntries ?? [];
+  const today = new Date().toISOString().slice(0, 10);
+  const todayEntries = entries.filter((entry) => entry.date === today);
+  const latest = todayEntries[todayEntries.length - 1];
+  const summary = latest ? `${todayEntries.length} logged today` : "0 entries today";
+  const help = latest
+    ? `Latest: ${latest.item} · ${formatFoodTimingLabel(latest.timing)} · ${formatFoodTimeLabel(latest.time)}`
+    : "Log meals and snacks as you go. Add a time and timing tag so the app can later reason about fuel before, during, or after training.";
+
+  if (foodSummary) foodSummary.textContent = latest ? latest.item : "No food logged yet";
+  if (foodHelp) foodHelp.textContent = help;
+  if (foodStatus) foodStatus.textContent = summary;
+  if (foodList) foodList.innerHTML = renderFoodList(todayEntries);
+  if (foodTime && !foodTime.value) foodTime.value = formatDateTimeLocal(new Date());
+
+  document.querySelectorAll("[data-food-timing]").forEach((button) => {
+    const active = button.dataset.foodTiming === (state.foodTiming ?? "flexible");
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function addFoodEntry() {
+  const item = foodItem?.value.trim() ?? "";
+  if (!item) return;
+  const entry = normalizeFoodEntry({
+    item,
+    time: foodTime?.value || formatDateTimeLocal(new Date()),
+    barcode: foodBarcode?.value.trim() ?? "",
+    timing: state.foodTiming ?? "flexible",
+  });
+  state.foodEntries = [...state.foodEntries, entry].slice(-50);
+  persistFoodEntries(state.foodEntries);
+  resetFoodForm(false);
+  renderFoodShell();
+}
+
+function resetFoodForm(clearTiming = true) {
+  if (foodItem) foodItem.value = "";
+  if (foodBarcode) foodBarcode.value = "";
+  if (foodTime) foodTime.value = formatDateTimeLocal(new Date());
+  if (clearTiming) {
+    state.foodTiming = "flexible";
+    persistFoodTiming(state.foodTiming);
+  }
+  renderFoodShell();
+  foodItem?.focus();
+}
+
+function focusBarcodeInput() {
+  foodBarcode?.focus();
 }
 
 function renderSessionShell() {
@@ -245,6 +313,35 @@ function renderGuidanceTiles({ priority, session, nutrition, snapshotDate }) {
     .join("");
 }
 
+function renderFoodList(entries) {
+  if (!entries.length) {
+    return `
+      <div class="food-empty">
+        <p class="muted">No entries today.</p>
+        <p class="muted">Add your first meal or snack to start building a timing history.</p>
+      </div>
+    `;
+  }
+  return entries
+    .slice()
+    .reverse()
+    .map(
+      (entry) => `
+        <div class="food-entry">
+          <div class="food-entry-main">
+            <strong>${escapeHtml(entry.item)}</strong>
+            <span>${escapeHtml(formatFoodTimingLabel(entry.timing))}</span>
+          </div>
+          <div class="food-entry-meta">
+            <span>${escapeHtml(formatFoodTimeLabel(entry.time))}</span>
+            ${entry.barcode ? `<span>Barcode: ${escapeHtml(entry.barcode)}</span>` : ""}
+          </div>
+        </div>
+      `,
+    )
+    .join("");
+}
+
 function renderGuidanceTilesEmpty() {
   return renderGuidanceTiles({
     priority: "Waiting for snapshot",
@@ -293,6 +390,30 @@ function formatSentenceValue(value) {
   if (!text) return "Unknown";
   if (text === "-") return "-";
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function formatFoodTimingLabel(timing) {
+  const labels = {
+    flexible: "Flexible timing",
+    before: "Before training",
+    during: "During training",
+    after: "After training",
+  };
+  return labels[timing] ?? "Flexible timing";
+}
+
+function formatFoodTimeLabel(value) {
+  if (!value) return "Time not set";
+  const normalized = value.length === 16 ? `${value}:00` : value;
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return "Time not set";
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function formatDateTimeLocal(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
 }
 
 function formatSessionModeLabel(mode) {
@@ -500,6 +621,14 @@ try {
 } catch {}
 
 document.addEventListener("click", (e) => {
+  const foodTimingButton = e.target.closest("[data-food-timing]");
+  if (foodTimingButton) {
+    state.foodTiming = foodTimingButton.dataset.foodTiming ?? "flexible";
+    persistFoodTiming(state.foodTiming);
+    renderFoodShell();
+    return;
+  }
+
   const modeButton = e.target.closest("[data-session-mode]");
   if (modeButton) {
     updateSessionContext({ mode: modeButton.dataset.sessionMode ?? "none" });
@@ -524,6 +653,17 @@ document.addEventListener("click", (e) => {
     state.completedSessions.push(session);
     persistCompletedSessions(state.completedSessions);
     recActions.innerHTML = renderSessionLog(priority);
+  }
+  if (e.target.id === "add-food-entry") {
+    addFoodEntry();
+    return;
+  }
+  if (e.target.id === "reset-food-form") {
+    resetFoodForm();
+    return;
+  }
+  if (e.target.id === "scan-barcode") {
+    focusBarcodeInput();
   }
 });
 
@@ -944,6 +1084,47 @@ function clearStoredSnapshot() {
   try {
     localStorage.removeItem("personal-trainer:last-snapshot");
   } catch {}
+}
+
+function persistFoodEntries(entries) {
+  try {
+    localStorage.setItem("personal-trainer:food-entries", JSON.stringify(entries.slice(-50)));
+  } catch {}
+}
+
+function readFoodEntries() {
+  try {
+    const raw = localStorage.getItem("personal-trainer:food-entries");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeFoodEntry).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistFoodTiming(timing) {
+  try {
+    localStorage.setItem("personal-trainer:food-timing", timing);
+  } catch {}
+}
+
+function readFoodTiming() {
+  try {
+    const raw = localStorage.getItem("personal-trainer:food-timing");
+    return ["flexible", "before", "during", "after"].includes(raw) ? raw : "flexible";
+  } catch {
+    return "flexible";
+  }
+}
+
+function normalizeFoodEntry(raw) {
+  const item = typeof raw?.item === "string" ? raw.item.trim() : "";
+  if (!item) return null;
+  const timing = ["flexible", "before", "during", "after"].includes(raw?.timing) ? raw.timing : "flexible";
+  const time = typeof raw?.time === "string" ? raw.time : "";
+  const barcode = typeof raw?.barcode === "string" ? raw.barcode.trim() : "";
+  const date = typeof raw?.date === "string" ? raw.date : time.slice(0, 10) || new Date().toISOString().slice(0, 10);
+  return { item, timing, time, barcode, date };
 }
 
 function persistSessionContext(context) {
