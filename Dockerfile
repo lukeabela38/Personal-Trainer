@@ -10,6 +10,9 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     curl \
     ca-certificates \
     git \
+    libatomic1 \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv (provides uvx for Garmin and Cronometer MCP servers)

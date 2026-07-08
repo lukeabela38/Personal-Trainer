@@ -66,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         recommendation = build_daily_recommendation(snapshot)
         _write_json(args.snapshot_output, {**snapshot, "recommendation": recommendation})
         _build_site_artifacts(args.snapshot_output, args.site_output)
+        _build_history_artifacts(args.site_output)
         print(args.site_output)
         return 0
     except (
@@ -123,6 +124,31 @@ def _build_site_artifacts(snapshot_path: Path, site_output: Path) -> None:
         str(site_output),
     ]
     subprocess.run(command, check=True, env=_with_pythonpath())
+
+
+def _build_history_artifacts(site_output: Path) -> None:
+    strength_output = site_output / "strength.json"
+    speed_output = site_output / "speed.json"
+    subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "strength_report.py"),
+            "--output",
+            str(strength_output),
+        ],
+        check=True,
+        env=_with_pythonpath(),
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "speed_report.py"),
+            "--output",
+            str(speed_output),
+        ],
+        check=True,
+        env=_with_pythonpath(),
+    )
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:

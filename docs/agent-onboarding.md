@@ -71,15 +71,25 @@ When a task touches live external data, keep the report tied to the exact comman
 
 ## Local Commands
 
+Prefer Docker for Python 3.12 runs. Use local Python only as a fallback when Docker is unavailable.
+
 - `./scripts/serve_site.sh`
-- `python3 ./scripts/build_site_artifacts.py`
-- `python3 ./scripts/daily_snapshot_runner.py`
+- `docker compose run --rm app python3 scripts/build_site_artifacts.py`
+- `docker compose run --rm app python3 scripts/daily_snapshot_runner.py`
 - `python3 ./scripts/wrappers/fetch_garmin.py`
 - `python3 ./scripts/wrappers/fetch_hevy.py`
 - `python3 ./scripts/wrappers/fetch_cronometer.py`
 - `python3 ./scripts/wrappers/fetch_manual.py`
 - `python3 ./scripts/wrappers/fetch_garmin_speed.py`
 - `python3 ./scripts/wrappers/fetch_hevy_strength.py`
+
+The published Speed view expects Garmin personal records to be normalized into readable paces and distances during the build step, so do not surface raw float seconds/meters in the UI.
+
+Do not commit bulk history snapshot archives. When the progress/history UI needs examples, generate them locally with:
+
+```bash
+docker compose run --rm app python3 scripts/generate_history.py
+```
 
 ## MCP Wrapper Testing Protocol
 

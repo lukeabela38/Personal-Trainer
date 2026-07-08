@@ -19,16 +19,16 @@ from scripts.mcp_client import McpError, call_tool
 
 GARMIN_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_GARMIN_MCP_COMMAND",
-    "/opt/homebrew/bin/uvx --python 3.12 --from git+https://github.com/Taxuspt/garmin_mcp garmin-mcp",
+    "uvx --python 3.12 --from git+https://github.com/Taxuspt/garmin_mcp garmin-mcp",
 )
 
 RUN_RECORD_TYPES = {
-    "Fastest 1K",
-    "Fastest Mile",
-    "Fastest 5K",
-    "Fastest 10K",
-    "Fastest Half Marathon",
-    "Longest Run",
+    1: "Fastest 1K",
+    2: "Fastest Mile",
+    3: "Fastest 5K",
+    4: "Fastest 10K",
+    5: "Fastest Half Marathon",
+    7: "Longest Run",
 }
 
 async def fetch() -> dict:
@@ -52,7 +52,7 @@ async def _fetch_direct(email: str, password: str) -> dict:
         client = Garmin({json.dumps(email)}, {json.dumps(password)})
         client.login()
         try:
-            records = client.get_personal_records()
+            records = client.get_personal_record()
             print(json.dumps(records if isinstance(records, list) else []))
         except Exception as e:
             print(json.dumps({{"error": str(e)}}))
@@ -106,14 +106,8 @@ def _extract_records(source) -> list[dict]:
     for entry in source:
         if not isinstance(entry, dict):
             continue
-        record_type = str(
-            entry.get("record_type")
-            or entry.get("recordType")
-            or entry.get("name")
-            or entry.get("activityName")
-            or ""
-        )
-        if record_type not in RUN_RECORD_TYPES:
+        record_type = _record_type_for_entry(entry)
+        if record_type is None:
             continue
         results.append(
             {
@@ -130,6 +124,27 @@ def _extract_records(source) -> list[dict]:
             }
         )
     return results
+
+
+def _record_type_for_entry(entry: dict) -> str | None:
+    record_type = str(
+        entry.get("record_type")
+        or entry.get("recordType")
+        or entry.get("name")
+        or entry.get("activityName")
+        or ""
+    )
+    if record_type in RUN_RECORD_TYPES.values():
+        return record_type
+
+    type_id = entry.get("typeId") or entry.get("type_id")
+    try:
+        type_id = int(type_id)
+    except (TypeError, ValueError):
+        type_id = None
+    if type_id in RUN_RECORD_TYPES:
+        return RUN_RECORD_TYPES[type_id]
+    return None
 
 def main() -> int:
     try:

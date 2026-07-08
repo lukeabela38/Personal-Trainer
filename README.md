@@ -8,7 +8,7 @@ This repository documents a personal performance system using training, nutritio
 - [Static snapshot viewer](site/index.html): local browser UI for inspecting assembled training data.
 - [Progress view](site/progress.html): compact change-since-last-snapshot summary.
 - [Strength view](site/strength.html): Hevy-backed all-time PBs and estimated 1RMs.
-- [Speed view](site/speed.html): Garmin running personal records and fastest efforts.
+- [Speed view](site/speed.html): Garmin running personal records and fastest efforts, rendered as readable paces and distances.
 
 ## How It Fits Together
 
@@ -17,6 +17,8 @@ This repository documents a personal performance system using training, nutritio
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
 
 ## Local Run
+
+Prefer Docker for Python 3.12 runs. Use local Python only if Docker is unavailable.
 
 Run local static server:
 
@@ -27,14 +29,26 @@ Run local static server:
 Build the static artifact set from one captured snapshot:
 
 ```bash
-python3 ./scripts/build_site_artifacts.py
+docker compose run --rm app python3 scripts/build_site_artifacts.py
 ```
 
 Pull live sources, build snapshot, and emit the site bundle in one pass:
 
 ```bash
-python3 ./scripts/daily_snapshot_runner.py
+docker compose run --rm app python3 scripts/daily_snapshot_runner.py
 ```
+
+This also refreshes the dedicated `strength.json` and `speed.json` history artifacts used by the `/strength` and `/speed` pages.
+The speed artifact normalizes Garmin personal records into human-readable durations and distances before publishing them.
+
+History snapshots are generated locally when needed and are not committed. To create the archive used by the progress/history UI, run:
+
+```bash
+docker compose run --rm app python3 scripts/generate_history.py
+```
+
+This writes `dist/history/` and updates `dist/history/index.json` for local browsing.
+The main snapshot payloads (`dist/data/snapshot.json` and `dist/raw.json`) are also generated locally by the build pipeline and are not meant to live in the repository.
 
 Open:
 
