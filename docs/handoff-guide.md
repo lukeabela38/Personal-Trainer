@@ -19,6 +19,7 @@ This repository builds a personal performance system for Luke.
 
 - [Global vision](./global-vision.md)
 - [App blueprint](./app-blueprint.md)
+- [Working conventions](./working-conventions.md)
 - [Performance OS charter](./performance-os-charter.md)
 - [Data snapshot contract](./data-snapshot-contract.md)
 - [Live input boundary](./live-input-boundary.md)
