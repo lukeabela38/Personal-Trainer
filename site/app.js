@@ -8,9 +8,15 @@ const statGroups = document.getElementById("stat-groups");
 const statusBanner = document.getElementById("status-banner");
 const freshnessBar = document.getElementById("freshness-bar");
 const dashboardSummary = document.getElementById("dashboard-summary");
+const guidanceTargets = document.getElementById("guidance-targets");
+const guidanceConfidence = document.getElementById("guidance-confidence");
+const guidanceCheckIn = document.getElementById("guidance-checkin");
+const guidanceDate = document.getElementById("guidance-date");
+const guidanceGuardrail = document.getElementById("guardrail");
 const recActions = document.getElementById("rec-actions");
 const state = {
   currentPayload: null,
+  currentPriority: null,
   previousSnapshot: readStoredSnapshot(),
   completedSessions: readCompletedSessions(),
   goals: loadGoals(),
@@ -100,12 +106,18 @@ function renderEmptyState() {
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
   freshnessBar.innerHTML = "";
-  if (dashboardSummary) dashboardSummary.innerHTML = "";
+  if (dashboardSummary) dashboardSummary.innerHTML = renderGuidanceTilesEmpty();
+  if (guidanceTargets) guidanceTargets.innerHTML = renderGuidanceTargetsEmpty();
+  if (guidanceConfidence) guidanceConfidence.textContent = "Confidence: -";
+  if (guidanceCheckIn) guidanceCheckIn.textContent = "Check in: -";
+  if (guidanceDate) guidanceDate.textContent = "Latest snapshot";
+  if (guidanceGuardrail) guidanceGuardrail.textContent = "Load a snapshot to see the guardrail for today.";
   statGroups.innerHTML = renderStatGroupsEmpty();
   recActions.innerHTML = "";
   sections.innerHTML = "";
   statusBanner.textContent = "No file loaded";
   state.currentPayload = null;
+  state.currentPriority = null;
   clearStoredSnapshot();
 }
 
@@ -116,17 +128,39 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const manual = snapshot.manual_context ?? {};
   const derived = snapshot.derived ?? {};
   const priority = formatPriorityLabel(recommendation.Priority ?? recommendation.priority ?? "No recommendation");
-  const reason = recommendation.Reason ?? recommendation.reason ?? "No explanation available.";
+  const reason = formatSentenceValue(recommendation.Reason ?? recommendation.reason ?? "No explanation available.");
+  const session = formatSentenceValue(recommendation.Session ?? recommendation.session ?? "-");
+  const nutrition = formatSentenceValue(recommendation.Nutrition ?? recommendation.nutrition ?? "-");
+  const confidence = recommendation.Confidence ?? recommendation.confidence ?? "-";
+  const checkIn = recommendation["Needs check-in"] ?? recommendation.needs_check_in ?? "-";
+  const guardrail = formatSentenceValue(recommendation.Guardrail ?? recommendation.guardrail ?? "No guardrail available.");
 
   setText("priority", priority);
   setText("reason", reason);
   statusBanner.textContent = `${sourceLabel} loaded`;
+  state.currentPriority = priority;
 
   const macros = recommendation.Macros ?? {};
   const today = cronometer.today ?? {};
 
   freshnessBar.innerHTML = renderFreshnessBar(snapshot);
-  renderDashboardSummary(snapshot, recommendation, derived);
+  if (dashboardSummary) {
+    dashboardSummary.innerHTML = renderGuidanceTiles({
+      priority,
+      session,
+      nutrition,
+      confidence,
+      checkIn,
+      snapshotDate: snapshot.snapshot_date ?? "Latest snapshot",
+    });
+  }
+  if (guidanceTargets) {
+    guidanceTargets.innerHTML = renderGuidanceTargets(macros, today);
+  }
+  if (guidanceConfidence) guidanceConfidence.textContent = `Confidence: ${formatDisplayValue(confidence)}`;
+  if (guidanceCheckIn) guidanceCheckIn.textContent = `Check in: ${formatDisplayValue(checkIn)}`;
+  if (guidanceDate) guidanceDate.textContent = snapshot.snapshot_date ?? "Latest snapshot";
+  if (guidanceGuardrail) guidanceGuardrail.textContent = guardrail;
   statGroups.innerHTML = [
     renderRecGroup(recommendation, derived),
     renderNutritionGroup(macros, today),
@@ -148,16 +182,14 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   persistSnapshot(snapshot);
 }
 
-function renderDashboardSummary(snapshot, recommendation, derived) {
-  if (!dashboardSummary) return;
-  const rec = recommendation ?? {};
+function renderGuidanceTiles({ priority, session, nutrition, snapshotDate }) {
   const tiles = [
-    { label: "Priority", value: formatDisplayValue(rec.Priority ?? rec.priority ?? "Unknown"), subvalue: snapshot.snapshot_date ?? "Latest snapshot" },
-    { label: "Check-in", value: formatDisplayValue(rec["Needs check-in"] ?? rec.needs_check_in ?? "-"), subvalue: "Decision data" },
-    { label: "Data quality", value: formatDisplayValue(derived.data_quality ?? "-"), subvalue: "Snapshot completeness" },
-    { label: "Confidence", value: formatDisplayValue(rec.Confidence ?? rec.confidence ?? "-"), subvalue: "Recommendation strength" },
+    { label: "Focus", value: priority, subvalue: "Today" },
+    { label: "Next action", value: session, subvalue: "Session" },
+    { label: "Fueling", value: nutrition, subvalue: "Nutrition" },
+    { label: "Snapshot", value: snapshotDate, subvalue: "Latest data" },
   ];
-  dashboardSummary.innerHTML = tiles
+  return tiles
     .map(
       (tile) => `
         <div class="summary-tile">
@@ -168,6 +200,56 @@ function renderDashboardSummary(snapshot, recommendation, derived) {
       `,
     )
     .join("");
+}
+
+function renderGuidanceTilesEmpty() {
+  return renderGuidanceTiles({
+    priority: "Waiting for snapshot",
+    session: "-",
+    nutrition: "-",
+    snapshotDate: "Latest snapshot",
+  });
+}
+
+function renderGuidanceTargets(macros, today) {
+  const targetItems = [
+    { label: "Calories", value: formatMacroTarget(macros.calories, "kcal"), current: formatMacroCurrent(today.calories_consumed, "kcal") },
+    { label: "Protein", value: formatMacroTarget(macros.protein_g, "g"), current: formatMacroCurrent(today.protein_g, "g") },
+    { label: "Carbs", value: formatMacroTarget(macros.carbs_g, "g"), current: formatMacroCurrent(today.carbs_g, "g") },
+    { label: "Fat", value: formatMacroTarget(macros.fat_g, "g"), current: formatMacroCurrent(today.fat_g, "g") },
+  ];
+  return targetItems
+    .map(
+      (tile) => `
+        <div class="target-pill">
+          <span class="target-pill-label">${escapeHtml(tile.label)}</span>
+          <strong class="target-pill-value">${escapeHtml(tile.value)}</strong>
+          <span class="target-pill-current">${escapeHtml(tile.current)}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function renderGuidanceTargetsEmpty() {
+  return renderGuidanceTargets({}, {});
+}
+
+function formatMacroTarget(value, unit) {
+  if (value == null || value === "") return "-";
+  return `${fmtNum(value)} ${unit}`;
+}
+
+function formatMacroCurrent(value, unit) {
+  if (value == null || value === "") return "No intake yet";
+  return `${fmtNum(value)} ${unit} logged`;
+}
+
+function formatSentenceValue(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "Unknown";
+  if (text === "-") return "-";
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /* ── Freshness bar ── */
@@ -295,7 +377,7 @@ function macroBar(label, consumed, target) {
 
 function renderSessionLog(priority) {
   const today = new Date().toISOString().slice(0, 10);
-  const alreadyLogged = state.completedSessions.some((s) => s.date === today && s.priority === priority);
+  const alreadyLogged = state.completedSessions.some((s) => s.date === today && s.priority === (state.currentPriority ?? priority));
   const recent = state.completedSessions.slice(-5).reverse();
   const tags = recent
     .map(
@@ -324,7 +406,7 @@ document.addEventListener("click", (e) => {
     return;
   }
   if (e.target.id === "log-session") {
-    const priority = document.getElementById("priority")?.textContent;
+    const priority = state.currentPriority ?? document.getElementById("priority")?.textContent;
     if (!priority || priority === "Import a snapshot") return;
     const session = { priority, date: new Date().toISOString().slice(0, 10), time: Date.now() };
     state.completedSessions.push(session);

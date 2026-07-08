@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer</title>
-  <link rel="stylesheet" href="./styles.css?v=10" />
+  <link rel="stylesheet" href="./styles.css?v=11" />
 </head>
 <body>
   <nav class="bottom-nav">
@@ -55,17 +55,34 @@
 
       <div id="freshness-bar"></div>
 
-      <div id="dashboard-summary" class="summary-strip"></div>
-
-      <div class="rec-card" id="rec-card">
-        <div class="rec-header">
-          <p class="label">Today's Recommendation</p>
+      <section class="card guidance-shell" id="guidance-shell" aria-label="Daily guidance">
+        <div class="guidance-shell-header">
+          <div>
+            <p class="label">Today</p>
+            <h2 id="priority" class="guidance-title">Waiting for snapshot</h2>
+            <p id="reason" class="guidance-reason">Drop in a JSON snapshot file or live payload export to see the current recommendation.</p>
+          </div>
           <span class="rec-badge" id="status-banner">No file loaded</span>
         </div>
-        <h2 id="priority" class="rec-priority">Waiting for snapshot</h2>
-        <p id="reason" class="rec-reason">Drop in a JSON snapshot file or live payload export to see the current recommendation.</p>
-        <div id="rec-actions" class="rec-actions"></div>
-      </div>
+
+        <div id="dashboard-summary" class="guidance-grid"></div>
+
+        <div id="guidance-targets" class="guidance-targets"></div>
+
+        <details class="guidance-rationale">
+          <summary><span class="guidance-question">?</span><span>Why this target?</span></summary>
+          <div class="guidance-rationale-body">
+            <p id="guardrail" class="guidance-guardrail">Load a snapshot to see the guardrail for today.</p>
+            <div class="guidance-rationale-meta">
+              <span id="guidance-confidence" class="guidance-meta-pill">Confidence: -</span>
+              <span id="guidance-checkin" class="guidance-meta-pill">Check in: -</span>
+              <span id="guidance-date" class="guidance-meta-pill">Latest snapshot</span>
+            </div>
+          </div>
+        </details>
+
+        <div id="rec-actions" class="guidance-actions"></div>
+      </section>
 
       <div id="stat-groups">
         <div class="stat-group">
@@ -87,9 +104,9 @@
   </main>
   <script>
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js?v=3").catch(() => {});
+      navigator.serviceWorker.register("./sw.js?v=4").catch(() => {});
     }
   </script>
-  <script type="module" src="./app.js?v=9"></script>
+  <script type="module" src="./app.js?v=12"></script>
 </body>
 </html>
