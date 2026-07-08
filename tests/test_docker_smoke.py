@@ -20,32 +20,37 @@ class DockerSmokeTest(TestCase):
             tmp_path = Path(tmp)
             output_dir = tmp_path / "dist"
             self._write_history_source_payloads(tmp_path)
+            created_env_file = self._ensure_env_file()
 
-            self._run_command(["docker", "compose", "build", "app"])
-            self._run_command(
-                [
-                    "docker",
-                    "compose",
-                    "run",
-                    "--rm",
-                    "--no-deps",
-                    "-v",
-                    f"{tmp_path}:/tmp/out",
-                    "-e",
-                    "PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND=cat /tmp/out/hevy_strength_source.json",
-                    "-e",
-                    "PERSONAL_TRAINER_GARMIN_SPEED_COMMAND=cat /tmp/out/garmin_speed_source.json",
-                    "app",
-                    "python3",
-                    "scripts/daily_snapshot_runner.py",
-                    "--sources-file",
-                    "personal_trainer/examples/sources-ready.json",
-                    "--snapshot-output",
-                    "/tmp/out/snapshot.json",
-                    "--site-output",
-                    "/tmp/out/dist",
-                ]
-            )
+            try:
+                self._run_command(["docker", "compose", "build", "app"])
+                self._run_command(
+                    [
+                        "docker",
+                        "compose",
+                        "run",
+                        "--rm",
+                        "--no-deps",
+                        "-v",
+                        f"{tmp_path}:/tmp/out",
+                        "-e",
+                        "PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND=cat /tmp/out/hevy_strength_source.json",
+                        "-e",
+                        "PERSONAL_TRAINER_GARMIN_SPEED_COMMAND=cat /tmp/out/garmin_speed_source.json",
+                        "app",
+                        "python3",
+                        "scripts/daily_snapshot_runner.py",
+                        "--sources-file",
+                        "personal_trainer/examples/sources-ready.json",
+                        "--snapshot-output",
+                        "/tmp/out/snapshot.json",
+                        "--site-output",
+                        "/tmp/out/dist",
+                    ]
+                )
+            finally:
+                if created_env_file:
+                    created_env_file.unlink(missing_ok=True)
 
             snapshot_path = output_dir / "data" / "snapshot.json"
             raw_path = output_dir / "raw.json"
@@ -90,6 +95,13 @@ class DockerSmokeTest(TestCase):
         (tmp_path / "garmin_speed_source.json").write_text(
             json.dumps({"result": garmin_rows}, indent=2), encoding="utf-8"
         )
+
+    def _ensure_env_file(self) -> Path | None:
+        env_file = REPO_ROOT / ".env"
+        if env_file.exists():
+            return None
+        env_file.write_text("", encoding="utf-8")
+        return env_file
 
     def _run_command(self, command: list[str]) -> None:
         completed = subprocess.run(
