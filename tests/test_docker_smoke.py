@@ -18,6 +18,7 @@ class DockerSmokeTest(TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
+            tmp_path.chmod(0o777)
             output_dir = tmp_path / "dist"
             self._write_history_source_payloads(tmp_path)
             created_env_file = self._ensure_env_file()
