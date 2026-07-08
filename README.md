@@ -61,6 +61,7 @@ Open:
 ## Documentation
 
 - [Global vision](docs/global-vision.md)
+- [Working conventions](docs/working-conventions.md)
 - [Performance OS charter](docs/performance-os-charter.md)
 - [Daily recommendation contract](docs/daily-recommendation-contract.md)
 - [Data snapshot contract](docs/data-snapshot-contract.md)

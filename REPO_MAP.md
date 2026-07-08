@@ -9,6 +9,7 @@
 - `TASK_NOTES.md` — temporary task scratchpad
 - `README.md` — human-facing project overview, local run instructions
 - `docs/global-vision.md` — top-level product vision; all other docs derive from it
+- `docs/working-conventions.md` — lightweight repository working rules
 - `.env.example` — all environment variables documented
 - `pyproject.toml` (in `personal_trainer/`) — hatchling build config, entrypoints, dependencies, ruff config
 - `.github/workflows/pages.yml` — GitHub Pages deployment
@@ -108,6 +109,7 @@ Purpose: Static browser UI.
 ### `docs/`
 
 - `global-vision.md` — mission, product layers, and derivation rules (read first)
+- `working-conventions.md` — RFC 2119, issue/PR shape, and decision rules
 - `performance-os-charter.md` — mission, tradeoff rules, athlete context
 - `data-snapshot-contract.md` — normalized snapshot shape, freshness, fields (read second)
 - `daily-recommendation-contract.md` — priority options, decision rules, check-in triggers
