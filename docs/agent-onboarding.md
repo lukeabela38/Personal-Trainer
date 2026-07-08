@@ -13,6 +13,7 @@ Agents should optimize for small, independent cards that can be completed withou
 ## Canonical Documents
 
 - [Global vision](./global-vision.md)
+- [App blueprint](./app-blueprint.md)
 - [Performance OS charter](./performance-os-charter.md)
 - [Data snapshot contract](./data-snapshot-contract.md)
 - [Daily recommendation contract](./daily-recommendation-contract.md)
@@ -65,7 +66,7 @@ When a task touches live external data, keep the report tied to the exact comman
 
 ## Start Here For New Work
 
-1. Read the global vision, charter, and snapshot contract first.
+1. Read the global vision, blueprint, charter, and snapshot contract first.
 2. Check the current board wave label.
 3. Pick one `Ready` card.
 4. Implement the smallest complete slice.
