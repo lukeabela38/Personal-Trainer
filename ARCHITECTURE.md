@@ -4,6 +4,8 @@
 
 Personal performance system that ingests training, nutrition, strength, and recovery data from Garmin, Hevy, Cronometer, and manual check-in sources, normalizes them into a contract-validated snapshot, and produces daily training/nutrition/recovery recommendations. Results are rendered in a static browser UI deployed to GitHub Pages.
 
+The long-term product direction is broader than the current implementation: it is intended to grow into an integrated coaching system with a durable ledger, direct food/workout logging, and feedback loops for performance and fueling. The current repo implements the first snapshot-first slice of that vision.
+
 Three runtime modes:
 
 1. **CLI** — load a snapshot JSON file and print a recommendation
@@ -17,7 +19,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - Language: Python >=3.11
 - Backend: None (local Python scripts, no server)
 - Frontend: Static HTML/CSS/JS (vanilla, no framework)
-- Database: None (JSON files only)
+- Database: None today (JSON files only); future phases may add a SQL ledger and API
 - Deployment: GitHub Pages (from `site/` and `dist/` artifacts)
 - Live sources: MCP servers (Garmin, Hevy, Cronometer) via stdio JSON-RPC
 - Build: Hatchling (package), shell scripts (site artifacts)
@@ -42,7 +44,14 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
   - `source_registry.py` — `CallableSourceAdapter` factory and adapter registry
   - `snapshot_assembler.py` — `build_snapshot_from_adapters()` for adapter-based workflows
   - `garmin_adapter.py`, `hevy_adapter.py`, `cronometer_adapter.py` — source adapter classes
-  - `live_smoke.py` — smoke test entrypoint that builds a snapshot from live fetchers
+- `live_smoke.py` — smoke test entrypoint that builds a snapshot from live fetchers
+
+### Vision and Contracts
+
+- `docs/global-vision.md` — top-level product vision for the integrated coach / nutritionist / ledger system
+- `docs/performance-os-charter.md` — Luke-specific operating principles derived from the global vision
+- `docs/data-snapshot-contract.md` — normalized snapshot shape used by the recommendation engine and UI
+- `docs/daily-recommendation-contract.md` — decision contract for the daily recommendation output
 
 ### Wrapper Scripts (`scripts/wrappers/`)
 
@@ -94,6 +103,16 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - **Hevy** — accessed via MCP server (`hevy-mcp`) with `HEVY_API_KEY`
 - **Cronometer** — accessed via MCP server (`cronometer-api-mcp`)
 - **GitHub Pages** — deployment target for the static site
+
+## Target Direction
+
+The current architecture is intentionally simple, but the target shape is:
+
+- durable event ledger for all imported and direct-entry data
+- SQL-backed query layer for historical analysis and app features
+- API layer for writes, reads, and coaching interactions
+- direct logging flows for meals and workouts
+- rule-based guidance first, more adaptive guidance later
 
 ## Configuration
 

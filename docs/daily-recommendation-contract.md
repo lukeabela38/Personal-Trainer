@@ -1,6 +1,6 @@
 # Daily Recommendation Contract
 
-This document defines the first decision contract for the Personal Trainer system.
+This document defines the first decision contract for the Personal Trainer system. It is derived from the global vision in [`docs/global-vision.md`](./global-vision.md) and the Luke-specific operating policy in [`docs/performance-os-charter.md`](./performance-os-charter.md).
 
 It does not define the final scoring model or UI. It defines the smallest useful feature boundary: given available training, nutrition, recovery, and manual context, produce one daily recommendation that helps Luke make the best overall progress today.
 

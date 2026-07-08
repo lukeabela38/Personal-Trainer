@@ -4,7 +4,7 @@ This repository builds a personal performance system for Luke.
 
 ## Current Direction
 
-- Normalize training, nutrition, recovery, manual check-in, Garmin, and Hevy data into one snapshot.
+- Normalize training, nutrition, recovery, manual check-in, Garmin, Hevy, and Cronometer data into one snapshot.
 - Render the snapshot in the local static viewer.
 - Publish read-only static pages to GitHub Pages.
 - Keep live source ingestion local and separate from the published artifact.
@@ -13,9 +13,11 @@ This repository builds a personal performance system for Luke.
 - Prefer a single daily runner command for live capture, snapshot build, and site artifact generation.
 - Treat any work intended for review as a pull request by default.
 - Unless explicitly told otherwise, put reviewable work on a feature branch and open a PR.
+- Preserve the global vision as the top-level source of truth before deriving new contracts or UI work.
 
 ## Where To Start
 
+- [Global vision](./global-vision.md)
 - [Performance OS charter](./performance-os-charter.md)
 - [Data snapshot contract](./data-snapshot-contract.md)
 - [Live input boundary](./live-input-boundary.md)
@@ -38,6 +40,7 @@ This repository builds a personal performance system for Luke.
 - `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot. Treat the snapshot payloads as generated build outputs, not committed source artifacts.
 - `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle.
 - `scripts/daily_snapshot_runner.py` writes the computed recommendation into `dist/snapshot.json`, and `scripts/build_site_artifacts.py` preserves that recommendation if it is already present so the published snapshot and UI stay aligned.
+- The long-term architecture should evolve toward a ledger plus direct logging, but the current implementation stays snapshot-first.
 
 ## Python Live-Source Seam
 
