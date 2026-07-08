@@ -62,6 +62,7 @@ Open:
 
 - [Global vision](docs/global-vision.md)
 - [App blueprint](docs/app-blueprint.md)
+- [Milestone roadmap](docs/milestone-roadmap.md)
 - [Working conventions](docs/working-conventions.md)
 - [Performance OS charter](docs/performance-os-charter.md)
 - [Daily recommendation contract](docs/daily-recommendation-contract.md)
