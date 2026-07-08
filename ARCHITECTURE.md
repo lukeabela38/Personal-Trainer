@@ -49,6 +49,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 ### Vision and Contracts
 
 - `docs/global-vision.md` — top-level product vision for the integrated coach / nutritionist / ledger system
+- `docs/app-blueprint.md` — app-level blueprint that turns the vision into the first useful product slice
 - `docs/performance-os-charter.md` — Luke-specific operating principles derived from the global vision
 - `docs/data-snapshot-contract.md` — normalized snapshot shape used by the recommendation engine and UI
 - `docs/daily-recommendation-contract.md` — decision contract for the daily recommendation output

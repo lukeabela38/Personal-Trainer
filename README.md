@@ -61,6 +61,7 @@ Open:
 ## Documentation
 
 - [Global vision](docs/global-vision.md)
+- [App blueprint](docs/app-blueprint.md)
 - [Working conventions](docs/working-conventions.md)
 - [Performance OS charter](docs/performance-os-charter.md)
 - [Daily recommendation contract](docs/daily-recommendation-contract.md)
