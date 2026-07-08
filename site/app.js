@@ -7,6 +7,10 @@ const historySections = document.getElementById("history-sections");
 const statGroups = document.getElementById("stat-groups");
 const statusBanner = document.getElementById("status-banner");
 const freshnessBar = document.getElementById("freshness-bar");
+const sessionSummary = document.getElementById("session-summary");
+const sessionHelp = document.getElementById("session-help");
+const sessionStatus = document.getElementById("session-status");
+const sessionTime = document.getElementById("session-time");
 const dashboardSummary = document.getElementById("dashboard-summary");
 const guidanceTargets = document.getElementById("guidance-targets");
 const guidanceConfidence = document.getElementById("guidance-confidence");
@@ -19,12 +23,15 @@ const state = {
   currentPriority: null,
   previousSnapshot: readStoredSnapshot(),
   completedSessions: readCompletedSessions(),
+  sessionContext: readSessionContext(),
   goals: loadGoals(),
 };
 
 document.getElementById("file-input").addEventListener("change", handleFile);
 document.getElementById("open-raw").addEventListener("click", openRawView);
 document.getElementById("load-history").addEventListener("click", loadHistory);
+if (sessionTime) sessionTime.addEventListener("change", handleSessionTimeChange);
+renderSessionShell();
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
 
 async function loadHistory() {
@@ -103,6 +110,7 @@ function renderPayload(payload, sourceLabel) {
 }
 
 function renderEmptyState() {
+  renderSessionShell();
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
   freshnessBar.innerHTML = "";
@@ -119,6 +127,41 @@ function renderEmptyState() {
   state.currentPayload = null;
   state.currentPriority = null;
   clearStoredSnapshot();
+}
+
+function renderSessionShell() {
+  const context = state.sessionContext ?? readSessionContext();
+  state.sessionContext = context;
+  const summary = describeSessionContext(context);
+  const help = describeSessionHelp(context);
+
+  if (sessionSummary) sessionSummary.textContent = summary;
+  if (sessionHelp) sessionHelp.textContent = help;
+  if (sessionStatus) sessionStatus.textContent = formatSessionModeLabel(context.mode);
+  if (sessionTime) sessionTime.value = context.time ?? "";
+
+  document.querySelectorAll("[data-session-mode]").forEach((button) => {
+    const active = button.dataset.sessionMode === context.mode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  document.querySelectorAll("[data-session-type]").forEach((button) => {
+    const active = button.dataset.sessionType === context.type;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+    button.disabled = context.mode === "none";
+  });
+  if (sessionTime) sessionTime.disabled = context.mode === "none";
+}
+
+function updateSessionContext(patch) {
+  state.sessionContext = normalizeSessionContext({ ...(state.sessionContext ?? {}), ...patch });
+  persistSessionContext(state.sessionContext);
+  renderSessionShell();
+}
+
+function handleSessionTimeChange(event) {
+  updateSessionContext({ time: event.target.value || "" });
 }
 
 function renderSnapshot(snapshot, recommendation, sourceLabel) {
@@ -250,6 +293,63 @@ function formatSentenceValue(value) {
   if (!text) return "Unknown";
   if (text === "-") return "-";
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function formatSessionModeLabel(mode) {
+  const labels = {
+    none: "Not set",
+    planned: "Planned",
+    live: "Live now",
+    retro: "Retrospective",
+  };
+  return labels[mode] ?? "Not set";
+}
+
+function formatSessionTypeLabel(type) {
+  const labels = {
+    run: "Run",
+    lift: "Lift",
+    mixed: "Mixed",
+    sport: "Sport",
+    recovery: "Recovery",
+    rest: "Rest",
+  };
+  return labels[type] ?? "Run";
+}
+
+function formatSessionTime(value) {
+  if (!value) return "";
+  try {
+    const normalized = value.length === 16 ? `${value}:00` : value;
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
+function describeSessionContext(context) {
+  if (!context || context.mode === "none") return "No session planned";
+  const typeLabel = formatSessionTypeLabel(context.type);
+  const timeLabel = formatSessionTime(context.time);
+  if (context.mode === "planned") {
+    return timeLabel ? `Planned ${typeLabel} at ${timeLabel}` : `Planned ${typeLabel}`;
+  }
+  if (context.mode === "live") {
+    return timeLabel ? `Live ${typeLabel} started at ${timeLabel}` : `Live ${typeLabel} session`;
+  }
+  if (context.mode === "retro") {
+    return timeLabel ? `Retrospective ${typeLabel} logged for ${timeLabel}` : `Retrospective ${typeLabel} session`;
+  }
+  return "No session planned";
+}
+
+function describeSessionHelp(context) {
+  if (!context || context.mode === "none") {
+    return "Pick a timing mode and session type when training is on the plan so fueling can later be adjusted around it.";
+  }
+  return "This context will later help the app reason about fueling before, during, and after the session.";
 }
 
 /* ── Freshness bar ── */
@@ -400,6 +500,18 @@ try {
 } catch {}
 
 document.addEventListener("click", (e) => {
+  const modeButton = e.target.closest("[data-session-mode]");
+  if (modeButton) {
+    updateSessionContext({ mode: modeButton.dataset.sessionMode ?? "none" });
+    return;
+  }
+
+  const typeButton = e.target.closest("[data-session-type]");
+  if (typeButton) {
+    updateSessionContext({ type: typeButton.dataset.sessionType ?? "run" });
+    return;
+  }
+
   if (e.target.closest("#welcome-dismiss") || e.target.id === "welcome-dismiss") {
     document.getElementById("welcome-overlay")?.remove();
     try { localStorage.setItem("personal-trainer:welcome-dismissed", "1"); } catch {}
@@ -832,6 +944,30 @@ function clearStoredSnapshot() {
   try {
     localStorage.removeItem("personal-trainer:last-snapshot");
   } catch {}
+}
+
+function persistSessionContext(context) {
+  try {
+    localStorage.setItem("personal-trainer:session-context", JSON.stringify(context));
+  } catch {}
+}
+
+function readSessionContext() {
+  const fallback = { mode: "none", type: "run", time: "" };
+  try {
+    const raw = localStorage.getItem("personal-trainer:session-context");
+    if (!raw) return fallback;
+    return normalizeSessionContext({ ...fallback, ...(JSON.parse(raw) ?? {}) });
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeSessionContext(raw) {
+  const mode = ["none", "planned", "live", "retro"].includes(raw?.mode) ? raw.mode : "none";
+  const type = ["run", "lift", "mixed", "sport", "recovery", "rest"].includes(raw?.type) ? raw.type : "run";
+  const time = typeof raw?.time === "string" ? raw.time : "";
+  return { mode, type, time };
 }
 
 function persistCompletedSessions(sessions) {

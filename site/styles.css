@@ -226,6 +226,104 @@ input[type="file"] { display: none; }
 }
 .rec-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
+/* Session shell */
+.session-shell {
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(157, 140, 255, 0.1), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(127, 209, 185, 0.05));
+  border: 1px solid rgba(157, 140, 255, 0.18);
+  display: grid;
+  gap: 16px;
+}
+.session-shell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.session-title {
+  margin-top: 4px;
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+.session-help {
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.5;
+  max-width: 72ch;
+}
+.session-shell-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.session-group {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.session-group-wide {
+  grid-column: 1 / -1;
+}
+.session-group-label,
+.session-time-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.session-chip-row,
+.session-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.session-chip {
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  box-shadow: none;
+}
+.session-chip.is-active {
+  background: rgba(127, 209, 185, 0.16);
+  color: var(--text);
+  border-color: rgba(127, 209, 185, 0.35);
+}
+.session-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.session-time-input {
+  width: min(100%, 320px);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+}
+.session-time-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.session-time-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.session-time-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  max-width: 72ch;
+}
+
 /* Freshness bar */
 .freshness-bar {
   margin-bottom: 16px;

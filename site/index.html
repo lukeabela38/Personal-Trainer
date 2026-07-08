@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personal Trainer</title>
-  <link rel="stylesheet" href="./styles.css?v=11" />
+  <link rel="stylesheet" href="./styles.css?v=12" />
 </head>
 <body>
   <nav class="bottom-nav">
@@ -54,6 +54,47 @@
       <script>try{if(!localStorage.getItem('personal-trainer:welcome-dismissed'))document.getElementById('welcome-overlay').style.display='flex'}catch(e){}</script>
 
       <div id="freshness-bar"></div>
+
+      <section class="card session-shell" id="session-shell" aria-label="Session context">
+        <div class="session-shell-header">
+          <div>
+            <p class="label">Session</p>
+            <h2 id="session-summary" class="session-title">No session planned</h2>
+            <p id="session-help" class="session-help">Pick whether today is planned, live, or retrospective so fueling can later be timed around it.</p>
+          </div>
+          <span class="rec-badge" id="session-status">Not set</span>
+        </div>
+
+        <div class="session-shell-grid">
+          <div class="session-group">
+            <span class="session-group-label">Timing</span>
+            <div class="session-chip-row" role="group" aria-label="Session timing">
+              <button type="button" class="button secondary session-chip" data-session-mode="none">No session</button>
+              <button type="button" class="button secondary session-chip" data-session-mode="planned">Planned</button>
+              <button type="button" class="button secondary session-chip" data-session-mode="live">Live now</button>
+              <button type="button" class="button secondary session-chip" data-session-mode="retro">Retrospective</button>
+            </div>
+          </div>
+
+          <div class="session-group">
+            <span class="session-group-label">Type</span>
+            <div class="session-chip-grid" role="group" aria-label="Session type">
+              <button type="button" class="button secondary session-chip" data-session-type="run">Run</button>
+              <button type="button" class="button secondary session-chip" data-session-type="lift">Lift</button>
+              <button type="button" class="button secondary session-chip" data-session-type="mixed">Mixed</button>
+              <button type="button" class="button secondary session-chip" data-session-type="sport">Sport</button>
+              <button type="button" class="button secondary session-chip" data-session-type="recovery">Recovery</button>
+              <button type="button" class="button secondary session-chip" data-session-type="rest">Rest</button>
+            </div>
+          </div>
+
+          <div class="session-group session-group-wide">
+            <label class="session-time-label" for="session-time">When it happens</label>
+            <input id="session-time" class="session-time-input" type="datetime-local" />
+            <p class="session-time-note">If you know the time, the app can later reason about pre-, during-, and post-session fueling windows.</p>
+          </div>
+        </div>
+      </section>
 
       <section class="card guidance-shell" id="guidance-shell" aria-label="Daily guidance">
         <div class="guidance-shell-header">
@@ -107,6 +148,6 @@
       navigator.serviceWorker.register("./sw.js?v=4").catch(() => {});
     }
   </script>
-  <script type="module" src="./app.js?v=12"></script>
+  <script type="module" src="./app.js?v=14"></script>
 </body>
 </html>
