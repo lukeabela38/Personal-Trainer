@@ -1,16 +1,18 @@
 # Agent Onboarding
 
-This repo is a personal performance system for tracking running, gym, fueling, and recovery.
+This repo is a personal performance system for tracking running, gym, fueling, recovery, and future direct-entry coaching flows.
 Agents should optimize for small, independent cards that can be completed without redefining the project.
 
 ## What The Project Is
 
-- Track progress across running and gym.
-- Translate planned workouts into practical eating guidance.
-- Keep deployment zero-cost and static by default.
+- An integrated performance companion that combines coaching, nutrition guidance, and durable personal data.
+- A system that tracks progress across running, gym, fueling, recovery, and direct logging.
+- A product that translates training and intake into practical action and feedback.
+- A deployment model that stays zero-cost and static by default until a backend layer is justified.
 
 ## Canonical Documents
 
+- [Global vision](./global-vision.md)
 - [Performance OS charter](./performance-os-charter.md)
 - [Data snapshot contract](./data-snapshot-contract.md)
 - [Daily recommendation contract](./daily-recommendation-contract.md)
@@ -63,7 +65,7 @@ When a task touches live external data, keep the report tied to the exact comman
 
 ## Start Here For New Work
 
-1. Read the charter and snapshot contract first.
+1. Read the global vision, charter, and snapshot contract first.
 2. Check the current board wave label.
 3. Pick one `Ready` card.
 4. Implement the smallest complete slice.

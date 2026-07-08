@@ -1,6 +1,6 @@
 # Data Snapshot Contract
 
-This document defines the normalized data object used by the daily recommendation feature and the derived UI pages.
+This document defines the normalized data object used by the daily recommendation feature and the derived UI pages. It is an implementation contract derived from the global vision in [`docs/global-vision.md`](./global-vision.md).
 
 The snapshot is the boundary between data collection and recommendation logic. Garmin, Hevy, Cronometer, and manual check-in data may each have different shapes, but the recommendation engine should receive one predictable object.
 

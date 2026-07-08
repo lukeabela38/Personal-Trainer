@@ -1,12 +1,12 @@
 # Performance OS Charter
 
-This document defines the operating principles for the Personal Trainer system. It is intentionally short and reviewable. The goal is to guide the first build without pretending the whole product is already designed.
+This document defines Luke-specific operating principles for the Personal Trainer system. It is intentionally short and reviewable. It is derived from the global vision in [`docs/global-vision.md`](./global-vision.md) and exists to translate that vision into day-to-day recommendation rules.
 
 ## Mission
 
-Build a personal performance system that helps Luke become faster, stronger, leaner, more powerful, and better prepared for sport.
+Build the first operating slice of the global vision: a personal performance system that helps Luke become faster, stronger, leaner, more powerful, better fueled, and better prepared for sport.
 
-The system should combine Garmin, Hevy, Cronometer, and manual context into practical recommendations for training, nutrition, and recovery.
+The system should combine Garmin, Hevy, Cronometer, manual context, and future direct inputs into practical recommendations for training, nutrition, and recovery.
 
 ## Athlete Context
 
@@ -18,9 +18,9 @@ The system should combine Garmin, Hevy, Cronometer, and manual context into prac
 
 ## Operating Principle
 
-The default ambition is progress on all fronts: aerobic fitness, running speed, strength, power, leanness, and table tennis readiness.
+The default ambition is progress on all fronts: aerobic fitness, running speed, strength, power, leanness, fueling quality, and sport readiness.
 
-When recovery, calories, time, or adaptation capacity conflict, the system must not pretend every goal can be maximized at once. It should explicitly choose the highest-return priority for the current block while protecting the broader athletic profile.
+When recovery, calories, time, adaptation capacity, or goal phase conflict, the system must not pretend every goal can be maximized at once. It should explicitly choose the highest-return priority for the current block while protecting the broader athletic profile.
 
 ## Current Block
 
