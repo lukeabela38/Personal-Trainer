@@ -28,8 +28,9 @@ COPY site site/
 COPY .env.example .env.example
 COPY Makefile Makefile
 
-RUN pip install -e personal_trainer/ --quiet \
-    && pip install ruff garminconnect --quiet
+RUN python3 -m pip install --upgrade pip==26.1 --quiet \
+    && python3 -m pip install -e personal_trainer/ --quiet \
+    && python3 -m pip install ruff garminconnect --quiet
 
 # Pre-cache for pip (no MCP servers needed — all wrappers use direct APIs)
 
