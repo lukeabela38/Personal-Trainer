@@ -15,6 +15,7 @@ The data snapshot should answer:
 - Is the data complete enough to recommend a hard session?
 
 The snapshot should not decide the recommendation by itself. It should provide the evidence used by the daily recommendation contract and the derived views.
+When the daily runner publishes `dist/snapshot.json`, it includes the computed recommendation alongside the normalized snapshot so the stored artifact remains paired with the exact decision made for that run.
 
 ## Snapshot Shape
 
