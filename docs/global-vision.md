@@ -6,8 +6,8 @@ This document is the top-level product vision for Personal Trainer. Everything e
 
 Build an integrated performance companion that acts as:
 
-- a coach for training decisions
-- a nutritionist for fueling decisions
+- a rules-based guide for training decisions
+- a rules-based guide for fueling decisions
 - a ledger for durable personal performance data
 
 The system should help Luke decide what to do next, what to eat next, and how to adjust training and fueling based on goals, recovery, and recent behavior.
@@ -48,9 +48,8 @@ Expose the system through:
 
 - read-only dashboards
 - direct logging flows
-- feedback and coaching views
+- feedback and guidance views
 - progress comparison views
-- future conversational or agent-assisted interactions
 
 ## Design Principles
 
@@ -67,10 +66,10 @@ Expose the system through:
 
 If a future feature does not clearly support one of these outcomes, it should not become a priority yet:
 
-- better performance decisions
+- better training decisions
 - better fueling decisions
 - better recovery decisions
 - better durability of the data record
 - better feedback loops between action and outcome
 
-All other docs should either derive from this vision or describe one implementation slice of it.
+All other docs should either derive from this vision or describe one implementation slice of it. The main implementation slice for the product is [`docs/app-blueprint.md`](./app-blueprint.md).
