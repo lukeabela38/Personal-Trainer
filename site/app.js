@@ -128,12 +128,12 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const manual = snapshot.manual_context ?? {};
   const derived = snapshot.derived ?? {};
   const priority = formatPriorityLabel(recommendation.Priority ?? recommendation.priority ?? "No recommendation");
-  const reason = recommendation.Reason ?? recommendation.reason ?? "No explanation available.";
-  const session = recommendation.Session ?? recommendation.session ?? "-";
-  const nutrition = recommendation.Nutrition ?? recommendation.nutrition ?? "-";
+  const reason = formatSentenceValue(recommendation.Reason ?? recommendation.reason ?? "No explanation available.");
+  const session = formatSentenceValue(recommendation.Session ?? recommendation.session ?? "-");
+  const nutrition = formatSentenceValue(recommendation.Nutrition ?? recommendation.nutrition ?? "-");
   const confidence = recommendation.Confidence ?? recommendation.confidence ?? "-";
   const checkIn = recommendation["Needs check-in"] ?? recommendation.needs_check_in ?? "-";
-  const guardrail = recommendation.Guardrail ?? recommendation.guardrail ?? "No guardrail available.";
+  const guardrail = formatSentenceValue(recommendation.Guardrail ?? recommendation.guardrail ?? "No guardrail available.");
 
   setText("priority", priority);
   setText("reason", reason);
@@ -246,6 +246,13 @@ function formatMacroTarget(value, unit) {
 function formatMacroCurrent(value, unit) {
   if (value == null || value === "") return "No intake yet";
   return `${fmtNum(value)} ${unit} logged`;
+}
+
+function formatSentenceValue(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "Unknown";
+  if (text === "-") return "-";
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /* ── Freshness bar ── */
