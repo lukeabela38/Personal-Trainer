@@ -109,7 +109,7 @@ function renderEmptyState() {
   if (dashboardSummary) dashboardSummary.innerHTML = renderGuidanceTilesEmpty();
   if (guidanceTargets) guidanceTargets.innerHTML = renderGuidanceTargetsEmpty();
   if (guidanceConfidence) guidanceConfidence.textContent = "Confidence: -";
-  if (guidanceCheckIn) guidanceCheckIn.textContent = "Check-in: -";
+  if (guidanceCheckIn) guidanceCheckIn.textContent = "Check in: -";
   if (guidanceDate) guidanceDate.textContent = "Latest snapshot";
   if (guidanceGuardrail) guidanceGuardrail.textContent = "Load a snapshot to see the guardrail for today.";
   statGroups.innerHTML = renderStatGroupsEmpty();
@@ -158,7 +158,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     guidanceTargets.innerHTML = renderGuidanceTargets(macros, today);
   }
   if (guidanceConfidence) guidanceConfidence.textContent = `Confidence: ${formatDisplayValue(confidence)}`;
-  if (guidanceCheckIn) guidanceCheckIn.textContent = `Check-in: ${formatDisplayValue(checkIn)}`;
+  if (guidanceCheckIn) guidanceCheckIn.textContent = `Check in: ${formatDisplayValue(checkIn)}`;
   if (guidanceDate) guidanceDate.textContent = snapshot.snapshot_date ?? "Latest snapshot";
   if (guidanceGuardrail) guidanceGuardrail.textContent = guardrail;
   statGroups.innerHTML = [
@@ -182,13 +182,12 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   persistSnapshot(snapshot);
 }
 
-function renderGuidanceTiles({ priority, session, nutrition, confidence, checkIn, snapshotDate }) {
+function renderGuidanceTiles({ priority, session, nutrition, snapshotDate }) {
   const tiles = [
     { label: "Focus", value: priority, subvalue: "Today" },
     { label: "Next action", value: session, subvalue: "Session" },
     { label: "Fueling", value: nutrition, subvalue: "Nutrition" },
-    { label: "Confidence", value: confidence, subvalue: snapshotDate },
-    { label: "Check-in", value: checkIn, subvalue: "Decision data" },
+    { label: "Snapshot", value: snapshotDate, subvalue: "Latest data" },
   ];
   return tiles
     .map(
@@ -208,8 +207,6 @@ function renderGuidanceTilesEmpty() {
     priority: "Waiting for snapshot",
     session: "-",
     nutrition: "-",
-    confidence: "-",
-    checkIn: "-",
     snapshotDate: "Latest snapshot",
   });
 }

@@ -12,6 +12,7 @@ Dockerized full pipeline run with Python 3.12.
 - Added a small rationale popover and macro target chips so the guidance is easier to scan without expanding the lower-detail dashboard sections.
 - Validation passed with `node --check site/app.js` and `docker compose run --rm app python3 scripts/build_site_artifacts.py`.
 - Cleaned up guidance copy so long recommendation fields render in sentence case instead of all-lowercase text.
+- Removed confidence and check-in from the top `Today` tiles so they only appear in the rationale area.
 
 ## Findings
 
