@@ -77,7 +77,14 @@ class BuildSiteArtifactsTest(TestCase):
                             "recent_runs": [],
                             "last_quality_run": None,
                             "last_long_run": None,
-                            "recent_bests": [{"name": "Fastest 5K", "value": "20:15"}],
+                            "recent_bests": [
+                                {"name": "Fastest 1K", "value": 216.9720001220703},
+                                {"name": "Fastest Mile", "value": 383.03900146484375},
+                                {"name": "Fastest 5K", "value": 1251.10400390625},
+                                {"name": "Fastest 10K", "value": 2891.330078125},
+                                {"name": "Fastest Half Marathon", "value": 6219.27685546875},
+                                {"name": "Longest Run", "value": 21370.650390625},
+                            ],
                             "flags": [],
                         },
                         "cronometer": {
@@ -124,12 +131,17 @@ class BuildSiteArtifactsTest(TestCase):
             )
 
             self.assertEqual(exit_code, 0)
-            self.assertTrue((output_dir / "data" / "snapshot.json").exists())
+            built_snapshot = json.loads((output_dir / "data" / "snapshot.json").read_text(encoding="utf-8"))
+            self.assertEqual(built_snapshot["recommendation"]["Priority"], "aerobic_quality")
             self.assertTrue((output_dir / "raw.json").exists())
             self.assertTrue((output_dir / "progress.html").exists())
             self.assertTrue((output_dir / "progress.js").exists())
             self.assertTrue((output_dir / "strength.json").exists())
-            self.assertTrue((output_dir / "speed.json").exists())
+            built_speed = json.loads((output_dir / "speed.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                [entry["value"] for entry in built_speed["entries"]],
+                ["3:36", "6:23", "20:51", "48:11", "1:43:39", "21.37 km"],
+            )
 
     def test_rejects_invalid_snapshot_before_building_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

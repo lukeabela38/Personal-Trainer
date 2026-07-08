@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -18,25 +18,65 @@ except ImportError:
 
 
 def fetch() -> dict:
-    today = datetime.now(UTC).strftime("%Y-%m-%d")
-    month_ago = (datetime.now(UTC) - timedelta(days=30)).strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    month_ago = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    tokenstore = _tokenstore_path()
 
     garmin_email = os.environ.get("GARMIN_EMAIL") or os.environ.get("GC_EMAIL")
     garmin_password = os.environ.get("GARMIN_PASSWORD") or os.environ.get("GC_PASSWORD")
 
+    if Garmin is not None and _tokenstore_is_populated(tokenstore):
+        try:
+            cached_payload = _fetch_cached(tokenstore, today, month_ago)
+            if not _payload_needs_refresh(cached_payload) or not (garmin_email and garmin_password):
+                return cached_payload
+            print(
+                "[garmin] cached session returned no usable data, retrying with password",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            print(f"[garmin] cached session fetch failed: {e}", file=sys.stderr)
+
     if garmin_email and garmin_password and Garmin is not None:
         try:
-            return _fetch_direct(garmin_email, garmin_password, today, month_ago)
+            return _fetch_direct(garmin_email, garmin_password, tokenstore, today, month_ago)
         except Exception as e:
             print(f"[garmin] direct fetch failed: {e}", file=sys.stderr)
 
     return _empty_payload()
 
 
-def _fetch_direct(email: str, password: str, today: str, month_ago: str) -> dict:
+def _tokenstore_path() -> Path:
+    configured = os.environ.get("GARMINTOKENS")
+    if configured:
+        return Path(configured).expanduser()
+    return Path.home() / ".garminconnect"
+
+
+def _tokenstore_is_populated(tokenstore: Path) -> bool:
+    return tokenstore.is_dir() and all(
+        (tokenstore / filename).is_file() for filename in ("oauth1_token.json", "oauth2_token.json")
+    )
+
+
+def _fetch_cached(tokenstore: Path, today: str, month_ago: str) -> dict:
+    client = Garmin()
+    client.login(tokenstore=str(tokenstore))
+    return _build_payload(client, today, month_ago)
+
+
+def _fetch_direct(email: str, password: str, tokenstore: Path, today: str, month_ago: str) -> dict:
     client = Garmin(email, password)
     client.login()
+    try:
+        client.garth.dump(str(tokenstore))
+    except Exception:
+        pass
 
+    return _build_payload(client, today, month_ago)
+
+
+def _build_payload(client, today: str, month_ago: str) -> dict:
     payload = _empty_payload()
 
     try:
@@ -97,16 +137,30 @@ def _fetch_direct(email: str, password: str, today: str, month_ago: str) -> dict
         runs = client.get_activities_by_date(month_ago, today, "running")
         if isinstance(runs, list):
             payload["recent_runs"] = runs[:10]
+            vo2_values = []
             for run in runs:
                 name = str(run.get("activityName", "")).lower()
                 rtype = str(run.get("activityType", {}).get("typeKey", "")).lower()
                 distance = _safe_float(run.get("distance"))
+                vo2_value = _safe_float(run.get("vO2MaxValue") or run.get("vo2MaxValue"))
+                if vo2_value is not None:
+                    vo2_values.append(vo2_value)
                 if any(kw in name or kw in rtype for kw in ("interval", "tempo", "threshold", "quality")):
                     if payload["last_quality_run"] is None:
                         payload["last_quality_run"] = _summarize_activity(run)
                 if "long" in name or "long" in rtype or (distance is not None and distance >= 15000):
                     if payload["last_long_run"] is None:
                         payload["last_long_run"] = _summarize_activity(run)
+            if vo2_values:
+                payload["current_vo2max"] = vo2_values[0]
+            if len(vo2_values) > 1:
+                payload["vo2max_trend"] = (
+                    "up"
+                    if vo2_values[0] > vo2_values[-1]
+                    else "down"
+                    if vo2_values[0] < vo2_values[-1]
+                    else "stable"
+                )
     except Exception:
         pass
 
@@ -133,6 +187,18 @@ def _fetch_direct(email: str, password: str, today: str, month_ago: str) -> dict
         pass
 
     return payload
+
+
+def _payload_needs_refresh(payload: dict) -> bool:
+    return not any(
+        (
+            payload.get("current_vo2max") is not None,
+            payload.get("recent_activities"),
+            payload.get("recent_runs"),
+            payload.get("recent_bests"),
+            payload.get("readiness"),
+        )
+    )
 
 
 def _empty_payload() -> dict:

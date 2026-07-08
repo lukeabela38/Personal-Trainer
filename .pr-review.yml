@@ -1,0 +1,21 @@
+# PR Review Pipeline Configuration
+# See .github/workflows/pr-review.yml
+
+enabled_tools:
+  - ruff
+  - mypy
+  - semgrep
+
+severity_threshold: warning  # fail CI on critical/high; report medium/low/style as warnings
+ignored_rules: []
+ignored_paths:
+  - "**/node_modules/**"
+  - "**/__pycache__/**"
+  - ".git/**"
+  - "dist/**"
+
+max_comments: 50
+enable_security: true
+enable_style: true
+enable_tests: true
+enable_reviewdog: true

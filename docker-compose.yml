@@ -6,9 +6,11 @@ services:
     env_file: .env
     environment:
       CRONOMETER_SESSION_FILE: /app/.cronometer_session/session.json
+      GARMINTOKENS: /app/.garminconnect
     volumes:
       - ./dist:/app/dist
       - ./.env:/app/.env:ro
+      - ./.cache/garmin:/app/.garminconnect
       - ./.cache/cronometer:/app/.cronometer_session
     command: python3 scripts/daily_snapshot_runner.py
 

@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -93,7 +93,7 @@ def build_report(raw: Any) -> dict[str, Any]:
         )
     return {
         "source": "Hevy exercise history",
-        "snapshot_date": datetime.now(UTC).date().isoformat(),
+        "snapshot_date": datetime.now(timezone.utc).date().isoformat(),
         "entries": entries,
     }
 

@@ -90,28 +90,30 @@ Then inspect only the named files.
 ## Commands (run from repo root)
 
 ```bash
-# All Python commands need PYTHONPATH set to the package src dir
-PYTHONPATH=personal_trainer/src python3 -m unittest discover -s personal_trainer/tests -v
+# Prefer Docker for Python 3.12 runs. Use local Python only as a fallback if Docker is unavailable.
 
-# Run a single test file
-PYTHONPATH=personal_trainer/src python3 -m unittest personal_trainer.tests.test_recommendation -v
+# Run package tests in the Python 3.12 container
+docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s personal_trainer/tests -v"
 
-# Run root-level script tests (separate test dir, different PYTHONPATH)
-python3 -m unittest discover -s tests -v
+# Run a single test file in the Python 3.12 container
+docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest personal_trainer.tests.test_recommendation -v"
+
+# Run root-level script tests in the Python 3.12 container
+docker compose run --rm app sh -c "python3 -m unittest discover -s tests -v"
 
 # Serve the static site locally
 ./scripts/serve_site.sh
 
-# Build site artifacts from example data
-python3 ./scripts/build_site_artifacts.py
+# Build site artifacts from example data in the Python 3.12 container
+docker compose run --rm app python3 scripts/build_site_artifacts.py
 
 # Full pipeline: live sources -> snapshot -> site
-python3 ./scripts/daily_snapshot_runner.py --sources-file personal_trainer/examples/snapshot-ready.json
+docker compose run --rm app python3 scripts/daily_snapshot_runner.py
 
 # Run CLI entrypoints directly
-PYTHONPATH=personal_trainer/src python3 -m personal_trainer.cli personal_trainer/examples/snapshot-ready.json
-PYTHONPATH=personal_trainer/src python3 -m personal_trainer.snapshot_cli personal_trainer/examples/sources-ready.json
-PYTHONPATH=personal_trainer/src python3 -m personal_trainer.live_cli personal_trainer/examples/sources-ready.json
+docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m personal_trainer.cli personal_trainer/examples/snapshot-ready.json"
+docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m personal_trainer.snapshot_cli personal_trainer/examples/sources-ready.json"
+docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m personal_trainer.live_cli personal_trainer/examples/sources-ready.json"
 ```
 
 ## Architecture

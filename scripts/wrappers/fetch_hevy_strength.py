@@ -15,7 +15,7 @@ from scripts.mcp_client import McpError, call_tool
 
 HEVY_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_HEVY_MCP_COMMAND",
-    "/opt/homebrew/bin/npx -y -p node@26 -p hevy-mcp hevy-mcp",
+    "npx -y -p node@26 -p hevy-mcp hevy-mcp",
 )
 
 _TRACKED_EXERCISES = [

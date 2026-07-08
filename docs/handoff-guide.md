@@ -35,7 +35,7 @@ This repository builds a personal performance system for Luke.
 - `personal_trainer/examples/snapshot-ready.json` is the deployed snapshot input.
 - `scripts/mcp_client.py` is the reusable async MCP stdio client for calling tools on Garmin, Hevy, and Cronometer MCP servers.
 - `scripts/wrappers/` contains per-source wrapper scripts that each call MCP tools and emit source payload JSON to stdout.
-- `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot.
+- `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot. Treat the snapshot payloads as generated build outputs, not committed source artifacts.
 - `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle.
 
 ## Python Live-Source Seam

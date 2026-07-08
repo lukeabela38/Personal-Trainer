@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import shutil
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ _PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "personal_trainer" / "src"
 if str(_PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(_PACKAGE_ROOT))
 
+from personal_trainer.recommendation import build_daily_recommendation
 from personal_trainer.snapshot import _validate_snapshot
 
 
@@ -42,13 +44,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         snapshot = _load_json(args.snapshot)
         _validate_snapshot(snapshot)
+        snapshot_payload = _with_recommendation(snapshot)
         output_dir = args.output_dir
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / "data").mkdir(parents=True, exist_ok=True)
 
         _copy_site_shell(args.site_dir, output_dir)
         (output_dir / "data" / "snapshot.json").write_text(
-            json.dumps(snapshot, indent=2),
+            json.dumps(snapshot_payload, indent=2),
             encoding="utf-8",
         )
         (output_dir / "raw.json").write_text(
@@ -68,6 +71,13 @@ def main(argv: list[str] | None = None) -> int:
 
     print(output_dir)
     return 0
+
+
+def _with_recommendation(snapshot: dict[str, Any]) -> dict[str, Any]:
+    recommendation = snapshot.get("recommendation")
+    if isinstance(recommendation, dict):
+        return snapshot
+    return {**snapshot, "recommendation": build_daily_recommendation(snapshot)}
 
 
 def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
@@ -211,11 +221,13 @@ def _build_speed_view(snapshot: dict[str, Any]) -> dict[str, Any]:
         rtype = str(b.get("record_type") or b.get("name") or "")
         if rtype not in _TRACKED_NAMES:
             continue
+        context = b.get("context")
+        raw_value = context.get("raw_value") if isinstance(context, dict) else b.get("raw_value")
         entries.append(
             {
                 "name": rtype,
                 "category": "Running",
-                "value": b.get("value"),
+                "value": _format_speed_value(rtype, b.get("value"), raw_value),
                 "date": b.get("date"),
             }
         )
@@ -224,6 +236,39 @@ def _build_speed_view(snapshot: dict[str, Any]) -> dict[str, Any]:
         "snapshot_date": snapshot.get("snapshot_date"),
         "entries": entries,
     }
+
+
+def _format_speed_value(record_type: str, value: Any, raw_value: Any = None) -> Any:
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return value
+        try:
+            numeric_value = float(stripped)
+        except ValueError:
+            return value
+    elif isinstance(value, (int, float)):
+        numeric_value = float(value)
+    else:
+        return value
+
+    numeric_source = raw_value if isinstance(raw_value, (int, float)) else numeric_value
+    if record_type == "Longest Run":
+        return _format_distance_km(numeric_source)
+    return _format_duration(numeric_source)
+
+
+def _format_duration(seconds: float) -> str:
+    whole_seconds = int(math.floor(seconds))
+    hours, remainder = divmod(whole_seconds, 3600)
+    minutes, sec = divmod(remainder, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{sec:02d}"
+    return f"{minutes}:{sec:02d}"
+
+
+def _format_distance_km(meters: float) -> str:
+    return f"{math.floor((meters / 1000) * 100) / 100:.2f} km"
 
 
 def _load_json(path: Path) -> dict[str, Any]:

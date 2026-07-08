@@ -55,6 +55,9 @@ class DailySnapshotRunnerTest(TestCase):
                 patch.object(
                     daily_snapshot_runner, "_build_site_artifacts"
                 ) as build_site_artifacts,
+                patch.object(
+                    daily_snapshot_runner, "_build_history_artifacts"
+                ) as build_history_artifacts,
             ):
                 exit_code = daily_snapshot_runner.main(
                     [
@@ -71,6 +74,7 @@ class DailySnapshotRunnerTest(TestCase):
             self.assertTrue(sources_output.exists())
             self.assertTrue(snapshot_output.exists())
             build_site_artifacts.assert_called_once()
+            build_history_artifacts.assert_called_once_with(site_output)
 
             saved_sources = json.loads(sources_output.read_text(encoding="utf-8"))
             saved_snapshot = json.loads(snapshot_output.read_text(encoding="utf-8"))

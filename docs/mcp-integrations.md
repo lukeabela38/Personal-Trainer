@@ -22,25 +22,13 @@ Secrets should be stored outside the repository and outside `config.toml` wherev
 
 Purpose: read Garmin Connect health, running, training, workout, race prediction, VO2 max, training load, and activity data.
 
-Configured MCP server:
-
-```toml
-[mcp_servers.garmin]
-command = "/opt/homebrew/bin/uvx"
-args = ["--python", "3.12", "--from", "git+https://github.com/Taxuspt/garmin_mcp", "garmin-mcp"]
-```
-
-Authentication flow:
-
-```bash
-/opt/homebrew/bin/uvx --python 3.12 --from git+https://github.com/Taxuspt/garmin_mcp garmin-mcp-auth
-```
-
-The Garmin auth tool stores reusable token data under:
+The Garmin wrapper uses the `garminconnect` client directly. Set `GARMIN_EMAIL` and `GARMIN_PASSWORD` for the initial login, then the wrapper stores reusable token data under:
 
 ```text
 ~/.garminconnect
 ```
+
+The wrapper also honors `GARMINTOKENS` when you want to override the tokenstore path. Docker mounts `./.cache/garmin` to `/app/.garminconnect` so repeated `docker compose run` invocations reuse the same session.
 
 No Garmin email or password should be stored in `config.toml`.
 
@@ -88,7 +76,7 @@ Secret handling:
 Wrapper command:
 
 ```bash
-/opt/homebrew/bin/uvx cronometer-api-mcp
+uvx cronometer-api-mcp
 ```
 
 Verified capabilities include:
@@ -98,6 +86,7 @@ Verified capabilities include:
 - macro target retrieval
 - fasting history and statistics
 - food search and food entry management
+- Keep in mind that build artifacts should present Garmin speed records as human-readable paces or distances; raw float values belong only in source or debug context.
 
 ## Hevy
 
@@ -121,7 +110,7 @@ Wrapper script:
 The active Hevy wrapper uses the maintained package:
 
 ```bash
-/opt/homebrew/bin/npx -y -p node@26 -p hevy-mcp hevy-mcp
+npx -y -p node@26 -p hevy-mcp hevy-mcp
 ```
 
 Reason for `node@26`:
