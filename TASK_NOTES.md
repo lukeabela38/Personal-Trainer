@@ -4,7 +4,15 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Python script coverage for the CLI and history writer paths.
+Playwright smoke coverage for the static site pages.
+
+## Browser Smoke Coverage
+
+- Added `@playwright/test`, `playwright.config.js`, and `tests/browser/site-smoke.test.js`.
+- Smoke checks cover the dashboard, strength, speed, and progress pages.
+- Console capture now fails the suite on uncaught page errors or console errors.
+- Added small static fixtures for `site/history/index.json`, `site/history/2026-07-02.json`, `site/history/exercises/_gains.json`, and `site/favicon.svg` so the pages load without noisy 404s.
+- Validation passed with `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4321 npm run test:browser`, `npm run format:js:check`, `npm run lint:js`, and `git diff --check`.
 
 ## Python Script Coverage
 

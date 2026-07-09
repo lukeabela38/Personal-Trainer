@@ -5,9 +5,11 @@
     "lint:js": "eslint site tests",
     "lint:js:fix": "eslint site tests --fix",
     "format:js": "prettier site tests --write",
-    "format:js:check": "prettier site tests --check"
+    "format:js:check": "prettier site tests --check",
+    "test:browser": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.0",
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
     "prettier": "^3.9.4"

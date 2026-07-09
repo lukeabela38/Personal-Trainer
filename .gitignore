@@ -10,3 +10,5 @@ dist/raw.json
 .venv/
 .env
 .cache/
+test-results/
+playwright-report/
