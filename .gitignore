@@ -4,6 +4,8 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 site/data/
+data/
+node_modules/
 dist/history/
 dist/data/snapshot.json
 dist/raw.json
