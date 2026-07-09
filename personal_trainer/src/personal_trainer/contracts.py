@@ -29,6 +29,12 @@ class Macros(TypedDict):
     fat_g: int
 
 
+class CheckInQuestion(TypedDict):
+    id: str
+    prompt: str
+    options: list[str]
+
+
 Recommendation = TypedDict(
     "Recommendation",
     {
@@ -50,4 +56,4 @@ class DerivedContext(TypedDict):
     primary_constraints: list[str]
     likely_conflicts: list[str]
     check_in_required: bool
-    check_in_questions: list[str]
+    check_in_questions: list[CheckInQuestion]

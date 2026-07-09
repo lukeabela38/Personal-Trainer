@@ -32,6 +32,7 @@ const sessionSummary = document.getElementById("session-summary");
 const sessionHelp = document.getElementById("session-help");
 const sessionStatus = document.getElementById("session-status");
 const sessionTime = document.getElementById("session-time");
+const checkInShell = document.getElementById("checkin-shell");
 const dashboardSummary = document.getElementById("dashboard-summary");
 const guidanceTargets = document.getElementById("guidance-targets");
 const guidanceConfidence = document.getElementById("guidance-confidence");
@@ -47,6 +48,7 @@ const state = {
   foodEntries: readFoodEntries(),
   foodTiming: readFoodTiming(),
   sessionContext: readSessionContext(),
+  checkInResponses: readCheckInResponses(),
   goals: loadGoals(),
 };
 
@@ -64,8 +66,17 @@ document
   .addEventListener("click", focusBarcodeInput);
 if (sessionTime)
   sessionTime.addEventListener("change", handleSessionTimeChange);
+window.addEventListener("error", (event) => {
+  renderFatalState(event.error?.message ?? "Unexpected dashboard error");
+});
+window.addEventListener("unhandledrejection", (event) => {
+  const reason =
+    event.reason instanceof Error ? event.reason.message : String(event.reason);
+  renderFatalState(reason || "Unexpected dashboard error");
+});
 renderSessionShell();
 renderFoodShell();
+renderCheckInShell();
 loadFromUrl(deployedSnapshotPath, "deployed snapshot").catch(renderEmptyState);
 
 async function loadHistory() {
@@ -174,6 +185,21 @@ function renderEmptyState() {
   if (guidanceGuardrail)
     guidanceGuardrail.textContent =
       "Load a snapshot to see the guardrail for today.";
+  if (checkInShell) {
+    checkInShell.innerHTML = `
+      <div class="checkin-shell-header">
+        <div>
+          <p class="label">Check-in</p>
+          <h2 class="checkin-title">Load a snapshot to see follow-up questions</h2>
+          <p class="checkin-help">
+            The app will show a short fixed check-in when the recommendation needs more data.
+          </p>
+        </div>
+        <span class="checkin-status">Not ready</span>
+      </div>
+      <p class="checkin-empty">No check-in questions yet.</p>
+    `;
+  }
   statGroups.innerHTML = renderStatGroupsEmpty();
   recActions.innerHTML = "";
   sections.innerHTML = "";
@@ -181,6 +207,34 @@ function renderEmptyState() {
   state.currentPayload = null;
   state.currentPriority = null;
   clearStoredSnapshot();
+}
+
+function renderFatalState(message) {
+  renderFoodShell();
+  renderSessionShell();
+  if (checkInShell) {
+    checkInShell.innerHTML = `
+      <div class="checkin-shell-header">
+        <div>
+          <p class="label">Check-in</p>
+          <h2 class="checkin-title">Dashboard failed to load</h2>
+          <p class="checkin-help">${escapeHtml(message)}</p>
+        </div>
+        <span class="checkin-status">Error</span>
+      </div>
+      <p class="checkin-empty">Reload the page after fixing the issue.</p>
+    `;
+  }
+  if (dashboardSummary) dashboardSummary.innerHTML = renderGuidanceTilesEmpty();
+  if (guidanceTargets) guidanceTargets.innerHTML = renderGuidanceTargetsEmpty();
+  if (guidanceConfidence) guidanceConfidence.textContent = "Confidence: -";
+  if (guidanceCheckIn) guidanceCheckIn.textContent = "Check in: -";
+  if (guidanceDate) guidanceDate.textContent = "Latest snapshot";
+  if (guidanceGuardrail) guidanceGuardrail.textContent = message;
+  statGroups.innerHTML = renderStatGroupsEmpty();
+  recActions.innerHTML = "";
+  sections.innerHTML = "";
+  statusBanner.textContent = "Error";
 }
 
 function renderFoodShell() {
@@ -268,6 +322,29 @@ function renderSessionShell() {
   if (sessionTime) sessionTime.disabled = context.mode === "none";
 }
 
+function renderCheckInShell(
+  snapshot = state.currentPayload?.snapshot ?? state.currentPayload ?? {},
+  recommendation = state.currentPayload?.recommendation ?? {},
+) {
+  if (!checkInShell) return;
+  const derived = snapshot.derived ?? {};
+  const questions = Array.isArray(derived.check_in_questions)
+    ? derived.check_in_questions
+    : [];
+  const needsCheckIn =
+    (recommendation["Needs check-in"] ??
+      recommendation.needs_check_in ??
+      "no") === "yes";
+  const snapshotDate = snapshot.snapshot_date ?? "Latest snapshot";
+  const responses = state.checkInResponses?.[snapshotDate] ?? {};
+  checkInShell.innerHTML = renderCheckInPanel({
+    snapshotDate,
+    needsCheckIn,
+    checkInQuestions: questions,
+    responses,
+  });
+}
+
 function updateSessionContext(patch) {
   state.sessionContext = normalizeSessionContext({
     ...(state.sessionContext ?? {}),
@@ -275,6 +352,20 @@ function updateSessionContext(patch) {
   });
   persistSessionContext(state.sessionContext);
   renderSessionShell();
+}
+
+function updateCheckInResponse(snapshotDate, questionId, answer) {
+  if (!snapshotDate || !questionId || !answer) return;
+  const current = state.checkInResponses?.[snapshotDate] ?? {};
+  state.checkInResponses = {
+    ...(state.checkInResponses ?? {}),
+    [snapshotDate]: {
+      ...current,
+      [questionId]: answer,
+    },
+  };
+  persistCheckInResponses(state.checkInResponses);
+  renderCheckInShell();
 }
 
 function handleSessionTimeChange(event) {
@@ -340,6 +431,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   if (guidanceDate)
     guidanceDate.textContent = snapshot.snapshot_date ?? "Latest snapshot";
   if (guidanceGuardrail) guidanceGuardrail.textContent = guardrail;
+  renderCheckInShell(snapshot, recommendation);
   statGroups.innerHTML = [
     renderRecGroup(recommendation, derived),
     renderNutritionGroup(macros, today),
@@ -457,6 +549,93 @@ function renderGuidanceTargets(macros, today) {
 
 function renderGuidanceTargetsEmpty() {
   return renderGuidanceTargets({}, {});
+}
+
+function renderCheckInQuestion(question, response) {
+  const options = Array.isArray(question?.options) ? question.options : [];
+  return `
+    <div class="checkin-question" data-checkin-question="${escapeHtml(question?.id ?? "")}">
+      <div class="checkin-question-prompt">${escapeHtml(question?.prompt ?? "")}</div>
+      <div class="checkin-option-row" role="group" aria-label="${escapeHtml(question?.prompt ?? "Check-in question")}">
+        ${options
+          .map((option) => {
+            const active = response === option;
+            return `
+              <button
+                type="button"
+                class="button secondary checkin-option${active ? " is-active" : ""}"
+                data-checkin-answer="${escapeHtml(option)}"
+                aria-pressed="${String(active)}"
+              >
+                ${escapeHtml(formatDisplayValue(option))}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+      <div class="checkin-question-meta">
+        ${response ? `Selected: ${escapeHtml(formatDisplayValue(response))}` : "Pick one answer"}
+      </div>
+    </div>
+  `;
+}
+
+export function renderCheckInPanel({
+  snapshotDate = "Latest snapshot",
+  needsCheckIn = false,
+  checkInQuestions = [],
+  responses = {},
+}) {
+  const answeredCount = checkInQuestions.filter((question) =>
+    shouldRenderValue(responses[question.id]),
+  ).length;
+  const allAnswered =
+    checkInQuestions.length > 0 && answeredCount === checkInQuestions.length;
+  const statusLabel = needsCheckIn
+    ? allAnswered
+      ? "Captured"
+      : checkInQuestions.length
+        ? `${checkInQuestions.length} question${checkInQuestions.length === 1 ? "" : "s"}`
+        : "Needed"
+    : "Not needed";
+  const title = needsCheckIn
+    ? allAnswered
+      ? "Check-in captured"
+      : "Short check-in needed"
+    : "No check-in needed";
+  const help = needsCheckIn
+    ? allAnswered
+      ? "Answers are saved locally so you can keep track of the missing context for this snapshot."
+      : "Answer the fixed questions below to fill the gap in today's decision."
+    : "Today's data is complete enough to avoid a follow-up.";
+  const body = checkInQuestions.length
+    ? `
+      <div class="checkin-question-list">
+        ${checkInQuestions
+          .map((question) =>
+            renderCheckInQuestion(question, responses[question.id]),
+          )
+          .join("")}
+      </div>
+    `
+    : `<p class="checkin-empty">${escapeHtml(
+        needsCheckIn
+          ? "No follow-up questions were generated, but the recommendation still needs a check-in."
+          : "No follow-up needed for this snapshot.",
+      )}</p>`;
+
+  return `
+    <div class="checkin-shell-header">
+      <div>
+        <p class="label">Check-in</p>
+        <h2 class="checkin-title">${escapeHtml(title)}</h2>
+        <p class="checkin-help">${escapeHtml(help)}</p>
+      </div>
+      <span class="checkin-status">${escapeHtml(statusLabel)}</span>
+    </div>
+    ${body}
+    <p class="checkin-question-meta">Snapshot: ${escapeHtml(formatDisplayValue(snapshotDate))}</p>
+  `;
 }
 
 export function formatMacroTarget(value, unit) {
@@ -759,6 +938,19 @@ document.addEventListener("click", (e) => {
   const typeButton = e.target.closest("[data-session-type]");
   if (typeButton) {
     updateSessionContext({ type: typeButton.dataset.sessionType ?? "run" });
+    return;
+  }
+
+  const checkInButton = e.target.closest("[data-checkin-answer]");
+  if (checkInButton) {
+    const questionNode = checkInButton.closest("[data-checkin-question]");
+    const questionId = questionNode?.dataset.checkinQuestion ?? "";
+    const answer = checkInButton.dataset.checkinAnswer ?? "";
+    const snapshotDate =
+      state.currentPayload?.snapshot?.snapshot_date ??
+      state.currentPayload?.snapshot_date ??
+      "Latest snapshot";
+    updateCheckInResponse(snapshotDate, questionId, answer);
     return;
   }
 
@@ -1308,6 +1500,24 @@ function readSessionContext() {
     return normalizeSessionContext({ ...fallback, ...(JSON.parse(raw) ?? {}) });
   } catch {
     return fallback;
+  }
+}
+
+function persistCheckInResponses(responses) {
+  try {
+    localStorage.setItem(
+      "personal-trainer:check-in-responses",
+      JSON.stringify(responses ?? {}),
+    );
+  } catch {}
+}
+
+function readCheckInResponses() {
+  try {
+    const raw = localStorage.getItem("personal-trainer:check-in-responses");
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
   }
 }
 

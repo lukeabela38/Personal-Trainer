@@ -107,6 +107,38 @@ class SnapshotContractTests(unittest.TestCase):
         result = _validate_snapshot(_valid_snapshot())
         self.assertEqual(result["derived"]["data_quality"], "high")
 
+    def test_build_snapshot_adds_fixed_check_in_questions_when_data_is_missing(self) -> None:
+        snapshot = build_snapshot(
+            {
+                "snapshot_date": "2026-07-06",
+                "timezone": "Europe/Malta",
+                "garmin": {"freshness": "stale", "flags": []},
+                "hevy": {"freshness": "fresh", "flags": []},
+                "cronometer": {
+                    "freshness": "partial",
+                    "today": {"log_completeness": "incomplete"},
+                    "flags": [],
+                },
+                "manual_context": {
+                    "freshness": "stale",
+                    "pain": ["wrists"],
+                    "sleep_quality": "unknown",
+                    "motivation": "normal",
+                    "mental_fatigue": "low",
+                    "table_tennis_today": "none",
+                },
+            }
+        )
+
+        questions = snapshot["derived"]["check_in_questions"]
+        self.assertEqual(len(questions), 3)
+        self.assertEqual(questions[0]["id"], "recovery_status")
+        self.assertEqual(questions[0]["options"], ["good", "okay", "poor"])
+        self.assertEqual(questions[1]["id"], "pain_or_soreness")
+        self.assertEqual(questions[1]["options"], ["no", "yes"])
+        self.assertEqual(questions[2]["id"], "fueling_status")
+        self.assertEqual(questions[2]["options"], ["yes", "partly", "no"])
+
     def test_rejects_invalid_freshness(self) -> None:
         snap = _valid_snapshot()
         snap["garmin"]["freshness"] = "expired"
