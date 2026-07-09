@@ -77,7 +77,7 @@ jobs:
         with:
           script: |
             const ref = context.payload.pull_request.head.ref;
-            const allowed = /^(dependabot\/.+|(feature|fix|chore|docs|ci)\/[a-z0-9._-]+)$/;
+            const allowed = /^(dependabot\/.+|(agent|feature|fix|chore|docs|ci)\/[a-z0-9._-]+)$/;
             if (!allowed.test(ref)) {
-              core.setFailed(`Branch name "${ref}" does not match pattern dependabot/** or feature|fix|chore|docs|ci/<description>`);
+              core.setFailed(`Branch name "${ref}" does not match pattern dependabot/** or agent|feature|fix|chore|docs|ci/<description>`);
             }

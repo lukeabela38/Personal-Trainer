@@ -20,6 +20,7 @@ Keep the wording short and concrete. The goal is clarity, not ceremony.
 - Open a PR for reviewable work instead of committing directly to `main`.
 - Link the PR back to the issue it resolves.
 - Prefer a PR that changes one behavior, one page, or one contract at a time.
+- Use a branch name that matches `agent/`, `feature/`, `fix/`, `chore/`, `docs/`, `ci/`, or `dependabot/`.
 
 GitHub templates should be used to keep issue and PR descriptions consistent.
 
