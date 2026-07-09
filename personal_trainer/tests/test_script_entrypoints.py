@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import json
+import os
 import sys
 import tempfile
 from contextlib import redirect_stderr, redirect_stdout
@@ -10,12 +12,16 @@ from unittest import TestCase
 from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "personal_trainer" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "wrappers"))
 
 from personal_trainer import snapshot_cli  # noqa: E402
 
 import generate_history  # noqa: E402
+import fetch_hevy_strength  # noqa: E402
+import fetch_manual  # noqa: E402
 
 try:  # noqa: SIM105
     import speed_report  # noqa: E402
@@ -130,3 +136,56 @@ class GenerateHistoryTests(TestCase):
             self.assertEqual(latest["recommendation"]["Priority"], "aerobic_quality")
             self.assertEqual(history_a["recommendation"]["Priority"], "aerobic_quality")
             self.assertEqual(history_b["recommendation"]["Priority"], "aerobic_quality")
+
+
+class ManualWrapperTests(TestCase):
+    def test_main_reads_checkin_from_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            checkin = tmp_path / "manual.json"
+            payload = {
+                "freshness": "fresh",
+                "sleep_quality": "good",
+                "soreness": ["quads"],
+                "pain": [],
+                "motivation": "high",
+                "mental_fatigue": "low",
+                "table_tennis_today": "training",
+                "time_available_minutes": 60,
+                "constraints": ["travel"],
+            }
+            checkin.write_text(json.dumps(payload), encoding="utf-8")
+
+            stdout = StringIO()
+            stderr = StringIO()
+            original = os.environ.get("PERSONAL_TRAINER_MANUAL_FILE")
+            os.environ["PERSONAL_TRAINER_MANUAL_FILE"] = str(checkin)
+            try:
+                with redirect_stdout(stdout), redirect_stderr(stderr):
+                    exit_code = fetch_manual.main()
+            finally:
+                if original is None:
+                    os.environ.pop("PERSONAL_TRAINER_MANUAL_FILE", None)
+                else:
+                    os.environ["PERSONAL_TRAINER_MANUAL_FILE"] = original
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(stderr.getvalue(), "")
+            self.assertEqual(json.loads(stdout.getvalue()), payload)
+
+
+class HevyStrengthWrapperTests(TestCase):
+    def test_fetch_marks_rows_with_exercise_name(self) -> None:
+        async def fake_call_tool(_command: str, method: str, params: dict[str, object]) -> list[dict[str, object]]:
+            if method != "get-exercise-history":
+                return []
+            if params.get("exerciseTemplateId") == "79D0BB3A":
+                return [{"weight": 80, "reps": 5, "workoutTitle": "Bench"}]
+            return []
+
+        with patch.object(fetch_hevy_strength, "call_tool", side_effect=fake_call_tool):
+            rows = asyncio.run(fetch_hevy_strength.fetch())
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["_exercise_name"], "Bench Press (Barbell)")
+        self.assertEqual(rows[0]["weight"], 80)
