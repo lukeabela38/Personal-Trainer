@@ -322,14 +322,19 @@ function renderSessionShell() {
   if (sessionTime) sessionTime.disabled = context.mode === "none";
 }
 
-function renderCheckInShell(snapshot = state.currentPayload?.snapshot ?? state.currentPayload ?? {}, recommendation = state.currentPayload?.recommendation ?? {}) {
+function renderCheckInShell(
+  snapshot = state.currentPayload?.snapshot ?? state.currentPayload ?? {},
+  recommendation = state.currentPayload?.recommendation ?? {},
+) {
   if (!checkInShell) return;
   const derived = snapshot.derived ?? {};
   const questions = Array.isArray(derived.check_in_questions)
     ? derived.check_in_questions
     : [];
   const needsCheckIn =
-    (recommendation["Needs check-in"] ?? recommendation.needs_check_in ?? "no") === "yes";
+    (recommendation["Needs check-in"] ??
+      recommendation.needs_check_in ??
+      "no") === "yes";
   const snapshotDate = snapshot.snapshot_date ?? "Latest snapshot";
   const responses = state.checkInResponses?.[snapshotDate] ?? {};
   checkInShell.innerHTML = renderCheckInPanel({
@@ -584,7 +589,8 @@ export function renderCheckInPanel({
   const answeredCount = checkInQuestions.filter((question) =>
     shouldRenderValue(responses[question.id]),
   ).length;
-  const allAnswered = checkInQuestions.length > 0 && answeredCount === checkInQuestions.length;
+  const allAnswered =
+    checkInQuestions.length > 0 && answeredCount === checkInQuestions.length;
   const statusLabel = needsCheckIn
     ? allAnswered
       ? "Captured"
@@ -606,7 +612,9 @@ export function renderCheckInPanel({
     ? `
       <div class="checkin-question-list">
         ${checkInQuestions
-          .map((question) => renderCheckInQuestion(question, responses[question.id]))
+          .map((question) =>
+            renderCheckInQuestion(question, responses[question.id]),
+          )
           .join("")}
       </div>
     `
