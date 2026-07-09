@@ -96,3 +96,23 @@ Implications:
 
 - All test classes extend `unittest.TestCase`.
 - Test discovery requires the `-v` flag for verbose output; no pytest fixtures or markers available.
+
+## 2026-07-09 — File-Mapping Guardrail for Source Changes
+
+Decision:
+
+- When source files change, CI must verify that the corresponding test surface changes in the same PR.
+- The current guardrail checks three common paths: Python package code, script code, and site JavaScript.
+
+Reason:
+
+- Prevents source-only changes from slipping through with no test updates.
+- Keeps the rule simple enough to enforce automatically without introducing a full coverage stack.
+- Works well with the repo's narrow card style and existing `unittest`/Node test setup.
+
+Implications:
+
+- Source changes to `personal_trainer/src/personal_trainer/*.py` must include a change under `personal_trainer/tests/`.
+- Source changes to `scripts/**/*.py` must include a change under `tests/`.
+- Source changes to `site/**/*.js` must include a change under `tests/frontend/`.
+- This guardrail complements the existing `unittest`-only decision rather than replacing it.

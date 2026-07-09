@@ -45,6 +45,10 @@ If the decision is durable enough to outlive a single task, record it in [`DECIS
 - Keep body composition and other indirect metrics optional until the product needs them.
 - Do not mix contract changes with UI changes unless the card explicitly requires integration.
 - Keep the default path simple, then add detail through progressive disclosure.
+- If source code changes, update the matching test surface in the same PR:
+  - `personal_trainer/src/personal_trainer/*.py` needs a change in `personal_trainer/tests/`
+  - `scripts/**/*.py` needs a change in `tests/`
+  - `site/**/*.js` needs a change in `tests/frontend/`
 
 ## Review Rule
 
