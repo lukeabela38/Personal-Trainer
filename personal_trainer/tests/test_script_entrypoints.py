@@ -17,11 +17,11 @@ sys.path.insert(0, str(REPO_ROOT / "personal_trainer" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "wrappers"))
 
-from personal_trainer import snapshot_cli  # noqa: E402
-
-import generate_history  # noqa: E402
 import fetch_hevy_strength  # noqa: E402
 import fetch_manual  # noqa: E402
+import generate_history  # noqa: E402
+
+from personal_trainer import snapshot_cli  # noqa: E402
 
 try:  # noqa: SIM105
     import speed_report  # noqa: E402
@@ -122,10 +122,13 @@ class GenerateHistoryTests(TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            with patch.object(generate_history, "REPO_ROOT", tmp_path), patch.object(
-                generate_history,
-                "_process_snapshot",
-                side_effect=lambda payload: {**payload, "recommendation": {"Priority": "aerobic_quality"}},
+            with (
+                patch.object(generate_history, "REPO_ROOT", tmp_path),
+                patch.object(
+                    generate_history,
+                    "_process_snapshot",
+                    side_effect=lambda payload: {**payload, "recommendation": {"Priority": "aerobic_quality"}},
+                ),
             ):
                 generate_history._merge_into_dist(snapshots, len(snapshots))
 
