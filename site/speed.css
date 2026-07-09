@@ -1,10 +1,23 @@
 /* Speed page: record table */
 
-.speed-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
-.speed-header h2 { font-size: 1rem; font-weight: 600; }
+.speed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.speed-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
 
-.speed-summary { margin-bottom: 14px; }
-.speed-summary .summary-tile-value { font-size: 1rem; }
+.speed-summary {
+  margin-bottom: 14px;
+}
+.speed-summary .summary-tile-value {
+  font-size: 1rem;
+}
 
 .speed-table {
   display: grid;
@@ -23,11 +36,22 @@
   align-items: center;
   transition: background 0.15s;
 }
-.speed-row:hover { background: rgba(255, 255, 255, 0.04); }
-.speed-row:first-child { padding-top: 16px; }
+.speed-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.speed-row:first-child {
+  padding-top: 16px;
+}
 
-.speed-row-name { font-weight: 700; font-size: 0.95rem; }
-.speed-row-name, .speed-row-value, .speed-row-date { min-width: 0; }
+.speed-row-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.speed-row-name,
+.speed-row-value,
+.speed-row-date {
+  min-width: 0;
+}
 .speed-row-value {
   font-weight: 700;
   font-size: 1.1rem;
@@ -35,9 +59,17 @@
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
-.speed-row-date { font-size: 0.8rem; color: var(--muted); text-align: right; white-space: nowrap; }
+.speed-row-date {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
 
-.speed-empty { padding: 24px; color: var(--muted); }
+.speed-empty {
+  padding: 24px;
+  color: var(--muted);
+}
 
 .pb-badge {
   display: inline-block;
@@ -53,12 +85,23 @@
 }
 
 @media (max-width: 768px) {
-  .speed-header { flex-direction: column; align-items: stretch; }
-  .speed-row { grid-template-columns: 1fr auto; }
-  .speed-row-date { display: none; }
+  .speed-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .speed-row {
+    grid-template-columns: 1fr auto;
+  }
+  .speed-row-date {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
-  .speed-row { padding: 12px 14px; }
-  .speed-summary .summary-tile { padding: 10px 12px; }
+  .speed-row {
+    padding: 12px 14px;
+  }
+  .speed-summary .summary-tile {
+    padding: 10px 12px;
+  }
 }
