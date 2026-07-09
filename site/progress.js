@@ -1,4 +1,11 @@
-import { loadLastDays, extractVo2, extractBodyWeight, weeklySummary, loadIndex, loadSnapshot } from "./history.js";
+import {
+  loadLastDays,
+  extractVo2,
+  extractBodyWeight,
+  weeklySummary,
+  loadIndex,
+  loadSnapshot,
+} from "./history.js";
 import { renderSparkline, fmtNum } from "./goals.js";
 import {
   escapeHtml,
@@ -75,7 +82,12 @@ async function loadHistoryTrends() {
       if (vo2.length > 1) {
         const vals = vo2.map((d) => d.value);
         const vo2Delta = vals[vals.length - 1] - vals[0];
-        const vo2Dir = vo2Delta > 0 ? "improved" : vo2Delta < 0 ? "declined" : "remained stable";
+        const vo2Dir =
+          vo2Delta > 0
+            ? "improved"
+            : vo2Delta < 0
+              ? "declined"
+              : "remained stable";
         parts.push(`
           <div class="stat-group">
             <div class="stat-group-title">VO2 max (${vo2.length} days)</div>
@@ -94,7 +106,12 @@ async function loadHistoryTrends() {
       if (bw.length > 1) {
         const vals = bw.map((d) => d.value);
         const bwDelta = vals[vals.length - 1] - vals[0];
-        const bwDir = bwDelta < 0 ? "decreased" : bwDelta > 0 ? "increased" : "remained stable";
+        const bwDir =
+          bwDelta < 0
+            ? "decreased"
+            : bwDelta > 0
+              ? "increased"
+              : "remained stable";
         parts.push(`
           <div class="stat-group">
             <div class="stat-group-title">Body weight (${bw.length} days)</div>
@@ -124,28 +141,70 @@ function renderProgress(snapshot) {
   statusBanner.classList.remove("skeleton");
 
   const rows = [
-    deltaRow("VO2 max", readNumber(previous, ["garmin", "current_vo2max"]), readNumber(snapshot, ["garmin", "current_vo2max"])),
-    deltaRow("Fueling", readText(previous, ["cronometer", "fueling_status"]), readText(snapshot, ["cronometer", "fueling_status"])),
-    deltaRow("Remaining kcal", readNumber(previous, ["cronometer", "today", "remaining_kcal"]), readNumber(snapshot, ["cronometer", "today", "remaining_kcal"])),
-    deltaRow("Strength trend", readText(previous, ["hevy", "strength_trend"]), readText(snapshot, ["hevy", "strength_trend"])),
-    deltaRow("Running bests", summarizeBests(previous), summarizeBests(snapshot)),
+    deltaRow(
+      "VO2 max",
+      readNumber(previous, ["garmin", "current_vo2max"]),
+      readNumber(snapshot, ["garmin", "current_vo2max"]),
+    ),
+    deltaRow(
+      "Fueling",
+      readText(previous, ["cronometer", "fueling_status"]),
+      readText(snapshot, ["cronometer", "fueling_status"]),
+    ),
+    deltaRow(
+      "Remaining kcal",
+      readNumber(previous, ["cronometer", "today", "remaining_kcal"]),
+      readNumber(snapshot, ["cronometer", "today", "remaining_kcal"]),
+    ),
+    deltaRow(
+      "Strength trend",
+      readText(previous, ["hevy", "strength_trend"]),
+      readText(snapshot, ["hevy", "strength_trend"]),
+    ),
+    deltaRow(
+      "Running bests",
+      summarizeBests(previous),
+      summarizeBests(snapshot),
+    ),
   ].filter(Boolean);
 
   renderSummaryStrip([
-    summaryTile("Latest", snapshot.snapshot_date ?? "Unknown date", snapshot.source ?? "Snapshot"),
-    summaryTile("Baseline", previous.snapshot_date ?? "Previous snapshot", previous.snapshot_date ? "Stored locally" : "No prior snapshot"),
-    summaryTile("Changes", rows.length ? `${rows.length} changed` : "No changes", rows.length ? "Compared with previous snapshot" : "Nothing moved"),
-    summaryTile("Running bests", summarizeBests(snapshot), "Strength / running"),
+    summaryTile(
+      "Latest",
+      snapshot.snapshot_date ?? "Unknown date",
+      snapshot.source ?? "Snapshot",
+    ),
+    summaryTile(
+      "Baseline",
+      previous.snapshot_date ?? "Previous snapshot",
+      previous.snapshot_date ? "Stored locally" : "No prior snapshot",
+    ),
+    summaryTile(
+      "Changes",
+      rows.length ? `${rows.length} changed` : "No changes",
+      rows.length ? "Compared with previous snapshot" : "Nothing moved",
+    ),
+    summaryTile(
+      "Running bests",
+      summarizeBests(snapshot),
+      "Strength / running",
+    ),
   ]);
 
-  statusBanner.textContent = rows.length ? `${rows.length} changes` : "No changes detected";
+  statusBanner.textContent = rows.length
+    ? `${rows.length} changes`
+    : "No changes detected";
   grid.innerHTML = rows.length
-    ? rows.map((row) => `
+    ? rows
+        .map(
+          (row) => `
       <article class="item">
         <span>${escapeHtml(row.label)}</span>
         <strong class="${row.deltaClass}" title="${row.tooltip ?? ""}">${escapeHtml(row.value)}</strong>
       </article>
-    `).join("")
+    `,
+        )
+        .join("")
     : `<div class="item"><span>Progress</span><strong>No change since the previous snapshot</strong></div>`;
 
   persistSnapshot(snapshot);
@@ -168,7 +227,12 @@ export function deltaRow(label, previous, current) {
   } else {
     tooltip = `${label}: ${formatValue(previous)} → ${formatValue(current)}`;
   }
-  return { label, value: `${formatValue(previous)} → ${formatValue(current)}`, deltaClass, tooltip };
+  return {
+    label,
+    value: `${formatValue(previous)} → ${formatValue(current)}`,
+    deltaClass,
+    tooltip,
+  };
 }
 
 export function summaryTile(label, value, subvalue) {
@@ -195,11 +259,18 @@ async function setupDatePickers() {
     const index = await loadIndex();
     if (!index?.dates?.length || !dateFrom || !dateTo) return;
     const dates = index.dates;
-    dateFrom.innerHTML = dates.map((d) => `<option value="${d}">${d}</option>`).join("");
-    dateTo.innerHTML = [...dates].reverse().map((d) => `<option value="${d}">${d}</option>`).join("");
+    dateFrom.innerHTML = dates
+      .map((d) => `<option value="${d}">${d}</option>`)
+      .join("");
+    dateTo.innerHTML = [...dates]
+      .reverse()
+      .map((d) => `<option value="${d}">${d}</option>`)
+      .join("");
     dateFrom.value = dates[0];
     dateTo.value = dates[dates.length - 1];
-    document.getElementById("compare-btn")?.addEventListener("click", compareDates);
+    document
+      .getElementById("compare-btn")
+      ?.addEventListener("click", compareDates);
   } catch {}
 }
 
@@ -219,33 +290,78 @@ function renderComparison(fromDate, snapA, toDate, snapB) {
   const current = snapB ?? {};
   sourceLabel.textContent = `${fromDate} → ${toDate}`;
   const rows = [
-    deltaRow("VO2 max", readNumber(prev, ["garmin", "current_vo2max"]), readNumber(current, ["garmin", "current_vo2max"])),
-    deltaRow("Body weight", readNumber(prev, ["athlete", "body_weight_kg"]), readNumber(current, ["athlete", "body_weight_kg"])),
-    deltaRow("Fueling", readText(prev, ["cronometer", "fueling_status"]), readText(current, ["cronometer", "fueling_status"])),
-    deltaRow("Sleep", readText(prev, ["manual_context", "sleep_quality"]), readText(current, ["manual_context", "sleep_quality"])),
-    deltaRow("Remaining kcal", readNumber(prev, ["cronometer", "today", "remaining_kcal"]), readNumber(current, ["cronometer", "today", "remaining_kcal"])),
-    deltaRow("Strength trend", readText(prev, ["hevy", "strength_trend"]), readText(current, ["hevy", "strength_trend"])),
+    deltaRow(
+      "VO2 max",
+      readNumber(prev, ["garmin", "current_vo2max"]),
+      readNumber(current, ["garmin", "current_vo2max"]),
+    ),
+    deltaRow(
+      "Body weight",
+      readNumber(prev, ["athlete", "body_weight_kg"]),
+      readNumber(current, ["athlete", "body_weight_kg"]),
+    ),
+    deltaRow(
+      "Fueling",
+      readText(prev, ["cronometer", "fueling_status"]),
+      readText(current, ["cronometer", "fueling_status"]),
+    ),
+    deltaRow(
+      "Sleep",
+      readText(prev, ["manual_context", "sleep_quality"]),
+      readText(current, ["manual_context", "sleep_quality"]),
+    ),
+    deltaRow(
+      "Remaining kcal",
+      readNumber(prev, ["cronometer", "today", "remaining_kcal"]),
+      readNumber(current, ["cronometer", "today", "remaining_kcal"]),
+    ),
+    deltaRow(
+      "Strength trend",
+      readText(prev, ["hevy", "strength_trend"]),
+      readText(current, ["hevy", "strength_trend"]),
+    ),
   ].filter(Boolean);
   renderSummaryStrip([
-    summaryTile("Range", `${fromDate} → ${toDate}`, "Selected comparison window"),
-    summaryTile("Baseline", prev.snapshot_date ?? fromDate, prev.snapshot_date ? "Earlier snapshot" : "Selected start date"),
-    summaryTile("Changes", rows.length ? `${rows.length} changed` : "No changes", rows.length ? "Differences detected" : "Matched exactly"),
+    summaryTile(
+      "Range",
+      `${fromDate} → ${toDate}`,
+      "Selected comparison window",
+    ),
+    summaryTile(
+      "Baseline",
+      prev.snapshot_date ?? fromDate,
+      prev.snapshot_date ? "Earlier snapshot" : "Selected start date",
+    ),
+    summaryTile(
+      "Changes",
+      rows.length ? `${rows.length} changed` : "No changes",
+      rows.length ? "Differences detected" : "Matched exactly",
+    ),
     summaryTile("Running bests", summarizeBests(current), "Current snapshot"),
   ]);
-  statusBanner.textContent = rows.length ? `${rows.length} changes` : "No changes";
+  statusBanner.textContent = rows.length
+    ? `${rows.length} changes`
+    : "No changes";
   grid.innerHTML = rows.length
-    ? rows.map((row) => `
+    ? rows
+        .map(
+          (row) => `
       <article class="item">
         <span>${escapeHtml(row.label)}</span>
         <strong class="${row.deltaClass}">${escapeHtml(row.value)}</strong>
       </article>
-    `).join("")
+    `,
+        )
+        .join("")
     : `<div class="item"><span>Progress</span><strong>No change between these dates</strong></div>`;
 }
 
 function persistSnapshot(snapshot) {
   try {
-    localStorage.setItem("personal-trainer:last-snapshot", JSON.stringify(snapshot));
+    localStorage.setItem(
+      "personal-trainer:last-snapshot",
+      JSON.stringify(snapshot),
+    );
   } catch {}
 }
 

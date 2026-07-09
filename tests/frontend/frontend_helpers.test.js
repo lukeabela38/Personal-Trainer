@@ -9,8 +9,20 @@ import {
   shouldRenderValue,
   summarizeBests,
 } from "../../site/data-helpers.js";
-import { defaultGoals, fmtNum, goalProgress, loadGoals, renderSparkline, saveGoals } from "../../site/goals.js";
-import { extractBodyWeight, extractPriority, extractVo2, weeklySummary } from "../../site/history.js";
+import {
+  defaultGoals,
+  fmtNum,
+  goalProgress,
+  loadGoals,
+  renderSparkline,
+  saveGoals,
+} from "../../site/goals.js";
+import {
+  extractBodyWeight,
+  extractPriority,
+  extractVo2,
+  weeklySummary,
+} from "../../site/history.js";
 
 function createElementStub() {
   const target = {
@@ -83,7 +95,9 @@ const elementCache = new Map();
 
 globalThis.document = createDocumentStub();
 globalThis.window = globalThis;
-globalThis.fetch = async () => ({ json: async () => ({ entries: [], recommendation: {}, snapshot: {} }) });
+globalThis.fetch = async () => ({
+  json: async () => ({ entries: [], recommendation: {}, snapshot: {} }),
+});
 
 const speed = await import("../../site/speed.js");
 const strength = await import("../../site/strength.js");
@@ -100,9 +114,18 @@ test("shared data helpers format and read values", () => {
   assert.equal(readText({ a: { b: 7 } }, ["a", "b"]), "7");
   assert.equal(shouldRenderValue("hello"), true);
   assert.equal(shouldRenderValue(" "), false);
-  assert.equal(formatDisplayValue("power_and_athleticism"), "Power And Athleticism");
+  assert.equal(
+    formatDisplayValue("power_and_athleticism"),
+    "Power And Athleticism",
+  );
   assert.equal(formatDisplayValue("-"), "-");
-  assert.equal(summarizeBests({ hevy: { recent_bests: [1, 2] }, garmin: { recent_bests: [1] } }), "2 strength / 1 running");
+  assert.equal(
+    summarizeBests({
+      hevy: { recent_bests: [1, 2] },
+      garmin: { recent_bests: [1] },
+    }),
+    "2 strength / 1 running",
+  );
 });
 
 test("goals helpers calculate targets and sparklines", () => {
@@ -110,9 +133,18 @@ test("goals helpers calculate targets and sparklines", () => {
   assert.equal(goals.length, 5);
   assert.equal(fmtNum(3), "3");
   assert.equal(fmtNum(3.5), "3.5");
-  assert.equal(goalProgress({ type: "strength", current: 50, target: 100 }), 50);
-  assert.equal(goalProgress({ type: "speed", current: "20:00", target: "18:30" }), 93);
-  assert.match(renderSparkline([1, 2, 3], 100, 40, { dots: true, labels: true }), /<svg/);
+  assert.equal(
+    goalProgress({ type: "strength", current: 50, target: 100 }),
+    50,
+  );
+  assert.equal(
+    goalProgress({ type: "speed", current: "20:00", target: "18:30" }),
+    93,
+  );
+  assert.match(
+    renderSparkline([1, 2, 3], 100, 40, { dots: true, labels: true }),
+    /<svg/,
+  );
 });
 
 test("goals loading falls back to defaults when storage is empty", () => {
@@ -139,7 +171,9 @@ test("goals save and load round-trip through localStorage", () => {
     removeItem: (key) => store.delete(key),
   };
   try {
-    const goals = defaultGoals().map((goal) => (goal.id === "bench" ? { ...goal, current: 95 } : goal));
+    const goals = defaultGoals().map((goal) =>
+      goal.id === "bench" ? { ...goal, current: 95 } : goal,
+    );
     saveGoals(goals);
     assert.deepEqual(loadGoals(), goals);
   } finally {
@@ -188,11 +222,13 @@ test("speed helpers normalize pace and distance records", () => {
   assert.equal(speed.formatDuration(3661), "1:01:01");
   assert.equal(speed.formatDistanceKm(12345), "12.34");
   assert.deepEqual(
-    speed.sortEntries([
-      { name: "Longest Run" },
-      { name: "Fastest 10K" },
-      { name: "Fastest 1K" },
-    ]).map((entry) => entry.name),
+    speed
+      .sortEntries([
+        { name: "Longest Run" },
+        { name: "Fastest 10K" },
+        { name: "Fastest 1K" },
+      ])
+      .map((entry) => entry.name),
     ["Fastest 1K", "Fastest 10K", "Longest Run"],
   );
 });
@@ -214,8 +250,18 @@ test("app helpers format guidance and session labels", () => {
   assert.equal(app.formatFoodTimingLabel("unknown"), "Flexible timing");
   assert.equal(app.formatSessionModeLabel("planned"), "Planned");
   assert.equal(app.formatSessionTypeLabel("lift"), "Lift");
-  assert.match(app.describeSessionContext({ mode: "planned", type: "run", time: "2026-07-09T07:00" }), /^Planned Run at /);
-  assert.equal(app.describeSessionHelp({ mode: "none" }).includes("Pick a timing mode"), true);
+  assert.match(
+    app.describeSessionContext({
+      mode: "planned",
+      type: "run",
+      time: "2026-07-09T07:00",
+    }),
+    /^Planned Run at /,
+  );
+  assert.equal(
+    app.describeSessionHelp({ mode: "none" }).includes("Pick a timing mode"),
+    true,
+  );
 });
 
 test("progress helpers format change rows", () => {

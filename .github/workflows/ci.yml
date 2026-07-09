@@ -63,6 +63,21 @@ jobs:
       - name: Run frontend helper tests
         run: node --test tests/frontend/*.test.js
 
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install JS tools
+        run: npm ci
+      - name: Check JS formatting
+        run: npm run format:js:check
+      - name: Lint JS
+        run: npm run lint:js
+
   docker:
     runs-on: ubuntu-latest
     permissions:

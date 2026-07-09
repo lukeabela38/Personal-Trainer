@@ -2,13 +2,85 @@
   "source": "Hevy exercise history",
   "snapshot_date": "2026-07-02",
   "entries": [
-    {"name":"Squat (Barbell)","category":"Lower body","best_set":{"weight_kg":100,"reps":8,"workout_start_date":"2026-06-24"},"estimated_one_rm_kg":126.7},
-    {"name":"Bench Press (Barbell)","category":"Push","best_set":{"weight_kg":70,"reps":4,"workout_start_date":"2026-06-26"},"estimated_one_rm_kg":79.3},
-    {"name":"Chin Up","category":"Pull / bodyweight","best_set":{"weight_kg":null,"reps":8,"workout_start_date":"2026-07-02"},"estimated_one_rm_kg":null},
-    {"name":"Triceps Dip","category":"Push / bodyweight","best_set":{"weight_kg":null,"reps":12,"workout_start_date":"2026-06-30"},"estimated_one_rm_kg":null},
-    {"name":"Push Up","category":"Push / bodyweight","best_set":{"weight_kg":null,"reps":12,"workout_start_date":"2026-07-02"},"estimated_one_rm_kg":null},
-    {"name":"Dumbbell Row","category":"Pull","best_set":{"weight_kg":35,"reps":8,"workout_start_date":"2026-07-02"},"estimated_one_rm_kg":44.3},
-    {"name":"Sumo Squat (Kettlebell)","category":"Lower body","best_set":{"weight_kg":36,"reps":12,"workout_start_date":"2026-07-02"},"estimated_one_rm_kg":50.4},
-    {"name":"Single Arm Tricep Extension (Dumbbell)","category":"Arms","best_set":{"weight_kg":12.5,"reps":10,"workout_start_date":"2026-06-22"},"estimated_one_rm_kg":16.7}
+    {
+      "name": "Squat (Barbell)",
+      "category": "Lower body",
+      "best_set": {
+        "weight_kg": 100,
+        "reps": 8,
+        "workout_start_date": "2026-06-24"
+      },
+      "estimated_one_rm_kg": 126.7
+    },
+    {
+      "name": "Bench Press (Barbell)",
+      "category": "Push",
+      "best_set": {
+        "weight_kg": 70,
+        "reps": 4,
+        "workout_start_date": "2026-06-26"
+      },
+      "estimated_one_rm_kg": 79.3
+    },
+    {
+      "name": "Chin Up",
+      "category": "Pull / bodyweight",
+      "best_set": {
+        "weight_kg": null,
+        "reps": 8,
+        "workout_start_date": "2026-07-02"
+      },
+      "estimated_one_rm_kg": null
+    },
+    {
+      "name": "Triceps Dip",
+      "category": "Push / bodyweight",
+      "best_set": {
+        "weight_kg": null,
+        "reps": 12,
+        "workout_start_date": "2026-06-30"
+      },
+      "estimated_one_rm_kg": null
+    },
+    {
+      "name": "Push Up",
+      "category": "Push / bodyweight",
+      "best_set": {
+        "weight_kg": null,
+        "reps": 12,
+        "workout_start_date": "2026-07-02"
+      },
+      "estimated_one_rm_kg": null
+    },
+    {
+      "name": "Dumbbell Row",
+      "category": "Pull",
+      "best_set": {
+        "weight_kg": 35,
+        "reps": 8,
+        "workout_start_date": "2026-07-02"
+      },
+      "estimated_one_rm_kg": 44.3
+    },
+    {
+      "name": "Sumo Squat (Kettlebell)",
+      "category": "Lower body",
+      "best_set": {
+        "weight_kg": 36,
+        "reps": 12,
+        "workout_start_date": "2026-07-02"
+      },
+      "estimated_one_rm_kg": 50.4
+    },
+    {
+      "name": "Single Arm Tricep Extension (Dumbbell)",
+      "category": "Arms",
+      "best_set": {
+        "weight_kg": 12.5,
+        "reps": 10,
+        "workout_start_date": "2026-06-22"
+      },
+      "estimated_one_rm_kg": 16.7
+    }
   ]
 }

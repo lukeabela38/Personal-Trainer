@@ -8,7 +8,10 @@ export function escapeHtml(value) {
 }
 
 export function readPath(object, path) {
-  return path.reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), object);
+  return path.reduce(
+    (acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined),
+    object,
+  );
 }
 
 export function readNumber(snapshot, path) {
