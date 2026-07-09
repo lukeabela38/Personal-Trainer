@@ -32,7 +32,7 @@ jobs:
           --snapshot-output dist/data/snapshot.json
           --site-output dist
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
