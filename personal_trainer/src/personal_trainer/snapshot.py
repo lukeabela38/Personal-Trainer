@@ -172,7 +172,7 @@ def _derive_context(
 ) -> SourcePayload:
     constraints: set[str] = set()
     conflicts: set[str] = set()
-    questions: list[str] = []
+    questions: list[dict[str, Any]] = []
 
     garmin_flags = set(_list(garmin.get("flags")))
     hevy_flags = set(_list(hevy.get("flags")))
@@ -181,17 +181,50 @@ def _derive_context(
     if "recovery_poor" in garmin_flags or manual.get("sleep_quality") == "poor":
         constraints.add("poor_recovery")
         conflicts.add("low_sleep_vs_intensity")
+        _add_check_in_question(
+            questions,
+            "recovery_status",
+            "How recovered do you feel today?",
+            ["good", "okay", "poor"],
+        )
 
     if manual.get("mental_fatigue") == "high" or manual.get("motivation") == "low":
         constraints.add("poor_recovery")
 
     if manual.get("pain"):
         constraints.add("pain_risk")
-        questions.append("Does the pain change your movement quality today?")
+        _add_check_in_question(
+            questions,
+            "pain_or_soreness",
+            "Any pain or unusual soreness today?",
+            ["no", "yes"],
+        )
 
     if _has_any(cronometer_flags, {"under_fueled_today", "protein_low_today", "carbs_low_for_quality_run"}):
         constraints.add("under_fueled")
         conflicts.add("calorie_deficit_vs_hard_training")
+        _add_check_in_question(
+            questions,
+            "fueling_status",
+            "Have you logged most of today's food yet?",
+            ["yes", "partly", "no"],
+        )
+
+    if garmin.get("freshness") in {"missing", "stale", "partial"}:
+        _add_check_in_question(
+            questions,
+            "recovery_status",
+            "How recovered do you feel today?",
+            ["good", "okay", "poor"],
+        )
+
+    if manual.get("freshness") in {"missing", "stale"}:
+        _add_check_in_question(
+            questions,
+            "pain_or_soreness",
+            "Any pain or unusual soreness today?",
+            ["no", "yes"],
+        )
 
     if _has_any(hevy_flags, {"heavy_legs_recently", "posterior_chain_fatigue_risk"}):
         constraints.add("leg_fatigue")
@@ -203,15 +236,13 @@ def _derive_context(
         constraints.add("table_tennis_conflict")
         conflicts.add("shoulder_fatigue_vs_table_tennis")
 
-    if manual.get("freshness") in {"missing", "stale"}:
-        questions.append("Any pain or unusual soreness today?")
-        questions.append("Are you playing table tennis today, and is it important?")
-
-    if garmin.get("freshness") in {"missing", "stale", "partial"}:
-        questions.append("How did you sleep, subjectively?")
-
     if cronometer.get("freshness") in {"missing", "stale", "partial"} or "log_incomplete" in cronometer_flags:
-        questions.append("Are your nutrition logs complete enough to judge fueling today?")
+        _add_check_in_question(
+            questions,
+            "fueling_status",
+            "Have you logged most of today's food yet?",
+            ["yes", "partly", "no"],
+        )
 
     data_quality = _data_quality(garmin, hevy, cronometer, manual)
     if data_quality == "low":
@@ -226,7 +257,7 @@ def _derive_context(
         "primary_constraints": sorted(constraints),
         "likely_conflicts": sorted(conflicts),
         "check_in_required": check_in_required,
-        "check_in_questions": _dedupe(questions)[:3],
+        "check_in_questions": sorted(questions, key=_check_in_question_rank)[:3],
     }
 
 
@@ -257,6 +288,26 @@ def _list(value: Any) -> list[Any]:
 
 def _has_any(values: set[str], targets: set[str]) -> bool:
     return bool(values & targets)
+
+
+def _add_check_in_question(
+    questions: list[dict[str, Any]],
+    question_id: str,
+    prompt: str,
+    options: list[str],
+) -> None:
+    if any(question.get("id") == question_id for question in questions):
+        return
+    questions.append({"id": question_id, "prompt": prompt, "options": options})
+
+
+def _check_in_question_rank(question: dict[str, Any]) -> int:
+    ranks = {
+        "recovery_status": 0,
+        "pain_or_soreness": 1,
+        "fueling_status": 2,
+    }
+    return ranks.get(str(question.get("id")), 99)
 
 
 def _dedupe(values: list[Any]) -> list[Any]:
@@ -351,6 +402,21 @@ def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
         raise ValueError("derived.likely_conflicts must be a list")
     if not isinstance(derived.get("check_in_questions"), list):
         raise ValueError("derived.check_in_questions must be a list")
+    for idx, question in enumerate(derived["check_in_questions"]):
+        if not isinstance(question, dict):
+            raise ValueError(f"derived.check_in_questions[{idx}] must be a JSON object")
+        if not isinstance(question.get("id"), str) or not question.get("id"):
+            raise ValueError(f"derived.check_in_questions[{idx}].id must be a non-empty string")
+        if not isinstance(question.get("prompt"), str) or not question.get("prompt"):
+            raise ValueError(f"derived.check_in_questions[{idx}].prompt must be a non-empty string")
+        options = question.get("options")
+        if not isinstance(options, list) or not options:
+            raise ValueError(f"derived.check_in_questions[{idx}].options must be a non-empty list")
+        for option_idx, option in enumerate(options):
+            if not isinstance(option, str) or not option:
+                raise ValueError(
+                    f"derived.check_in_questions[{idx}].options[{option_idx}] must be a non-empty string"
+                )
 
     for source in _VALID_FRESHNESS_SOURCES:
         freshness = snapshot.get(source, {}).get("freshness")

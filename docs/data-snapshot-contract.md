@@ -222,12 +222,15 @@ Manual context should stay short. The system should ask only what changes the de
 
 When needed, ask no more than three questions, chosen from:
 
-- How did you sleep, subjectively?
+- How recovered do you feel today?
 - Any pain or unusual soreness today?
-- Are you playing table tennis today, and is it important?
-- How much time do you realistically have?
-- Any illness, travel, alcohol, heat exposure, or unusual stress?
-- Do you feel motivated for a hard session?
+- Have you logged most of today's food yet?
+
+Use fixed answer sets for those questions:
+
+- Recovery: `good`, `okay`, `poor`
+- Pain or soreness: `no`, `yes`
+- Fueling log: `yes`, `partly`, `no`
 
 ### Manual Values
 
@@ -249,6 +252,16 @@ Use these values:
 - `high`: all important sources are fresh and agree
 - `medium`: enough data exists, but one source is partial, stale, or mildly conflicting
 - `low`: important data is missing, stale, or contradictory
+
+### Check-In Questions
+
+The derived snapshot should carry at most three structured check-in questions when the decision needs more information. Each question should include:
+
+- an `id`
+- a short `prompt`
+- a fixed list of answer `options`
+
+The first version should keep the set deterministic and rules-based rather than conversational.
 
 ### Hard Session Allowed
 

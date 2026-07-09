@@ -181,6 +181,32 @@ test("goals save and load round-trip through localStorage", () => {
   }
 });
 
+test("check-in panel renders fixed questions and answer chips", () => {
+  const html = app.renderCheckInPanel({
+    snapshotDate: "2026-07-06",
+    needsCheckIn: true,
+    checkInQuestions: [
+      {
+        id: "recovery_status",
+        prompt: "How recovered do you feel today?",
+        options: ["good", "okay", "poor"],
+      },
+      {
+        id: "pain_or_soreness",
+        prompt: "Any pain or unusual soreness today?",
+        options: ["no", "yes"],
+      },
+    ],
+    responses: {
+      recovery_status: "okay",
+    },
+  });
+
+  assert.match(html, /How recovered do you feel today\?/);
+  assert.match(html, /data-checkin-answer="poor"/);
+  assert.match(html, /Selected: Okay/);
+});
+
 test("history helpers summarize snapshots", () => {
   const snapshots = [
     {

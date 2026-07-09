@@ -569,6 +569,108 @@ input[type="file"] {
   max-width: 72ch;
 }
 
+/* Check-in shell */
+.checkin-shell {
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(240, 179, 75, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(127, 209, 185, 0.05)
+    );
+  border: 1px solid rgba(240, 179, 75, 0.18);
+  display: grid;
+  gap: 16px;
+}
+
+.checkin-shell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.checkin-title {
+  margin-top: 4px;
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.checkin-help {
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.5;
+  max-width: 72ch;
+}
+
+.checkin-status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(240, 179, 75, 0.12);
+  color: var(--amber);
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.checkin-question-list {
+  display: grid;
+  gap: 12px;
+}
+
+.checkin-question {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: grid;
+  gap: 10px;
+}
+
+.checkin-question-prompt {
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.checkin-question-meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.checkin-option-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.checkin-option {
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  box-shadow: none;
+}
+
+.checkin-option.is-active {
+  background: rgba(240, 179, 75, 0.16);
+  color: var(--text);
+  border-color: rgba(240, 179, 75, 0.35);
+}
+
+.checkin-empty {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 /* Freshness bar */
 .freshness-bar {
   margin-bottom: 16px;

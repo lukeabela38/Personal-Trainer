@@ -129,7 +129,7 @@ Set `Needs check-in: yes` when any of these are true:
 - Garmin and subjective patterns appear likely to disagree.
 - The recommendation would meaningfully increase injury or fatigue risk.
 
-When a check-in is needed, ask no more than three short questions.
+When a check-in is needed, ask no more than three short questions from the fixed check-in set defined in the snapshot contract.
 
 ## Non-Goals For Version One
 
