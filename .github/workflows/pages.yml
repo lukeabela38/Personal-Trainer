@@ -37,6 +37,7 @@ jobs:
           path: dist
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -46,3 +47,12 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+      - name: Post-deploy smoke test
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          base_url="${PAGE_URL%/}/"
+          echo "Checking deployed Pages site at ${base_url}"
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --retry-all-errors "${base_url}" | grep -q "Dashboard"
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --retry-all-errors "${base_url}favicon.svg" | grep -q "<svg"

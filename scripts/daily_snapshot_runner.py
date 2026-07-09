@@ -24,7 +24,9 @@ from personal_trainer import build_daily_recommendation, build_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Pull live sources, build a snapshot, and emit site artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Pull live sources, build a snapshot, and emit site artifacts."
+    )
     parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
     parser.add_argument("--timezone", default="Europe/Malta", help="Snapshot timezone")
     parser.add_argument(
@@ -57,9 +59,13 @@ def main(argv: list[str] | None = None) -> int:
         sources = _load_sources(args.sources_file, args.date, args.timezone)
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
-        snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
+        snapshot = build_snapshot(
+            sources, snapshot_date=args.date, timezone=args.timezone
+        )
         recommendation = build_daily_recommendation(snapshot)
-        _write_json(args.snapshot_output, {**snapshot, "recommendation": recommendation})
+        _write_json(
+            args.snapshot_output, {**snapshot, "recommendation": recommendation}
+        )
         _build_site_artifacts(args.snapshot_output, args.site_output)
         _build_history_artifacts(args.site_output)
         print(args.site_output)
@@ -126,24 +132,28 @@ def _build_site_artifacts(snapshot_path: Path, site_output: Path) -> None:
 
 
 def _build_history_artifacts(site_output: Path) -> None:
-    strength_output = site_output / "strength.json"
-    speed_output = site_output / "speed.json"
-    subprocess.run(
-        [
-            sys.executable,
-            str(REPO_ROOT / "scripts" / "strength_report.py"),
-            "--output",
-            str(strength_output),
-        ],
-        check=True,
-        env=_with_pythonpath(),
+    _run_optional_history_report(
+        env_var="PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND",
+        script="strength_report.py",
+        output_path=site_output / "strength.json",
     )
+    _run_optional_history_report(
+        env_var="PERSONAL_TRAINER_GARMIN_SPEED_COMMAND",
+        script="speed_report.py",
+        output_path=site_output / "speed.json",
+    )
+
+
+def _run_optional_history_report(env_var: str, script: str, output_path: Path) -> None:
+    if not os.environ.get(env_var):
+        print(f"Skipping {script}: {env_var} is not set", file=sys.stderr)
+        return
     subprocess.run(
         [
             sys.executable,
-            str(REPO_ROOT / "scripts" / "speed_report.py"),
+            str(REPO_ROOT / "scripts" / script),
             "--output",
-            str(speed_output),
+            str(output_path),
         ],
         check=True,
         env=_with_pythonpath(),
