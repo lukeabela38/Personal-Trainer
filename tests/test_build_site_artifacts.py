@@ -21,6 +21,7 @@ class BuildSiteArtifactsTest(TestCase):
                 "index.html",
                 "styles.css",
                 "app.js",
+                "data-helpers.js",
                 "progress.html",
                 "progress.js",
                 "progress.css",

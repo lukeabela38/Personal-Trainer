@@ -94,7 +94,10 @@ function createDocumentStub() {
 const elementCache = new Map();
 
 globalThis.document = createDocumentStub();
-globalThis.window = globalThis;
+globalThis.window = {
+  addEventListener() {},
+  open() {},
+};
 globalThis.fetch = async () => ({
   json: async () => ({ entries: [], recommendation: {}, snapshot: {} }),
 });

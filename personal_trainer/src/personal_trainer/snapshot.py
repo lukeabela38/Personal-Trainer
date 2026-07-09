@@ -414,9 +414,7 @@ def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
             raise ValueError(f"derived.check_in_questions[{idx}].options must be a non-empty list")
         for option_idx, option in enumerate(options):
             if not isinstance(option, str) or not option:
-                raise ValueError(
-                    f"derived.check_in_questions[{idx}].options[{option_idx}] must be a non-empty string"
-                )
+                raise ValueError(f"derived.check_in_questions[{idx}].options[{option_idx}] must be a non-empty string")
 
     for source in _VALID_FRESHNESS_SOURCES:
         freshness = snapshot.get(source, {}).get("freshness")
