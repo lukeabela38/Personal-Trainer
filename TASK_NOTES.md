@@ -6,6 +6,11 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 Dockerized full pipeline run with Python 3.12.
 
+## CI Lint Fix
+
+- Updated `python-tests.yml` so ruff formatting and lint failures now fail the workflow instead of being masked by `tee`/`echo`.
+- Kept the step summary output while preserving the non-zero exit code from ruff.
+
 ## Milestone 1
 
 - Built the daily guidance shell on the home screen so the recommendation is now presented as a compact focus card with next action, fueling, confidence, and check-in cues.
