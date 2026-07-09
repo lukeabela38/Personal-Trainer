@@ -406,6 +406,7 @@ def _build_soreness(day_type: str, bonus: float) -> list[str]:
 def _merge_into_dist(snapshots: list[dict], days: int) -> None:
     dist = REPO_ROOT / "dist"
     dist.mkdir(parents=True, exist_ok=True)
+    (dist / "history").mkdir(parents=True, exist_ok=True)
 
     latest = snapshots[-1]
     latest_processed = _process_snapshot(latest)

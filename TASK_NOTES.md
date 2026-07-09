@@ -4,7 +4,14 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Frontend helper coverage for the browser pages.
+Python script coverage for the CLI and history writer paths.
+
+## Python Script Coverage
+
+- Added `personal_trainer/tests/test_script_entrypoints.py` to cover the snapshot CLI, Garmin speed report, history artifact writer, manual wrapper, and Hevy strength wrapper.
+- The new test module exercises both the CLI success/error paths, wrapper JSON output, and the file-writing path for the history generator.
+- Fixed `scripts/generate_history.py` so `_merge_into_dist()` creates `dist/history/` before writing history snapshots.
+- Validation passed with `python3 -m unittest personal_trainer.tests.test_script_entrypoints -v` and the Docker bind-mounted package test run for the same module.
 
 ## Frontend Helper Coverage
 
