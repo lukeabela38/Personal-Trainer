@@ -126,12 +126,8 @@ def main():
             },
             "cronometer": {
                 "freshness": freshness,
-                "fueling_status": "adequate"
-                if today_cals["calories_consumed"] > 2000
-                else "low",
-                "protein_status": "adequate"
-                if today_cals["protein_g"] > 120
-                else "low",
+                "fueling_status": "adequate" if today_cals["calories_consumed"] > 2000 else "low",
+                "protein_status": "adequate" if today_cals["protein_g"] > 120 else "low",
                 "carb_availability": "adequate"
                 if today_cals["carbs_g"] > 200
                 else "low"
@@ -189,11 +185,7 @@ def main():
 
     gains = {}
     for tid, entries in exercise_history.items():
-        one_rms = [
-            e["estimated_one_rm_kg"]
-            for e in entries
-            if e.get("estimated_one_rm_kg") is not None
-        ]
+        one_rms = [e["estimated_one_rm_kg"] for e in entries if e.get("estimated_one_rm_kg") is not None]
         if len(one_rms) < 2:
             gains[tid] = {
                 "start": None,
@@ -209,9 +201,7 @@ def main():
             "start": one_rms[0],
             "current": one_rms[-1],
             "peak": max(one_rms),
-            "gain_pct": round(((one_rms[-1] - one_rms[0]) / one_rms[0]) * 100, 1)
-            if one_rms[0]
-            else 0,
+            "gain_pct": round(((one_rms[-1] - one_rms[0]) / one_rms[0]) * 100, 1) if one_rms[0] else 0,
             "stalled": stalled,
         }
     (ex_dir / "_gains.json").write_text(json.dumps(gains, indent=2))
@@ -228,9 +218,7 @@ def _load_base_payloads() -> dict:
     return json.loads(path.read_text())
 
 
-def _drift(
-    value: float, drift_up: float, noise: float, floor: float, ceil: float
-) -> float:
+def _drift(value: float, drift_up: float, noise: float, floor: float, ceil: float) -> float:
     drift = drift_up + random.gauss(0, noise * 0.3)
     new = value + drift + random.uniform(-noise, noise)
     return max(floor, min(ceil, new))
@@ -240,9 +228,7 @@ def _pick_weighted(options: list[str], weights: list[float]) -> str:
     return random.choices(options, weights=weights, k=1)[0]
 
 
-def _build_garmin_bests(
-    current: date, is_pb_day: bool, day_index: int = 0
-) -> list[dict]:
+def _build_garmin_bests(current: date, is_pb_day: bool, day_index: int = 0) -> list[dict]:
     bests = []
     pb_progress = {
         "Fastest 5K": (300, 240, 19),  # 5:00 → 4:00 /km pace
@@ -255,14 +241,10 @@ def _build_garmin_bests(
     progress = day_index / 90
     for name, (start_sec, end_sec, divisor) in pb_progress.items():
         if is_pb_day:
-            val_sec = (
-                start_sec - (start_sec - end_sec) * progress + random.uniform(-5, 0)
-            )
+            val_sec = start_sec - (start_sec - end_sec) * progress + random.uniform(-5, 0)
             val_sec = max(end_sec - 10, val_sec)
         else:
-            val_sec = (
-                start_sec - (start_sec - end_sec) * progress + random.uniform(-15, 15)
-            )
+            val_sec = start_sec - (start_sec - end_sec) * progress + random.uniform(-15, 15)
         if name == "Longest Run":
             value = f"{val_sec:.1f} km"
         else:
@@ -273,9 +255,7 @@ def _build_garmin_bests(
     return bests
 
 
-def _build_hevy_bests(
-    current: date, pb_dates: dict[str, date], is_pb_day: bool, day_index: int = 0
-) -> list[dict]:
+def _build_hevy_bests(current: date, pb_dates: dict[str, date], is_pb_day: bool, day_index: int = 0) -> list[dict]:
     progress = day_index / 90
     base_weights = {
         "D04AC939": (100, 130),
@@ -316,9 +296,7 @@ def _build_hevy_bests(
     bests = []
     boost_tid = None
     if is_pb_day:
-        candidates = [
-            t for t in TEMPLATE_IDS if pb_dates[t] < current - timedelta(days=14)
-        ]
+        candidates = [t for t in TEMPLATE_IDS if pb_dates[t] < current - timedelta(days=14)]
         if candidates:
             boost_tid = random.choice(candidates)
             pb_dates[boost_tid] = current

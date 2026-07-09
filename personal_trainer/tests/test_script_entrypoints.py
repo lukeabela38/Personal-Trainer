@@ -17,6 +17,7 @@ sys.path.insert(0, str(REPO_ROOT / "personal_trainer" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "wrappers"))
 
+import fetch_hevy  # noqa: E402
 import fetch_hevy_strength  # noqa: E402
 import fetch_manual  # noqa: E402
 import generate_history  # noqa: E402
@@ -192,3 +193,89 @@ class HevyStrengthWrapperTests(TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["_exercise_name"], "Bench Press (Barbell)")
         self.assertEqual(rows[0]["weight"], 80)
+
+
+class HevyWrapperTests(TestCase):
+    def test_fetch_builds_recent_bests_and_fatigue(self) -> None:
+        class FakeResponse:
+            def __init__(self, body: dict[str, object]) -> None:
+                self._body = body
+
+            def read(self) -> bytes:
+                return json.dumps(self._body).encode("utf-8")
+
+            def __enter__(self) -> FakeResponse:
+                return self
+
+            def __exit__(self, exc_type, exc, tb) -> None:
+                return None
+
+        def fake_urlopen(req, timeout: int = 30) -> FakeResponse:
+            self.assertEqual(timeout, 30)
+            self.assertEqual(req.full_url, "https://api.hevyapp.com/v1/workouts?page=1&pageSize=10")
+            self.assertEqual(req.headers["Api-key"], "test-hevy-key")
+            return FakeResponse(
+                {
+                    "workouts": [
+                        {
+                            "title": "Lower Body",
+                            "start_time": "2026-07-09T08:00:00Z",
+                            "end_time": "2026-07-09T09:00:00Z",
+                            "exercises": [
+                                {
+                                    "exercise_template_id": "D04AC939",
+                                    "sets": [
+                                        {"weight_kg": 100, "reps": 5},
+                                        {"weight_kg": 110, "reps": 3},
+                                    ],
+                                },
+                                {
+                                    "exercise_template_id": "79D0BB3A",
+                                    "sets": [{"weight_kg": 80, "reps": 8}],
+                                },
+                                {
+                                    "exercise_template_id": "NOPE",
+                                    "sets": [{"weight_kg": 999, "reps": 1}],
+                                },
+                            ],
+                        },
+                        {
+                            "title": "Upper Body",
+                            "start_time": "2026-07-08T08:00:00Z",
+                            "end_time": "2026-07-08T09:00:00Z",
+                            "exercises": [
+                                {
+                                    "exercise_template_id": "29083183",
+                                    "sets": [{"weight_kg": 50, "reps": 10}],
+                                }
+                            ],
+                        },
+                    ]
+                }
+            )
+
+        original = os.environ.get("HEVY_API_KEY")
+        os.environ["HEVY_API_KEY"] = "test-hevy-key"
+        try:
+            with patch.object(fetch_hevy.urllib.request, "urlopen", side_effect=fake_urlopen):
+                payload = fetch_hevy.fetch()
+        finally:
+            if original is None:
+                os.environ.pop("HEVY_API_KEY", None)
+            else:
+                os.environ["HEVY_API_KEY"] = original
+
+        self.assertEqual(payload["freshness"], "fresh")
+        self.assertEqual(payload["last_workout"]["title"], "Lower Body")
+        self.assertEqual(payload["last_workout"]["exercise_count"], 3)
+        self.assertEqual(len(payload["recent_workouts"]), 2)
+        self.assertEqual(payload["muscle_group_fatigue"]["legs"], "high")
+        self.assertEqual(payload["muscle_group_fatigue"]["push"], "high")
+        self.assertEqual(payload["muscle_group_fatigue"]["pull"], "unknown")
+        self.assertEqual(len(payload["recent_bests"]), 3)
+        best_by_template = {row["exercise_template_id"]: row for row in payload["recent_bests"]}
+        self.assertEqual(best_by_template["D04AC939"]["weight_kg"], 110.0)
+        self.assertEqual(best_by_template["D04AC939"]["reps"], 3)
+        self.assertEqual(best_by_template["D04AC939"]["workout_title"], "Lower Body")
+        self.assertEqual(best_by_template["79D0BB3A"]["estimated_one_rm_kg"], 101.3)
+        self.assertEqual(best_by_template["29083183"]["workout_start_time"], "2026-07-08T08:00:00Z")
