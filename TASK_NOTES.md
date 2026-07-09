@@ -13,6 +13,11 @@ Dockerized full pipeline run with Python 3.12.
 - Added a small regression test that proves the shell pattern returns `1` for a failing command and `0` for passing commands.
 - Formatted the Python files that CI had flagged and added Ruff per-file ignores for the intentional `sys.path.insert` scripts.
 
+## CI Concurrency
+
+- Added workflow-level concurrency to `python-tests.yml` so only the latest run for a branch stays active.
+- This should cancel stale pushes automatically and reduce CI noise during iteration.
+
 ## Food Logging Shell
 
 - Added a compact food logging shell with item, timestamp, timing tags, and a barcode placeholder.
