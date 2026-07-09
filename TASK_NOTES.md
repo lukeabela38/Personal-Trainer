@@ -10,7 +10,7 @@ Frontend helper coverage for the browser pages.
 
 - Added a shared `site/data-helpers.js` module for the formatting and snapshot-reading helpers that were duplicated across the dashboard/progress pages.
 - Exported the small pure helpers from `site/app.js`, `site/progress.js`, `site/speed.js`, and `site/strength.js` so they can be exercised in Node without a browser.
-- Added `tests/frontend/frontend_helpers.test.js` using the Node test runner with minimal DOM/fetch stubs.
+- Added `tests/frontend/frontend_helpers.test.js` using the Node test runner with stricter DOM/fetch stubs, edge-case `readNumber()` coverage, and a `saveGoals()`/`loadGoals()` round-trip assertion.
 - Renamed the CI workflow to `.github/workflows/ci.yml` so the frontend and Python jobs sit under one workflow instead of a misnamed `python-tests.yml`.
 - Fixed `formatSpeedValue()` so missing `rawValue` no longer coerces to `0`.
 - Validation passed with `node --test tests/frontend/frontend_helpers.test.js`, `node --check site/app.js`, `node --check site/progress.js`, `node --check site/speed.js`, `node --check site/strength.js`, `node --check site/data-helpers.js`, and `git diff --check`.

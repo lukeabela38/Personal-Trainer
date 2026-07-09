@@ -9,11 +9,11 @@ import {
   shouldRenderValue,
   summarizeBests,
 } from "../../site/data-helpers.js";
-import { defaultGoals, fmtNum, goalProgress, loadGoals, renderSparkline } from "../../site/goals.js";
+import { defaultGoals, fmtNum, goalProgress, loadGoals, renderSparkline, saveGoals } from "../../site/goals.js";
 import { extractBodyWeight, extractPriority, extractVo2, weeklySummary } from "../../site/history.js";
 
 function createElementStub() {
-  return {
+  const target = {
     classList: {
       add() {},
       remove() {},
@@ -22,32 +22,66 @@ function createElementStub() {
       },
     },
     addEventListener() {},
+    click() {},
+    focus() {},
     removeAttribute() {},
     setAttribute() {},
     querySelectorAll() {
       return [];
     },
-    removeAttribute() {},
     appendChild() {},
     innerHTML: "",
     textContent: "",
+    value: "",
+    disabled: false,
+    checked: false,
+    hidden: false,
     dataset: {},
+    style: {},
   };
+
+  return new Proxy(target, {
+    get(obj, prop) {
+      if (prop in obj) return obj[prop];
+      if (typeof prop === "string") {
+        throw new Error(`Unexpected element DOM access: ${prop}`);
+      }
+      return undefined;
+    },
+    set(obj, prop, value) {
+      obj[prop] = value;
+      return true;
+    },
+  });
+}
+
+function createDocumentStub() {
+  const target = {
+    getElementById: (id) => {
+      if (!elementCache.has(id)) {
+        elementCache.set(id, createElementStub());
+      }
+      return elementCache.get(id);
+    },
+    querySelectorAll: () => [],
+    addEventListener() {},
+    createElement: () => createElementStub(),
+  };
+
+  return new Proxy(target, {
+    get(obj, prop) {
+      if (prop in obj) return obj[prop];
+      if (typeof prop === "string") {
+        throw new Error(`Unexpected document DOM access: ${prop}`);
+      }
+      return undefined;
+    },
+  });
 }
 
 const elementCache = new Map();
 
-globalThis.document = {
-  getElementById: (id) => {
-    if (!elementCache.has(id)) {
-      elementCache.set(id, createElementStub());
-    }
-    return elementCache.get(id);
-  },
-  querySelectorAll: () => [],
-  addEventListener() {},
-  createElement: () => createElementStub(),
-};
+globalThis.document = createDocumentStub();
 globalThis.window = globalThis;
 globalThis.fetch = async () => ({ json: async () => ({ entries: [], recommendation: {}, snapshot: {} }) });
 
@@ -59,6 +93,10 @@ const progress = await import("../../site/progress.js");
 test("shared data helpers format and read values", () => {
   assert.equal(sharedEscapeHtml(`<&>"'`), "&lt;&amp;&gt;&quot;&#39;");
   assert.equal(readNumber({ a: { b: "12.5" } }, ["a", "b"]), 12.5);
+  assert.equal(readNumber({ a: { b: "NaN" } }, ["a", "b"]), null);
+  assert.equal(readNumber({ a: { b: "" } }, ["a", "b"]), null);
+  assert.equal(readNumber({ a: undefined }, ["a", "b"]), null);
+  assert.equal(readNumber({}, ["missing", "path"]), null);
   assert.equal(readText({ a: { b: 7 } }, ["a", "b"]), "7");
   assert.equal(shouldRenderValue("hello"), true);
   assert.equal(shouldRenderValue(" "), false);
@@ -87,6 +125,23 @@ test("goals loading falls back to defaults when storage is empty", () => {
   };
   try {
     assert.deepEqual(loadGoals(), defaultGoals());
+  } finally {
+    globalThis.localStorage = original;
+  }
+});
+
+test("goals save and load round-trip through localStorage", () => {
+  const original = globalThis.localStorage;
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => store.set(key, String(value)),
+    removeItem: (key) => store.delete(key),
+  };
+  try {
+    const goals = defaultGoals().map((goal) => (goal.id === "bench" ? { ...goal, current: 95 } : goal));
+    saveGoals(goals);
+    assert.deepEqual(loadGoals(), goals);
   } finally {
     globalThis.localStorage = original;
   }
