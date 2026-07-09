@@ -29,6 +29,7 @@ _TRACKED_EXERCISES = [
     ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
 ]
 
+
 async def fetch() -> list[dict]:
     all_rows: list[dict] = []
 
@@ -49,6 +50,7 @@ async def fetch() -> list[dict]:
 
     return all_rows
 
+
 def main() -> int:
     try:
         payload = asyncio.run(fetch())
@@ -58,6 +60,7 @@ def main() -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

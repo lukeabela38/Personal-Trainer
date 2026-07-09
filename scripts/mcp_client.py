@@ -64,9 +64,7 @@ async def call_tool(
             chunk = await asyncio.wait_for(proc.stdout.read(65536), timeout=timeout)
             if not chunk:
                 stderr = (await proc.stderr.read()).decode() if proc.stderr else ""
-                raise McpError(
-                    f"MCP server closed stdout unexpectedly.\nstderr: {stderr[:500]}"
-                )
+                raise McpError(f"MCP server closed stdout unexpectedly.\nstderr: {stderr[:500]}")
             buf += chunk
             if b"\n" in buf:
                 line, _ = buf.split(b"\n", 1)
@@ -119,5 +117,5 @@ async def call_tool(
         proc.terminate()
         try:
             await asyncio.wait_for(proc.wait(), timeout=5)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()

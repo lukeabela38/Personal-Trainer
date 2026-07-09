@@ -59,9 +59,7 @@ def _normalize_athlete(raw: SourcePayload) -> SourcePayload:
         raise ValueError("athlete.age must be an integer")
     if not isinstance(athlete.get("height_cm"), int) or isinstance(athlete.get("height_cm"), bool):
         raise ValueError("athlete.height_cm must be an integer")
-    if not isinstance(athlete.get("body_weight_kg"), (int, float)) or isinstance(
-        athlete.get("body_weight_kg"), bool
-    ):
+    if not isinstance(athlete.get("body_weight_kg"), (int, float)) or isinstance(athlete.get("body_weight_kg"), bool):
         raise ValueError("athlete.body_weight_kg must be a number")
     if not isinstance(athlete.get("current_block"), str):
         raise ValueError("athlete.current_block must be a string")
@@ -324,9 +322,7 @@ def _validate_snapshot(snapshot: Snapshot) -> Snapshot:
     for key in ("age", "height_cm", "current_vo2max_waypoint"):
         if not isinstance(athlete.get(key), int) or isinstance(athlete.get(key), bool):
             raise ValueError(f"athlete.{key} must be an integer")
-    if not isinstance(athlete.get("body_weight_kg"), (int, float)) or isinstance(
-        athlete.get("body_weight_kg"), bool
-    ):
+    if not isinstance(athlete.get("body_weight_kg"), (int, float)) or isinstance(athlete.get("body_weight_kg"), bool):
         raise ValueError("athlete.body_weight_kg must be a number")
     if not isinstance(athlete.get("current_block"), str):
         raise ValueError("athlete.current_block must be a string")

@@ -67,9 +67,7 @@ def parse_ruff(file: Path) -> list[dict]:
             continue
         code = str(entry.get("code", ""))
         prefix = re.match(r"[A-Z]+", code)
-        category = RUFF_CATEGORIES.get(
-            prefix.group(0) if prefix else "", "Maintainability"
-        )
+        category = RUFF_CATEGORIES.get(prefix.group(0) if prefix else "", "Maintainability")
         location = entry.get("location", {}) or {}
         issues.append(
             {
@@ -197,9 +195,7 @@ def build_summary(
             files_map[path] = []
         files_map[path].append(issue)
 
-    files_list = [
-        {"path": path, "issues": issues} for path, issues in sorted(files_map.items())
-    ]
+    files_list = [{"path": path, "issues": issues} for path, issues in sorted(files_map.items())]
 
     status = "failed" if errors > 0 else "success"
 
@@ -214,9 +210,7 @@ def build_summary(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Generate review-summary.json from tool outputs."
-    )
+    parser = argparse.ArgumentParser(description="Generate review-summary.json from tool outputs.")
     parser.add_argument("--ruff", type=Path, help="Path to ruff JSON output")
     parser.add_argument("--mypy", type=Path, help="Path to mypy text output")
     parser.add_argument("--semgrep", type=Path, help="Path to semgrep JSON output")
@@ -230,9 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     semgrep_issues = parse_semgrep(args.semgrep) if args.semgrep else []
     junit_report = parse_junit(args.junit) if args.junit else None
 
-    summary = build_summary(
-        ruff_issues, mypy_issues, semgrep_issues, junit_report, args.severity_threshold
-    )
+    summary = build_summary(ruff_issues, mypy_issues, semgrep_issues, junit_report, args.severity_threshold)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))

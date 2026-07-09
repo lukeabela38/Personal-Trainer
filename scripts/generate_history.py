@@ -12,13 +12,40 @@ EXAMPLES = REPO_ROOT / "personal_trainer" / "examples"
 random.seed(42)
 
 TEMPLATE_IDS = [
-    "D04AC939", "79D0BB3A", "29083183", "28BB4A95", "392887AA",
-    "F1E57334", "5E10D0E6", "8347DFD1", "A1B2C3D4", "B2C3D4E5",
-    "C3D4E5F6", "D4E5F6A7", "E5F6A7B8", "F6A7B8C9", "A7B8C9D0",
-    "B8C9D0A1", "C9D0A1B2", "D0A1B2C3", "E1F2A3B4", "F2A3B4C5",
-    "A3B4C5D6", "B4C5D6E7", "C5D6E7F8", "D6E7F8A9", "E7F8A9B0",
-    "F8A9B0C1", "A9B0C1D2", "B0C1D2E3", "C1D2E3F4", "D2E3F4A5",
-    "E3F4A5B6", "F4A5B6C7", "A5B6C7D8", "B6C7D8E9",
+    "D04AC939",
+    "79D0BB3A",
+    "29083183",
+    "28BB4A95",
+    "392887AA",
+    "F1E57334",
+    "5E10D0E6",
+    "8347DFD1",
+    "A1B2C3D4",
+    "B2C3D4E5",
+    "C3D4E5F6",
+    "D4E5F6A7",
+    "E5F6A7B8",
+    "F6A7B8C9",
+    "A7B8C9D0",
+    "B8C9D0A1",
+    "C9D0A1B2",
+    "D0A1B2C3",
+    "E1F2A3B4",
+    "F2A3B4C5",
+    "A3B4C5D6",
+    "B4C5D6E7",
+    "C5D6E7F8",
+    "D6E7F8A9",
+    "E7F8A9B0",
+    "F8A9B0C1",
+    "A9B0C1D2",
+    "B0C1D2E3",
+    "C1D2E3F4",
+    "D2E3F4A5",
+    "E3F4A5B6",
+    "F4A5B6C7",
+    "A5B6C7D8",
+    "B6C7D8E9",
 ]
 
 SLEEP_STATES = ["poor", "okay", "good", "great"]
@@ -28,13 +55,13 @@ TT_STATES = ["none", "light", "training", "match"]
 FRESHNESS = ["fresh", "stale", "missing", "partial"]
 FUELING = ["adequate", "low", "high"]
 WEEKLY_PATTERN = {
-    0: "aerobic_base",    # Mon: easy run
-    1: "strength",        # Tue: gym
+    0: "aerobic_base",  # Mon: easy run
+    1: "strength",  # Tue: gym
     2: "aerobic_quality",  # Wed: quality run
-    3: "strength",        # Thu: gym
-    4: "aerobic_base",    # Fri: easy run
+    3: "strength",  # Thu: gym
+    4: "aerobic_base",  # Fri: easy run
     5: "aerobic_quality",  # Sat: quality run
-    6: "recovery",        # Sun: rest/recovery
+    6: "recovery",  # Sun: rest/recovery
 }
 
 
@@ -101,7 +128,11 @@ def main():
                 "freshness": freshness,
                 "fueling_status": "adequate" if today_cals["calories_consumed"] > 2000 else "low",
                 "protein_status": "adequate" if today_cals["protein_g"] > 120 else "low",
-                "carb_availability": "adequate" if today_cals["carbs_g"] > 200 else "low" if today_cals["carbs_g"] > 100 else "low",
+                "carb_availability": "adequate"
+                if today_cals["carbs_g"] > 200
+                else "low"
+                if today_cals["carbs_g"] > 100
+                else "low",
                 "today": today_cals,
                 "flags": [],
             },
@@ -122,12 +153,14 @@ def main():
 
         for b in hevy_bests:
             tid = b["exercise_template_id"]
-            exercise_history[tid].append({
-                "date": current.isoformat(),
-                "weight_kg": b.get("weight_kg"),
-                "reps": b.get("reps"),
-                "estimated_one_rm_kg": b.get("estimated_one_rm_kg"),
-            })
+            exercise_history[tid].append(
+                {
+                    "date": current.isoformat(),
+                    "weight_kg": b.get("weight_kg"),
+                    "reps": b.get("reps"),
+                    "estimated_one_rm_kg": b.get("estimated_one_rm_kg"),
+                }
+            )
 
     output_dir = REPO_ROOT / "dist" / "history"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -154,7 +187,13 @@ def main():
     for tid, entries in exercise_history.items():
         one_rms = [e["estimated_one_rm_kg"] for e in entries if e.get("estimated_one_rm_kg") is not None]
         if len(one_rms) < 2:
-            gains[tid] = {"start": None, "current": None, "peak": None, "gain_pct": 0, "stalled": False}
+            gains[tid] = {
+                "start": None,
+                "current": None,
+                "peak": None,
+                "gain_pct": 0,
+                "stalled": False,
+            }
             continue
         recent = one_rms[-30:]
         stalled = len(recent) > 5 and recent[-1] <= recent[0]
@@ -192,7 +231,7 @@ def _pick_weighted(options: list[str], weights: list[float]) -> str:
 def _build_garmin_bests(current: date, is_pb_day: bool, day_index: int = 0) -> list[dict]:
     bests = []
     pb_progress = {
-        "Fastest 5K": (300, 240, 19),       # 5:00 → 4:00 /km pace
+        "Fastest 5K": (300, 240, 19),  # 5:00 → 4:00 /km pace
         "Fastest 10K": (620, 500, 41),
         "Fastest Half Marathon": (1400, 1100, 91),
         "Fastest Mile": (95, 85, 6),
@@ -219,15 +258,40 @@ def _build_garmin_bests(current: date, is_pb_day: bool, day_index: int = 0) -> l
 def _build_hevy_bests(current: date, pb_dates: dict[str, date], is_pb_day: bool, day_index: int = 0) -> list[dict]:
     progress = day_index / 90
     base_weights = {
-        "D04AC939": (100, 130), "79D0BB3A": (75, 95), "29083183": (88, 105), "28BB4A95": (20, 30),
-        "392887AA": (None, None), "F1E57334": (36, 48), "5E10D0E6": (32, 42), "8347DFD1": (14, 20),
-        "A1B2C3D4": (130, 160), "B2C3D4E5": (50, 65), "C3D4E5F6": (85, 100), "D4E5F6A7": (90, 115),
-        "E5F6A7B8": (34, 44), "F6A7B8C9": (32, 42), "A7B8C9D0": (60, 75), "B8C9D0A1": (18, 24),
-        "C9D0A1B2": (25, 35), "D0A1B2C3": (12, 18), "E1F2A3B4": (140, 180), "F2A3B4C5": (55, 70),
-        "A3B4C5D6": (80, 100), "B4C5D6E7": (20, 28), "C5D6E7F8": (50, 65), "D6E7F8A9": (70, 85),
-        "E7F8A9B0": (60, 80), "F8A9B0C1": (16, 24), "A9B0C1D2": (22, 30), "B0C1D2E3": (100, 130),
-        "C1D2E3F4": (40, 50), "D2E3F4A5": (None, None), "E3F4A5B6": (20, 28), "F4A5B6C7": (24, 32),
-        "A5B6C7D8": (None, None), "B6C7D8E9": (28, 40),
+        "D04AC939": (100, 130),
+        "79D0BB3A": (75, 95),
+        "29083183": (88, 105),
+        "28BB4A95": (20, 30),
+        "392887AA": (None, None),
+        "F1E57334": (36, 48),
+        "5E10D0E6": (32, 42),
+        "8347DFD1": (14, 20),
+        "A1B2C3D4": (130, 160),
+        "B2C3D4E5": (50, 65),
+        "C3D4E5F6": (85, 100),
+        "D4E5F6A7": (90, 115),
+        "E5F6A7B8": (34, 44),
+        "F6A7B8C9": (32, 42),
+        "A7B8C9D0": (60, 75),
+        "B8C9D0A1": (18, 24),
+        "C9D0A1B2": (25, 35),
+        "D0A1B2C3": (12, 18),
+        "E1F2A3B4": (140, 180),
+        "F2A3B4C5": (55, 70),
+        "A3B4C5D6": (80, 100),
+        "B4C5D6E7": (20, 28),
+        "C5D6E7F8": (50, 65),
+        "D6E7F8A9": (70, 85),
+        "E7F8A9B0": (60, 80),
+        "F8A9B0C1": (16, 24),
+        "A9B0C1D2": (22, 30),
+        "B0C1D2E3": (100, 130),
+        "C1D2E3F4": (40, 50),
+        "D2E3F4A5": (None, None),
+        "E3F4A5B6": (20, 28),
+        "F4A5B6C7": (24, 32),
+        "A5B6C7D8": (None, None),
+        "B6C7D8E9": (28, 40),
     }
     bests = []
     boost_tid = None
@@ -241,13 +305,15 @@ def _build_hevy_bests(current: date, pb_dates: dict[str, date], is_pb_day: bool,
         start_val, end_val = base_weights.get(tid, (None, None))
         if start_val is None:
             reps = random.randint(8, 50)
-            bests.append({
-                "exercise_template_id": tid,
-                "weight_kg": None,
-                "reps": reps,
-                "estimated_one_rm_kg": None,
-                "workout_start_date": current.isoformat(),
-            })
+            bests.append(
+                {
+                    "exercise_template_id": tid,
+                    "weight_kg": None,
+                    "reps": reps,
+                    "estimated_one_rm_kg": None,
+                    "workout_start_date": current.isoformat(),
+                }
+            )
         else:
             current_weight = start_val + (end_val - start_val) * progress
             w = round(current_weight + random.randint(-3, 3))
@@ -255,13 +321,15 @@ def _build_hevy_bests(current: date, pb_dates: dict[str, date], is_pb_day: bool,
                 w += random.randint(3, 8)
             reps = random.choice([5, 6, 8, 10, 12])
             one_rm = round(w * (1 + reps / 30), 1)
-            bests.append({
-                "exercise_template_id": tid,
-                "weight_kg": w,
-                "reps": reps,
-                "estimated_one_rm_kg": one_rm,
-                "workout_start_date": current.isoformat(),
-            })
+            bests.append(
+                {
+                    "exercise_template_id": tid,
+                    "weight_kg": w,
+                    "reps": reps,
+                    "estimated_one_rm_kg": one_rm,
+                    "workout_start_date": current.isoformat(),
+                }
+            )
     return bests
 
 
@@ -299,7 +367,14 @@ def _build_nutrition(day_type: str, bw: float) -> dict:
 
 
 def _build_muscle_fatigue(day_type: str, bonus: float) -> dict:
-    base = {"legs": 0.2, "posterior_chain": 0.2, "push": 0.2, "pull": 0.2, "shoulders_arms": 0.2, "core": 0.2}
+    base = {
+        "legs": 0.2,
+        "posterior_chain": 0.2,
+        "push": 0.2,
+        "pull": 0.2,
+        "shoulders_arms": 0.2,
+        "core": 0.2,
+    }
     if day_type == "strength":
         base["legs"] = 0.5
         base["push"] = 0.5
@@ -351,8 +426,8 @@ def _merge_into_dist(snapshots: list[dict], days: int) -> None:
 
 def _process_snapshot(payload: dict) -> dict:
     try:
-        from personal_trainer.snapshot import build_snapshot
         from personal_trainer.recommendation import build_daily_recommendation
+        from personal_trainer.snapshot import build_snapshot
 
         snapshot = build_snapshot(payload)
         rec = build_daily_recommendation(snapshot)

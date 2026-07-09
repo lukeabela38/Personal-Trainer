@@ -26,7 +26,7 @@ class _FakeGarth:
 
 
 class _FakeGarmin:
-    instances: list["_FakeGarmin"] = []
+    instances: list[_FakeGarmin] = []
 
     def __init__(self, email: str | None = None, password: str | None = None) -> None:
         self.email = email
@@ -82,7 +82,7 @@ class _FakeGarmin:
                 "startTimeLocal": "2026-07-05T06:00:00",
                 "duration": 3600,
                 "vO2MaxValue": 50,
-            }
+            },
         ]
 
     def get_training_load_trend(self, month_ago: str, today: str) -> dict:
@@ -102,14 +102,17 @@ class GarminWrapperTests(TestCase):
             (tokenstore / "oauth1_token.json").write_text("{}", encoding="utf-8")
             (tokenstore / "oauth2_token.json").write_text("{}", encoding="utf-8")
 
-            with patch.object(garmin, "Garmin", _FakeGarmin), patch.dict(
-                os.environ,
-                {
-                    "GARMINTOKENS": str(tokenstore),
-                    "GARMIN_EMAIL": "person@example.com",
-                    "GARMIN_PASSWORD": "secret",
-                },
-                clear=False,
+            with (
+                patch.object(garmin, "Garmin", _FakeGarmin),
+                patch.dict(
+                    os.environ,
+                    {
+                        "GARMINTOKENS": str(tokenstore),
+                        "GARMIN_EMAIL": "person@example.com",
+                        "GARMIN_PASSWORD": "secret",
+                    },
+                    clear=False,
+                ),
             ):
                 payload = garmin.fetch()
 
@@ -128,14 +131,17 @@ class GarminWrapperTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tokenstore = Path(tmp) / "garmin-cache"
 
-            with patch.object(garmin, "Garmin", _FakeGarmin), patch.dict(
-                os.environ,
-                {
-                    "GARMINTOKENS": str(tokenstore),
-                    "GARMIN_EMAIL": "person@example.com",
-                    "GARMIN_PASSWORD": "secret",
-                },
-                clear=False,
+            with (
+                patch.object(garmin, "Garmin", _FakeGarmin),
+                patch.dict(
+                    os.environ,
+                    {
+                        "GARMINTOKENS": str(tokenstore),
+                        "GARMIN_EMAIL": "person@example.com",
+                        "GARMIN_PASSWORD": "secret",
+                    },
+                    clear=False,
+                ),
             ):
                 payload = garmin.fetch()
 
@@ -158,14 +164,17 @@ class GarminWrapperTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tokenstore = Path(tmp) / "garmin-cache"
 
-            with patch.object(garmin, "Garmin", MissingSummaryGarmin), patch.dict(
-                os.environ,
-                {
-                    "GARMINTOKENS": str(tokenstore),
-                    "GARMIN_EMAIL": "person@example.com",
-                    "GARMIN_PASSWORD": "secret",
-                },
-                clear=False,
+            with (
+                patch.object(garmin, "Garmin", MissingSummaryGarmin),
+                patch.dict(
+                    os.environ,
+                    {
+                        "GARMINTOKENS": str(tokenstore),
+                        "GARMIN_EMAIL": "person@example.com",
+                        "GARMIN_PASSWORD": "secret",
+                    },
+                    clear=False,
+                ),
             ):
                 payload = garmin.fetch()
 
@@ -180,14 +189,17 @@ class GarminWrapperTests(TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tokenstore = Path(tmp) / "garmin-cache"
 
-            with patch.object(garmin, "Garmin", SummaryLagGarmin), patch.dict(
-                os.environ,
-                {
-                    "GARMINTOKENS": str(tokenstore),
-                    "GARMIN_EMAIL": "person@example.com",
-                    "GARMIN_PASSWORD": "secret",
-                },
-                clear=False,
+            with (
+                patch.object(garmin, "Garmin", SummaryLagGarmin),
+                patch.dict(
+                    os.environ,
+                    {
+                        "GARMINTOKENS": str(tokenstore),
+                        "GARMIN_EMAIL": "person@example.com",
+                        "GARMIN_PASSWORD": "secret",
+                    },
+                    clear=False,
+                ),
             ):
                 payload = garmin.fetch()
 

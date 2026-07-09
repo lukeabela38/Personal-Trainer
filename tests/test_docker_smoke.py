@@ -7,7 +7,6 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -78,12 +77,10 @@ class DockerSmokeTest(TestCase):
                     "exerciseTemplateId": row["exercise_template_id"],
                     "weight": row["weight_kg"],
                     "reps": row["reps"],
-                    "workoutStartTime": f'{row["workout_start_date"]}T07:00:00Z',
+                    "workoutStartTime": f"{row['workout_start_date']}T07:00:00Z",
                 }
             )
-        (tmp_path / "hevy_strength_source.json").write_text(
-            json.dumps(hevy_rows, indent=2), encoding="utf-8"
-        )
+        (tmp_path / "hevy_strength_source.json").write_text(json.dumps(hevy_rows, indent=2), encoding="utf-8")
 
         garmin_rows = [
             {

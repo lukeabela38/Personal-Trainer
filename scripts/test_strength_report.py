@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import sys
 import unittest
 from pathlib import Path
-import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -28,11 +28,7 @@ class StrengthReportTests(unittest.TestCase):
             },
         ]
         report = build_report(raw)
-        bench = next(
-            entry
-            for entry in report["entries"]
-            if entry["name"] == "Bench Press (Barbell)"
-        )
+        bench = next(entry for entry in report["entries"] if entry["name"] == "Bench Press (Barbell)")
         self.assertEqual(bench["best_set"]["weight_kg"], 70.0)
         self.assertEqual(bench["best_set"]["reps"], 4)
         self.assertEqual(bench["estimated_one_rm_kg"], 79.3)
