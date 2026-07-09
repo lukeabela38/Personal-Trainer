@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import ast
+import json
 from pathlib import Path
 from unittest import TestCase
 
@@ -45,6 +45,46 @@ class RecommendationGoldenTests(TestCase):
         recommendation = build_daily_recommendation(snapshot)
 
         self.assertEqual(recommendation, self._load_expected("recovery"))
+
+    def test_aerobic_base_snapshot_matches_golden(self) -> None:
+        sources = json.loads(
+            (EXAMPLES_DIR / "sources-ready.json").read_text(encoding="utf-8")
+        )
+        sources["hevy"]["muscle_group_fatigue"]["legs"] = "high"
+        snapshot = build_snapshot(sources)
+        recommendation = build_daily_recommendation(snapshot)
+
+        self.assertEqual(recommendation, self._load_expected("aerobic_base"))
+
+    def test_strength_progression_snapshot_matches_golden(self) -> None:
+        sources = json.loads(
+            (EXAMPLES_DIR / "sources-ready.json").read_text(encoding="utf-8")
+        )
+        sources["athlete"]["current_block"] = "hybrid_balanced"
+        snapshot = build_snapshot(sources)
+        recommendation = build_daily_recommendation(snapshot)
+
+        self.assertEqual(recommendation, self._load_expected("strength_progression"))
+
+    def test_power_and_athleticism_snapshot_matches_golden(self) -> None:
+        sources = json.loads(
+            (EXAMPLES_DIR / "sources-ready.json").read_text(encoding="utf-8")
+        )
+        sources["athlete"]["current_block"] = "strength_focus"
+        snapshot = build_snapshot(sources)
+        recommendation = build_daily_recommendation(snapshot)
+
+        self.assertEqual(recommendation, self._load_expected("power_and_athleticism"))
+
+    def test_table_tennis_readiness_snapshot_matches_golden(self) -> None:
+        sources = json.loads(
+            (EXAMPLES_DIR / "sources-ready.json").read_text(encoding="utf-8")
+        )
+        sources["manual_context"]["table_tennis_today"] = "match"
+        snapshot = build_snapshot(sources)
+        recommendation = build_daily_recommendation(snapshot)
+
+        self.assertEqual(recommendation, self._load_expected("table_tennis_readiness"))
 
 
 if __name__ == "__main__":

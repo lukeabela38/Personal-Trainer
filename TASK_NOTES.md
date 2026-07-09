@@ -12,6 +12,7 @@ Testing guardrails for snapshot and recommendation contracts.
 - Added golden-file regression checks for the ready, under-fueled, and recovery recommendation paths.
 - Golden fixtures are stored as Python literals so they stay stdlib-only and work in the local Python 3.9 environment.
 - Validation passed with `python3 -m unittest tests.test_testing_guardrails tests.test_snapshot_fuzz tests.test_recommendation_goldens -v`, `python3 -c "import yaml, pathlib; yaml.safe_load(pathlib.Path('.github/workflows/ci.yml').read_text(encoding='utf-8')); print('ok')"`, and `git diff --check`.
+- Expanded the mutation matrix to cover more of the snapshot contract surface and added golden coverage for aerobic base, strength progression, power, and table tennis readiness.
 
 ## Browser Smoke Coverage
 
