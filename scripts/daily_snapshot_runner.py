@@ -24,9 +24,7 @@ from personal_trainer import build_daily_recommendation, build_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Pull live sources, build a snapshot, and emit site artifacts."
-    )
+    parser = argparse.ArgumentParser(description="Pull live sources, build a snapshot, and emit site artifacts.")
     parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
     parser.add_argument("--timezone", default="Europe/Malta", help="Snapshot timezone")
     parser.add_argument(
@@ -59,13 +57,9 @@ def main(argv: list[str] | None = None) -> int:
         sources = _load_sources(args.sources_file, args.date, args.timezone)
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
-        snapshot = build_snapshot(
-            sources, snapshot_date=args.date, timezone=args.timezone
-        )
+        snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
         recommendation = build_daily_recommendation(snapshot)
-        _write_json(
-            args.snapshot_output, {**snapshot, "recommendation": recommendation}
-        )
+        _write_json(args.snapshot_output, {**snapshot, "recommendation": recommendation})
         _build_site_artifacts(args.snapshot_output, args.site_output)
         _build_history_artifacts(args.site_output)
         print(args.site_output)
