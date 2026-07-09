@@ -63,3 +63,23 @@ for (const pageSpec of pages) {
     ).toEqual([]);
   });
 }
+
+test("redirect shells forward to their canonical pages", async ({ page }) => {
+  await page.goto("/strength/");
+  await expect(page).toHaveURL(/\/strength\.html$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Strength" }),
+  ).toBeVisible();
+
+  await page.goto("/speed/");
+  await expect(page).toHaveURL(/\/speed\.html$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Speed" }),
+  ).toBeVisible();
+});
+
+test("favicon is served", async ({ request }) => {
+  const response = await request.get("/favicon.svg");
+  expect(response.ok()).toBe(true);
+  await expect(response.text()).resolves.toContain("<svg");
+});
