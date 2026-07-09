@@ -4,7 +4,13 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Testing guardrails for snapshot and recommendation contracts.
+Post-deploy smoke test for GitHub Pages.
+
+## Pages Smoke Coverage
+
+- Added a post-deploy HTTP smoke step to `.github/workflows/pages.yml`.
+- The smoke step retries the live Pages URL after deployment, checks the dashboard content, and verifies `favicon.svg` is served.
+- The workflow change is YAML-valid and keeps the scope limited to deployment verification.
 
 ## Guardrail Coverage
 
