@@ -20,14 +20,11 @@ from scripts.mcp_client import load_dotenv as _load_dotenv
 
 _load_dotenv()
 
-from personal_trainer import build_daily_recommendation
-from personal_trainer import build_snapshot
+from personal_trainer import build_daily_recommendation, build_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Pull live sources, build a snapshot, and emit site artifacts."
-    )
+    parser = argparse.ArgumentParser(description="Pull live sources, build a snapshot, and emit site artifacts.")
     parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
     parser.add_argument("--timezone", default="Europe/Malta", help="Snapshot timezone")
     parser.add_argument(
@@ -60,9 +57,7 @@ def main(argv: list[str] | None = None) -> int:
         sources = _load_sources(args.sources_file, args.date, args.timezone)
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
-        snapshot = build_snapshot(
-            sources, snapshot_date=args.date, timezone=args.timezone
-        )
+        snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
         recommendation = build_daily_recommendation(snapshot)
         _write_json(args.snapshot_output, {**snapshot, "recommendation": recommendation})
         _build_site_artifacts(args.snapshot_output, args.site_output)
@@ -105,8 +100,12 @@ def _capture_live_sources(date: str | None, timezone: str) -> dict[str, Any]:
         command.extend(["--date", date])
     command.extend(["--timezone", timezone])
     completed = subprocess.run(
-        command, check=True, capture_output=True, text=True,
-        cwd=str(REPO_ROOT), env=_with_pythonpath(),
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+        env=_with_pythonpath(),
     )
     payload = json.loads(completed.stdout)
     if not isinstance(payload, dict):

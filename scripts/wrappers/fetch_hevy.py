@@ -4,10 +4,9 @@ from __future__ import annotations
 import json
 import os
 import sys
-import urllib.request
 import urllib.error
+import urllib.request
 from collections import defaultdict
-from pathlib import Path
 
 _API_BASE = "https://api.hevyapp.com/v1"
 
@@ -85,13 +84,15 @@ def fetch() -> dict:
                         reps = _safe_int(s.get("reps"))
                         if weight is None or reps is None or reps == 0:
                             continue
-                        per_exercise_sets[tid].append({
-                            "weight": weight,
-                            "reps": reps,
-                            "exerciseTemplateId": tid,
-                            "workoutStartTime": w.get("start_time", ""),
-                            "workoutTitle": w.get("title", ""),
-                        })
+                        per_exercise_sets[tid].append(
+                            {
+                                "weight": weight,
+                                "reps": reps,
+                                "exerciseTemplateId": tid,
+                                "workoutStartTime": w.get("start_time", ""),
+                                "workoutTitle": w.get("title", ""),
+                            }
+                        )
 
         if recent:
             payload["last_workout"] = recent[0]
@@ -118,9 +119,7 @@ def _summarize_workout(w: dict) -> dict:
         "title": w.get("title") or w.get("name") or "",
         "start_time": w.get("start_time") or w.get("start_time") or "",
         "end_time": w.get("end_time") or w.get("end_time") or "",
-        "exercise_count": len(
-            w.get("exercises", []) if isinstance(w.get("exercises"), list) else []
-        ),
+        "exercise_count": len(w.get("exercises", []) if isinstance(w.get("exercises"), list) else []),
     }
 
 
@@ -133,9 +132,7 @@ def _infer_fatigue(workout: dict) -> dict:
         "shoulders_arms": "unknown",
         "core": "unknown",
     }
-    exercises = (
-        workout.get("exercises") if isinstance(workout.get("exercises"), list) else []
-    )
+    exercises = workout.get("exercises") if isinstance(workout.get("exercises"), list) else []
     for ex in exercises:
         if not isinstance(ex, dict):
             continue
@@ -172,9 +169,7 @@ def _best_set(rows: list[dict]) -> dict | None:
                 "weight_kg": weight,
                 "reps": reps,
                 "estimated_one_rm_kg": round(weight * (1 + reps / 30), 1),
-                "workout_start_time": str(
-                    row.get("workoutStartTime") or row.get("startTime") or ""
-                ),
+                "workout_start_time": str(row.get("workoutStartTime") or row.get("startTime") or ""),
                 "workout_title": str(row.get("workoutTitle") or row.get("title") or ""),
             }
     return best

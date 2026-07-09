@@ -18,9 +18,7 @@ from personal_trainer.snapshot import _validate_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Build the static site artifacts from one captured snapshot."
-    )
+    parser = argparse.ArgumentParser(description="Build the static site artifacts from one captured snapshot.")
     parser.add_argument(
         "--snapshot",
         type=Path,
@@ -54,9 +52,7 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(snapshot_payload, indent=2),
             encoding="utf-8",
         )
-        (output_dir / "raw.json").write_text(
-            json.dumps(snapshot, indent=2), encoding="utf-8"
-        )
+        (output_dir / "raw.json").write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
         (output_dir / "strength.json").write_text(
             json.dumps(_build_strength_view(snapshot), indent=2),
             encoding="utf-8",

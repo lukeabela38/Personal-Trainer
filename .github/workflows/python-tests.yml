@@ -17,21 +17,24 @@ jobs:
           python-version: "3.11"
       - name: Install ruff
         run: python3 -m pip install ruff>=0.11.0
-      - name: Check formatting
+      - name: Ruff format check
         working-directory: personal_trainer
         run: |
-          python3 -m ruff format --check src tests 2>&1 \
-            || echo "## Lint: formatting issues found" >> $GITHUB_STEP_SUMMARY
-          python3 -m ruff format --check ../scripts ../tests 2>&1 \
-            || true
-      - name: Check lint rules
+          set -o pipefail
+          status=0
+          echo "### Ruff format" >> "$GITHUB_STEP_SUMMARY"
+          python3 -m ruff format --check src tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          python3 -m ruff format --check ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          exit "$status"
+      - name: Ruff lint check
         working-directory: personal_trainer
         run: |
-          echo "### Ruff check results" >> $GITHUB_STEP_SUMMARY
-          python3 -m ruff check src tests 2>&1 \
-            | tee -a $GITHUB_STEP_SUMMARY
-          python3 -m ruff check ../scripts ../tests 2>&1 \
-            | tee -a $GITHUB_STEP_SUMMARY
+          set -o pipefail
+          status=0
+          echo "### Ruff check" >> "$GITHUB_STEP_SUMMARY"
+          python3 -m ruff check src tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          python3 -m ruff check ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          exit "$status"
 
   unittest:
     runs-on: ubuntu-latest

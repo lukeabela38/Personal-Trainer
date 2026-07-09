@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -18,8 +18,8 @@ except ImportError:
 
 
 def fetch() -> dict:
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    month_ago = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    month_ago = (datetime.now(UTC) - timedelta(days=30)).strftime("%Y-%m-%d")
     tokenstore = _tokenstore_path()
 
     garmin_email = os.environ.get("GARMIN_EMAIL") or os.environ.get("GC_EMAIL")
@@ -88,26 +88,17 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
     try:
         trend = client.get_vo2max_trend(month_ago, today)
         if isinstance(trend, list) and trend:
-            vals = [
-                t.get("vo2Max") or t.get("vo2MaxValue")
-                for t in trend
-                if t.get("vo2Max") or t.get("vo2MaxValue")
-            ]
+            vals = [t.get("vo2Max") or t.get("vo2MaxValue") for t in trend if t.get("vo2Max") or t.get("vo2MaxValue")]
             if vals:
                 payload["current_vo2max"] = max(vals)
-                payload["vo2max_trend"] = (
-                    "up" if vals[-1] > vals[0] else "down" if vals[-1] < vals[0] else "stable"
-                )
+                payload["vo2max_trend"] = "up" if vals[-1] > vals[0] else "down" if vals[-1] < vals[0] else "stable"
     except Exception:
         pass
 
     try:
         summary = client.get_user_summary(today)
         payload["readiness"] = {
-            "sleep_score": (
-                summary.get("sleepingQualifierSummary", {}).get("value")
-                or summary.get("sleepingSeconds")
-            ),
+            "sleep_score": (summary.get("sleepingQualifierSummary", {}).get("value") or summary.get("sleepingSeconds")),
             "hrv": summary.get("heartRateVariabilitySummary", {}).get("value"),
             "stress": summary.get("stressQualifierSummary", {}).get("value"),
             "body_battery": summary.get("bodyBatteryChargedValue"),
@@ -155,11 +146,7 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
                 payload["current_vo2max"] = vo2_values[0]
             if len(vo2_values) > 1:
                 payload["vo2max_trend"] = (
-                    "up"
-                    if vo2_values[0] > vo2_values[-1]
-                    else "down"
-                    if vo2_values[0] < vo2_values[-1]
-                    else "stable"
+                    "up" if vo2_values[0] > vo2_values[-1] else "down" if vo2_values[0] < vo2_values[-1] else "stable"
                 )
     except Exception:
         pass
@@ -234,15 +221,9 @@ def _summarize_activity(run: dict) -> dict:
     return {
         "date": run.get("start_time") or run.get("startTimeLocal") or "",
         "distance_m": _safe_float(run.get("distance_meters") or run.get("distance")),
-        "duration_s": _safe_float(
-            run.get("duration_seconds") or run.get("duration") or run.get("moving_duration")
-        ),
+        "duration_s": _safe_float(run.get("duration_seconds") or run.get("duration") or run.get("moving_duration")),
         "type": run.get("type", "")
-        or (
-            run.get("activityType", {}).get("typeKey")
-            if isinstance(run.get("activityType"), dict)
-            else ""
-        ),
+        or (run.get("activityType", {}).get("typeKey") if isinstance(run.get("activityType"), dict) else ""),
     }
 
 

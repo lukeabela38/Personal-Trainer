@@ -6,6 +6,13 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 Dockerized full pipeline run with Python 3.12.
 
+## CI Lint Fix
+
+- Updated `python-tests.yml` so ruff formatting and lint failures now fail the workflow instead of being masked by `tee`/`echo`.
+- Kept the step summary output while preserving the non-zero exit code from ruff.
+- Added a small regression test that proves the shell pattern returns `1` for a failing command and `0` for passing commands.
+- Formatted the Python files that CI had flagged and added Ruff per-file ignores for the intentional `sys.path.insert` scripts.
+
 ## Food Logging Shell
 
 - Added a compact food logging shell with item, timestamp, timing tags, and a barcode placeholder.

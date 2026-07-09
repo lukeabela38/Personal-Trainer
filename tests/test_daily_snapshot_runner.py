@@ -52,12 +52,8 @@ class DailySnapshotRunnerTest(TestCase):
                         "Needs check-in": "no",
                     },
                 ),
-                patch.object(
-                    daily_snapshot_runner, "_build_site_artifacts"
-                ) as build_site_artifacts,
-                patch.object(
-                    daily_snapshot_runner, "_build_history_artifacts"
-                ) as build_history_artifacts,
+                patch.object(daily_snapshot_runner, "_build_site_artifacts") as build_site_artifacts,
+                patch.object(daily_snapshot_runner, "_build_history_artifacts") as build_history_artifacts,
             ):
                 exit_code = daily_snapshot_runner.main(
                     [

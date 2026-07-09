@@ -5,10 +5,11 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -33,9 +34,7 @@ ALIASES = {
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Build site/strength.json from Hevy history."
-    )
+    parser = argparse.ArgumentParser(description="Build site/strength.json from Hevy history.")
     parser.add_argument("--output", type=Path, default=Path("site/strength.json"))
     parser.add_argument("--source", type=Path, default=None)
     args = parser.parse_args(argv)
@@ -57,9 +56,7 @@ def _load_from_command() -> Any:
     command = os.environ.get("PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND")
     if not command:
         raise ValueError("set PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND or pass --source")
-    completed = subprocess.run(
-        command.split(), check=True, capture_output=True, text=True
-    )
+    completed = subprocess.run(command.split(), check=True, capture_output=True, text=True)
     return json.loads(completed.stdout)
 
 
@@ -93,7 +90,7 @@ def build_report(raw: Any) -> dict[str, Any]:
         )
     return {
         "source": "Hevy exercise history",
-        "snapshot_date": datetime.now(timezone.utc).date().isoformat(),
+        "snapshot_date": datetime.now(UTC).date().isoformat(),
         "entries": entries,
     }
 

@@ -7,8 +7,6 @@ import os
 import shlex
 import sys
 import textwrap
-
-
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -31,6 +29,7 @@ RUN_RECORD_TYPES = {
     7: "Longest Run",
 }
 
+
 async def fetch() -> dict:
     garmin_email = os.environ.get("GARMIN_EMAIL") or os.environ.get("GC_EMAIL")
     garmin_password = os.environ.get("GARMIN_PASSWORD") or os.environ.get("GC_PASSWORD")
@@ -44,6 +43,7 @@ async def fetch() -> dict:
                 file=sys.stderr,
             )
     return await _fetch_via_mcp()
+
 
 async def _fetch_direct(email: str, password: str) -> dict:
     script = textwrap.dedent(f"""\
@@ -64,14 +64,10 @@ async def _fetch_direct(email: str, password: str) -> dict:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await asyncio.wait_for(
-        proc.communicate(script.encode()), timeout=60
-    )
+    stdout, stderr = await asyncio.wait_for(proc.communicate(script.encode()), timeout=60)
     if proc.returncode != 0:
         err = stderr.decode()[:500]
-        raise RuntimeError(
-            f"garminconnect subprocess failed (exit {proc.returncode}): {err}"
-        )
+        raise RuntimeError(f"garminconnect subprocess failed (exit {proc.returncode}): {err}")
 
     raw = json.loads(stdout.decode())
     if isinstance(raw, dict) and "error" in raw:
@@ -81,23 +77,19 @@ async def _fetch_direct(email: str, password: str) -> dict:
     records = _extract_records(raw)
     return {"result": records}
 
+
 async def _fetch_via_mcp() -> dict:
     records = []
     try:
         raw = await call_tool(GARMIN_COMMAND, "get_personal_record")
-        source = (
-            raw
-            if isinstance(raw, list)
-            else raw.get("result", raw)
-            if isinstance(raw, dict)
-            else []
-        )
+        source = raw if isinstance(raw, list) else raw.get("result", raw) if isinstance(raw, dict) else []
         if isinstance(source, str):
             source = json.loads(source)
         records = _extract_records(source)
     except McpError as e:
         print(f"[garmin-speed] personal records unavailable: {e}", file=sys.stderr)
     return {"result": records}
+
 
 def _extract_records(source) -> list[dict]:
     if not isinstance(source, list):
@@ -113,13 +105,9 @@ def _extract_records(source) -> list[dict]:
             {
                 "record_type": record_type,
                 "value": entry.get("value"),
-                "date": entry.get("date")
-                or entry.get("start_date")
-                or entry.get("startTimeLocal"),
+                "date": entry.get("date") or entry.get("start_date") or entry.get("startTimeLocal"),
                 "raw_value": entry.get("raw_value") or entry.get("rawValue"),
-                "activity_id": entry.get("activity_id")
-                or entry.get("activityId")
-                or entry.get("activityIdGarmin"),
+                "activity_id": entry.get("activity_id") or entry.get("activityId") or entry.get("activityIdGarmin"),
                 "type_id": entry.get("type_id") or entry.get("typeId"),
             }
         )
@@ -128,11 +116,7 @@ def _extract_records(source) -> list[dict]:
 
 def _record_type_for_entry(entry: dict) -> str | None:
     record_type = str(
-        entry.get("record_type")
-        or entry.get("recordType")
-        or entry.get("name")
-        or entry.get("activityName")
-        or ""
+        entry.get("record_type") or entry.get("recordType") or entry.get("name") or entry.get("activityName") or ""
     )
     if record_type in RUN_RECORD_TYPES.values():
         return record_type
@@ -146,6 +130,7 @@ def _record_type_for_entry(entry: dict) -> str | None:
         return RUN_RECORD_TYPES[type_id]
     return None
 
+
 def main() -> int:
     try:
         payload = asyncio.run(fetch())
@@ -155,6 +140,7 @@ def main() -> int:
     except Exception as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

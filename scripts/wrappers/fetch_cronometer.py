@@ -5,8 +5,8 @@ import argparse
 import json
 import os
 import sys
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -171,7 +171,7 @@ def fetch(date_str: str | None = None) -> dict:
             td["remaining_kcal"] = _safe_float(target - consumed) if target is not None else None
             td["log_completeness"] = "complete" if consumed > 0 else "incomplete"
 
-        entry_macros = (summary.get("macros") or {})
+        entry_macros = summary.get("macros") or {}
         td["protein_g"] = _safe_float(entry_macros.get("protein"))
         td["carbs_g"] = _safe_float(entry_macros.get("carbs") or entry_macros.get("net_carbs"))
         td["fat_g"] = _safe_float(entry_macros.get("fat"))
