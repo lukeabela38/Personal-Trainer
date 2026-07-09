@@ -78,6 +78,21 @@ jobs:
       - name: Lint JS
         run: npm run lint:js
 
+  browser-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install JS tools
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke tests
+        run: npm run test:browser
+
   docker:
     runs-on: ubuntu-latest
     permissions:

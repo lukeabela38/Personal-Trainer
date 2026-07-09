@@ -1,0 +1,18 @@
+{
+  "snapshot_date": "2026-07-02",
+  "athlete": {
+    "body_weight_kg": 83.5
+  },
+  "garmin": {
+    "current_vo2max": 51
+  },
+  "cronometer": {
+    "today": {
+      "calories_consumed": 1806,
+      "protein_g": 160
+    }
+  },
+  "recommendation": {
+    "Priority": "aerobic_quality"
+  }
+}
