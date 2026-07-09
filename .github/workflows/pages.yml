@@ -54,5 +54,17 @@ jobs:
           set -euo pipefail
           base_url="${PAGE_URL%/}/"
           echo "Checking deployed Pages site at ${base_url}"
-          curl --fail --silent --show-error --retry 6 --retry-delay 5 --retry-all-errors "${base_url}" | grep -q "Dashboard"
-          curl --fail --silent --show-error --retry 6 --retry-delay 5 --retry-all-errors "${base_url}favicon.svg" | grep -q "<svg"
+          page_ok=0
+          for attempt in $(seq 1 18); do
+            if html="$(curl --silent --show-error --location "${base_url}")" &&
+              printf '%s' "$html" | grep -q "Dashboard"; then
+              page_ok=1
+              break
+            fi
+            sleep 10
+          done
+          if [ "$page_ok" -ne 1 ]; then
+            echo "Pages dashboard never became available" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --location "${base_url}favicon.svg" | grep -q "<svg"
