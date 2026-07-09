@@ -4,13 +4,15 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Post-deploy smoke test for GitHub Pages.
+Pages build hardening for post-deploy smoke verification.
 
 ## Pages Smoke Coverage
 
 - Added a post-deploy HTTP smoke step to `.github/workflows/pages.yml`.
 - The smoke step retries the live Pages URL after deployment, checks the dashboard content, and verifies `favicon.svg` is served.
 - The workflow change is YAML-valid and keeps the scope limited to deployment verification.
+- Hardened `scripts/daily_snapshot_runner.py` so Pages can skip optional Hevy/Garmin history overlays when the command env vars are not set, while keeping direct history scripts strict.
+- Added regression coverage in `tests/test_daily_snapshot_runner.py` for the optional history-report skip path.
 
 ## Guardrail Coverage
 

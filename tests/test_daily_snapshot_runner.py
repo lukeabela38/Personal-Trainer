@@ -52,8 +52,12 @@ class DailySnapshotRunnerTest(TestCase):
                         "Needs check-in": "no",
                     },
                 ),
-                patch.object(daily_snapshot_runner, "_build_site_artifacts") as build_site_artifacts,
-                patch.object(daily_snapshot_runner, "_build_history_artifacts") as build_history_artifacts,
+                patch.object(
+                    daily_snapshot_runner, "_build_site_artifacts"
+                ) as build_site_artifacts,
+                patch.object(
+                    daily_snapshot_runner, "_build_history_artifacts"
+                ) as build_history_artifacts,
             ):
                 exit_code = daily_snapshot_runner.main(
                     [
@@ -76,4 +80,21 @@ class DailySnapshotRunnerTest(TestCase):
             saved_snapshot = json.loads(snapshot_output.read_text(encoding="utf-8"))
             self.assertEqual(saved_sources["garmin"]["current_vo2max"], 52)
             self.assertEqual(saved_snapshot["garmin"]["current_vo2max"], 52)
-            self.assertEqual(saved_snapshot["recommendation"]["Priority"], "aerobic_quality")
+            self.assertEqual(
+                saved_snapshot["recommendation"]["Priority"], "aerobic_quality"
+            )
+
+    def test_skips_optional_history_reports_when_commands_are_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            site_output = tmp_path / "dist"
+
+            with (
+                patch.dict(daily_snapshot_runner.os.environ, {}, clear=True),
+                patch.object(daily_snapshot_runner.subprocess, "run") as run,
+            ):
+                daily_snapshot_runner._build_history_artifacts(site_output)
+
+            self.assertFalse(run.called)
+            self.assertFalse((site_output / "strength.json").exists())
+            self.assertFalse((site_output / "speed.json").exists())
