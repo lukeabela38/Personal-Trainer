@@ -59,23 +59,17 @@ def collect_changed_files(base_ref: str, head_ref: str) -> list[str]:
 def evaluate_guardrails(changed_files: list[str]) -> list[str]:
     violations: list[str] = []
     for rule in RULES:
-        source_files = _matching_paths(
-            changed_files, rule.source_prefix, rule.source_suffixes
-        )
+        source_files = _matching_paths(changed_files, rule.source_prefix, rule.source_suffixes)
         if not source_files:
             continue
         test_files = _matching_paths(changed_files, rule.test_prefix, ())
         if test_files:
             continue
-        violations.append(
-            f"{rule.name} source changed without matching tests: {', '.join(source_files)}"
-        )
+        violations.append(f"{rule.name} source changed without matching tests: {', '.join(source_files)}")
     return violations
 
 
-def _matching_paths(
-    paths: list[str], prefix: str, suffixes: tuple[str, ...]
-) -> list[str]:
+def _matching_paths(paths: list[str], prefix: str, suffixes: tuple[str, ...]) -> list[str]:
     matches = []
     for path in paths:
         if not path.startswith(prefix):
@@ -87,9 +81,7 @@ def _matching_paths(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Enforce small file-mapping testing guardrails."
-    )
+    parser = argparse.ArgumentParser(description="Enforce small file-mapping testing guardrails.")
     parser.add_argument(
         "--base",
         default="origin/main",
