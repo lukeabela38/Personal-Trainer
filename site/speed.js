@@ -102,7 +102,7 @@ function renderSummary(entries) {
     .join("");
 }
 
-function sortEntries(entries) {
+export function sortEntries(entries) {
   const order = ["Fastest 1K", "Fastest Mile", "Fastest 5K", "Fastest 10K", "Fastest Half Marathon", "Longest Run"];
   return [...entries].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 }
@@ -136,11 +136,11 @@ function renderSpeedGoals(payload) {
   goalsContainer.removeAttribute("hidden");
 }
 
-function formatSpeedValue(recordType, value, rawValue = null) {
+export function formatSpeedValue(recordType, value, rawValue = null) {
   if (value == null || value === "") return "-";
   const type = String(recordType ?? "");
   const numeric = typeof value === "number" ? value : Number(value);
-  const rawNumeric = typeof rawValue === "number" ? rawValue : Number(rawValue);
+  const rawNumeric = rawValue == null || rawValue === "" ? null : typeof rawValue === "number" ? rawValue : Number(rawValue);
   const source = Number.isFinite(rawNumeric) ? rawNumeric : numeric;
 
   if (type === "Longest Run") {
@@ -156,7 +156,7 @@ function formatSpeedValue(recordType, value, rawValue = null) {
   return String(value);
 }
 
-function formatDuration(seconds) {
+export function formatDuration(seconds) {
   const wholeSeconds = Math.floor(seconds);
   const hours = Math.floor(wholeSeconds / 3600);
   const minutes = Math.floor((wholeSeconds % 3600) / 60);
@@ -165,11 +165,11 @@ function formatDuration(seconds) {
   return `${minutes}:${String(secs).padStart(2, "0")}`;
 }
 
-function formatDistanceKm(meters) {
+export function formatDistanceKm(meters) {
   return (Math.floor((meters / 1000) * 100) / 100).toFixed(2).replace(/\.00$/, "");
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")

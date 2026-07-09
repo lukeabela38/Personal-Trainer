@@ -1,5 +1,13 @@
 import { loadLastDays, extractVo2, extractBodyWeight, weeklySummary, loadIndex, loadSnapshot } from "./history.js";
 import { renderSparkline, fmtNum } from "./goals.js";
+import {
+  escapeHtml,
+  formatDisplayValue as formatValue,
+  readNumber,
+  readText,
+  shouldRenderValue,
+  summarizeBests,
+} from "./data-helpers.js";
 
 const snapshotUrl = new URL("./data/snapshot.json", import.meta.url);
 const grid = document.getElementById("progress-grid");
@@ -144,7 +152,7 @@ function renderProgress(snapshot) {
   state.previous = snapshot;
 }
 
-function deltaRow(label, previous, current) {
+export function deltaRow(label, previous, current) {
   if (!shouldRenderValue(previous) && !shouldRenderValue(current)) return null;
   if (previous === current) return null;
   const pNum = Number(previous);
@@ -163,47 +171,7 @@ function deltaRow(label, previous, current) {
   return { label, value: `${formatValue(previous)} → ${formatValue(current)}`, deltaClass, tooltip };
 }
 
-function summarizeBests(snapshot) {
-  const hevy = snapshot?.hevy?.recent_bests?.length ?? 0;
-  const garmin = snapshot?.garmin?.recent_bests?.length ?? 0;
-  return `${hevy} strength / ${garmin} running`;
-}
-
-function readNumber(snapshot, path) {
-  const value = readPath(snapshot, path);
-  if (value == null || value === "") return null;
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function readText(snapshot, path) {
-  const value = readPath(snapshot, path);
-  return value == null ? null : String(value);
-}
-
-function readPath(object, path) {
-  return path.reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), object);
-}
-
-function shouldRenderValue(value) {
-  if (value == null) return false;
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "object") return Object.keys(value).length > 0;
-  if (typeof value === "string") return value.trim() !== "" && value !== "null";
-  return true;
-}
-
-function formatValue(value) {
-  if (!shouldRenderValue(value)) return "-";
-  return String(value)
-    .replaceAll("_", " ")
-    .replaceAll("-", " ")
-    .replace(/\s+/g, " ")
-    .toLowerCase()
-    .replace(/(^|\s)\S/g, (match) => match.toUpperCase());
-}
-
-function summaryTile(label, value, subvalue) {
+export function summaryTile(label, value, subvalue) {
   return { label, value, subvalue };
 }
 
@@ -273,15 +241,6 @@ function renderComparison(fromDate, snapA, toDate, snapB) {
       </article>
     `).join("")
     : `<div class="item"><span>Progress</span><strong>No change between these dates</strong></div>`;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
 
 function persistSnapshot(snapshot) {

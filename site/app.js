@@ -1,5 +1,13 @@
 import { loadLastDays, weeklySummary, extractBodyWeight } from "./history.js";
 import { loadGoals, updateGoalCurrent, goalProgress, renderSparkline, fmtNum } from "./goals.js";
+import {
+  escapeHtml,
+  formatDisplayValue,
+  readNumber,
+  readText,
+  shouldRenderValue,
+  summarizeBests as summarizeBestCount,
+} from "./data-helpers.js";
 
 const deployedSnapshotPath = new URL("./data/snapshot.json", import.meta.url);
 const sections = document.getElementById("sections");
@@ -375,24 +383,24 @@ function renderGuidanceTargetsEmpty() {
   return renderGuidanceTargets({}, {});
 }
 
-function formatMacroTarget(value, unit) {
+export function formatMacroTarget(value, unit) {
   if (value == null || value === "") return "-";
   return `${fmtNum(value)} ${unit}`;
 }
 
-function formatMacroCurrent(value, unit) {
+export function formatMacroCurrent(value, unit) {
   if (value == null || value === "") return "No intake yet";
   return `${fmtNum(value)} ${unit} logged`;
 }
 
-function formatSentenceValue(value) {
+export function formatSentenceValue(value) {
   const text = String(value ?? "").trim();
   if (!text) return "Unknown";
   if (text === "-") return "-";
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function formatFoodTimingLabel(timing) {
+export function formatFoodTimingLabel(timing) {
   const labels = {
     flexible: "Flexible timing",
     before: "Before training",
@@ -402,7 +410,7 @@ function formatFoodTimingLabel(timing) {
   return labels[timing] ?? "Flexible timing";
 }
 
-function formatFoodTimeLabel(value) {
+export function formatFoodTimeLabel(value) {
   if (!value) return "Time not set";
   const normalized = value.length === 16 ? `${value}:00` : value;
   const date = new Date(normalized);
@@ -416,7 +424,7 @@ function formatDateTimeLocal(date) {
   return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
 }
 
-function formatSessionModeLabel(mode) {
+export function formatSessionModeLabel(mode) {
   const labels = {
     none: "Not set",
     planned: "Planned",
@@ -426,7 +434,7 @@ function formatSessionModeLabel(mode) {
   return labels[mode] ?? "Not set";
 }
 
-function formatSessionTypeLabel(type) {
+export function formatSessionTypeLabel(type) {
   const labels = {
     run: "Run",
     lift: "Lift",
@@ -438,7 +446,7 @@ function formatSessionTypeLabel(type) {
   return labels[type] ?? "Run";
 }
 
-function formatSessionTime(value) {
+export function formatSessionTime(value) {
   if (!value) return "";
   try {
     const normalized = value.length === 16 ? `${value}:00` : value;
@@ -450,7 +458,7 @@ function formatSessionTime(value) {
   }
 }
 
-function describeSessionContext(context) {
+export function describeSessionContext(context) {
   if (!context || context.mode === "none") return "No session planned";
   const typeLabel = formatSessionTypeLabel(context.type);
   const timeLabel = formatSessionTime(context.time);
@@ -466,7 +474,7 @@ function describeSessionContext(context) {
   return "No session planned";
 }
 
-function describeSessionHelp(context) {
+export function describeSessionHelp(context) {
   if (!context || context.mode === "none") {
     return "Pick a timing mode and session type when training is on the plan so fueling can later be adjusted around it.";
   }
@@ -774,12 +782,6 @@ function buildDeltaRows(previousSnapshot, currentSnapshot) {
   return rows;
 }
 
-function summarizeBestCount(snapshot) {
-  const hevyBests = snapshot?.hevy?.recent_bests?.length ?? 0;
-  const garminBests = snapshot?.garmin?.recent_bests?.length ?? 0;
-  return `${hevyBests} strength / ${garminBests} running`;
-}
-
 function addDeltaRow(rows, label, previous, current) {
   if (!shouldRenderValue(previous) && !shouldRenderValue(current)) return;
   if (previous === current) return;
@@ -797,24 +799,6 @@ function formatDeltaValue(value) {
   return formatDisplayValue(value);
 }
 
-/* ── Data helpers ── */
-
-function readNumber(snapshot, path) {
-  const value = readPath(snapshot, path);
-  if (value == null || value === "") return null;
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function readText(snapshot, path) {
-  const value = readPath(snapshot, path);
-  return value == null ? null : String(value);
-}
-
-function readPath(object, path) {
-  return path.reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), object);
-}
-
 function flattenEntries(value, path = []) {
   if (!shouldDescend(value)) return [[path, value]];
   return Object.entries(value).flatMap(([key, entry]) => flattenEntries(entry, [...path, key]));
@@ -823,14 +807,6 @@ function flattenEntries(value, path = []) {
 function shouldDescend(value) {
   if (Array.isArray(value)) return value.length > 0;
   return value !== null && typeof value === "object" && Object.keys(value).length > 0;
-}
-
-function shouldRenderValue(value) {
-  if (value == null) return false;
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "object") return Object.keys(value).length > 0;
-  if (typeof value === "string") return value.trim() !== "" && value !== "null";
-  return true;
 }
 
 function formatRenderedValue(value) {
@@ -848,21 +824,6 @@ function formatVal(value, unit) {
 
 function formatPriorityLabel(value) {
   return formatDisplayValue(value);
-}
-
-function formatDisplayValue(value) {
-  const text = String(value ?? "").trim();
-  if (!text) return "Unknown";
-  if (text === "-") return "-";
-  if (/^[A-Za-z0-9 _-]+$/.test(text)) {
-    return text
-      .replaceAll("_", " ")
-      .replaceAll("-", " ")
-      .replace(/\s+/g, " ")
-      .toLowerCase()
-      .replace(/(^|\s)\S/g, (match) => match.toUpperCase());
-  }
-  return text;
 }
 
 function formatLabel(key, sectionTitle = "") {
@@ -1043,15 +1004,6 @@ function renderSparklineCard(bw) {
 
 function saveGoals(goals) {
   try { localStorage.setItem("personal-trainer:goals", JSON.stringify(goals)); } catch {}
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
 
 function openRawView() {

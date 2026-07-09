@@ -346,7 +346,7 @@ grid.addEventListener("click", async (e) => {
   }
 });
 
-function findTemplateId(name) {
+export function findTemplateId(name) {
   const mapping = {
     "Squat (Barbell)": "D04AC939", "Bench Press (Barbell)": "79D0BB3A", "Chin Up": "29083183",
     "Triceps Dip": "28BB4A95", "Push Up": "392887AA", "Dumbbell Row": "F1E57334",
@@ -475,11 +475,11 @@ function showTrendModal(name, history) {
   });
 }
 
-function formatNum(value) {
+export function formatNum(value) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
