@@ -40,9 +40,7 @@ class PrReviewSummaryTests(TestCase):
     def test_parse_mypy_reads_text_issues(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "mypy.txt"
-            path.write_text(
-                "src/example.py:8:4: error: Incompatible types\n", encoding="utf-8"
-            )
+            path.write_text("src/example.py:8:4: error: Incompatible types\n", encoding="utf-8")
 
             issues = pr_review_summary.parse_mypy(path)
 
@@ -88,9 +86,7 @@ class PrReviewSummaryTests(TestCase):
     def test_parse_junit_reads_failure_counts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "junit.xml"
-            path.write_text(
-                '<testsuite errors="2" failures="3"></testsuite>', encoding="utf-8"
-            )
+            path.write_text('<testsuite errors="2" failures="3"></testsuite>', encoding="utf-8")
 
             report = pr_review_summary.parse_junit(path)
 
@@ -148,9 +144,7 @@ class PrReviewSummaryTests(TestCase):
         self.assertEqual(summary["errors"], 3)
         self.assertEqual(summary["warnings"], 3)
         self.assertEqual(summary["security"], 1)
-        self.assertEqual(
-            [entry["path"] for entry in summary["files"]], ["src/a.py", "src/b.py"]
-        )
+        self.assertEqual([entry["path"] for entry in summary["files"]], ["src/a.py", "src/b.py"])
 
     def test_main_writes_summary_and_exit_code(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -171,9 +165,7 @@ class PrReviewSummaryTests(TestCase):
                 ),
                 encoding="utf-8",
             )
-            junit.write_text(
-                '<testsuite errors="0" failures="1"></testsuite>', encoding="utf-8"
-            )
+            junit.write_text('<testsuite errors="0" failures="1"></testsuite>', encoding="utf-8")
 
             exit_code = pr_review_summary.main(
                 [

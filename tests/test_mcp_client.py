@@ -50,8 +50,7 @@ class McpClientTests(TestCase):
     def test_call_tool_parses_json_result_and_sends_expected_messages(self) -> None:
         fake_proc = _FakeProcess(
             [
-                json.dumps({"jsonrpc": "2.0", "id": 1, "result": {}}).encode("utf-8")
-                + b"\n",
+                json.dumps({"jsonrpc": "2.0", "id": 1, "result": {}}).encode("utf-8") + b"\n",
                 json.dumps(
                     {
                         "jsonrpc": "2.0",
@@ -83,9 +82,7 @@ class McpClientTests(TestCase):
             side_effect=fake_create_subprocess_exec,
         ):
             result = asyncio.run(
-                mcp_client.call_tool(
-                    "hevy-mcp", "get-exercise-history", {"exerciseTemplateId": "123"}
-                )
+                mcp_client.call_tool("hevy-mcp", "get-exercise-history", {"exerciseTemplateId": "123"})
             )
 
         self.assertEqual(result, {"ok": True, "count": 3})
@@ -100,8 +97,7 @@ class McpClientTests(TestCase):
     def test_call_tool_raises_on_tool_error(self) -> None:
         fake_proc = _FakeProcess(
             [
-                json.dumps({"jsonrpc": "2.0", "id": 1, "result": {}}).encode("utf-8")
-                + b"\n",
+                json.dumps({"jsonrpc": "2.0", "id": 1, "result": {}}).encode("utf-8") + b"\n",
                 json.dumps(
                     {
                         "jsonrpc": "2.0",
@@ -121,9 +117,7 @@ class McpClientTests(TestCase):
             "create_subprocess_exec",
             side_effect=fake_create_subprocess_exec,
         ):
-            with self.assertRaisesRegex(
-                mcp_client.McpError, "tool 'missing-tool' error"
-            ):
+            with self.assertRaisesRegex(mcp_client.McpError, "tool 'missing-tool' error"):
                 asyncio.run(mcp_client.call_tool("hevy-mcp", "missing-tool"))
 
         self.assertTrue(fake_proc.terminated)
