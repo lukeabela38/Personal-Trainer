@@ -116,3 +116,22 @@ Implications:
 - Source changes to `scripts/**/*.py` must include a change under `tests/`.
 - Source changes to `site/**/*.js` must include a change under `tests/frontend/`.
 - This guardrail complements the existing `unittest`-only decision rather than replacing it.
+
+## 2026-07-09 — Snapshot Fuzzing and Golden Files for Core Contracts
+
+Decision:
+
+- Core snapshot and recommendation contracts should be protected by both fuzz-style mutation tests and golden-file regression tests.
+- Fuzz tests should probe invalid shapes and partial inputs.
+- Golden files should freeze a small number of representative recommendation outputs.
+
+Reason:
+
+- Fuzzing catches brittle edge cases and missing validation.
+- Golden files catch unintended behavior drift in the daily recommendation output.
+- The combination is hard to game without actually exercising the contract.
+
+Implications:
+
+- Changes to snapshot or recommendation rules should update or add both a mutation test and a golden case.
+- Golden fixtures should stay small and representative rather than trying to cover every possible day.

@@ -49,6 +49,7 @@ If the decision is durable enough to outlive a single task, record it in [`DECIS
   - `personal_trainer/src/personal_trainer/*.py` needs a change in `personal_trainer/tests/`
   - `scripts/**/*.py` needs a change in `tests/`
   - `site/**/*.js` needs a change in `tests/frontend/`
+- When changing the snapshot or recommendation contract, add at least one fuzz mutation test and one golden-file regression case.
 
 ## Review Rule
 
