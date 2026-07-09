@@ -96,3 +96,42 @@ Implications:
 
 - All test classes extend `unittest.TestCase`.
 - Test discovery requires the `-v` flag for verbose output; no pytest fixtures or markers available.
+
+## 2026-07-09 — File-Mapping Guardrail for Source Changes
+
+Decision:
+
+- When source files change, CI must verify that the corresponding test surface changes in the same PR.
+- The current guardrail checks three common paths: Python package code, script code, and site JavaScript.
+
+Reason:
+
+- Prevents source-only changes from slipping through with no test updates.
+- Keeps the rule simple enough to enforce automatically without introducing a full coverage stack.
+- Works well with the repo's narrow card style and existing `unittest`/Node test setup.
+
+Implications:
+
+- Source changes to `personal_trainer/src/personal_trainer/*.py` must include a change under `personal_trainer/tests/`.
+- Source changes to `scripts/**/*.py` must include a change under `tests/`.
+- Source changes to `site/**/*.js` must include a change under `tests/frontend/`.
+- This guardrail complements the existing `unittest`-only decision rather than replacing it.
+
+## 2026-07-09 — Snapshot Fuzzing and Golden Files for Core Contracts
+
+Decision:
+
+- Core snapshot and recommendation contracts should be protected by both fuzz-style mutation tests and golden-file regression tests.
+- Fuzz tests should probe invalid shapes and partial inputs.
+- Golden files should freeze a small number of representative recommendation outputs.
+
+Reason:
+
+- Fuzzing catches brittle edge cases and missing validation.
+- Golden files catch unintended behavior drift in the daily recommendation output.
+- The combination is hard to game without actually exercising the contract.
+
+Implications:
+
+- Changes to snapshot or recommendation rules should update or add both a mutation test and a golden case.
+- Golden fixtures should stay small and representative rather than trying to cover every possible day.

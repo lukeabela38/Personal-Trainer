@@ -12,6 +12,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  testing-guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check testing guardrails
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          base_sha="$PUSH_BEFORE_SHA"
+          if [ -n "$BASE_SHA" ]; then
+            base_sha="$BASE_SHA"
+          fi
+          if [ -z "$base_sha" ] || [ "$base_sha" = "0000000000000000000000000000000000000000" ]; then
+            base_sha="origin/main"
+          fi
+          python3 scripts/testing_guardrails.py --base "$base_sha" --head "$HEAD_SHA"
+
   lint:
     runs-on: ubuntu-latest
     steps:
