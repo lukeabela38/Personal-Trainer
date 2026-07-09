@@ -79,5 +79,5 @@ jobs:
             const ref = context.payload.pull_request.head.ref;
             const allowed = /^(feature|fix|chore|docs|ci)\/[a-z0-9._-]+$/;
             if (!allowed.test(ref)) {
-              core.warning(`Branch name "${ref}" does not match pattern feature|fix|chore|docs|ci/<description>`);
+              core.setFailed(`Branch name "${ref}" does not match pattern feature|fix|chore|docs|ci/<description>`);
             }

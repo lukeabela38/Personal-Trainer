@@ -18,6 +18,11 @@ Dockerized full pipeline run with Python 3.12.
 - Added workflow-level concurrency to `python-tests.yml` so only the latest run for a branch stays active.
 - This should cancel stale pushes automatically and reduce CI noise during iteration.
 
+## PR Review Branch Check
+
+- Swapped the branch-name audit in `pr-review.yml` from a warning to a failing check.
+- This makes non-conforming branch names block the PR review workflow instead of only surfacing a warning.
+
 ## Food Logging Shell
 
 - Added a compact food logging shell with item, timestamp, timing tags, and a barcode placeholder.
