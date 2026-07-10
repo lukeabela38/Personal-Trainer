@@ -8,9 +8,9 @@ Switch GitHub Pages to build from live source capture instead of the committed e
 
 ## Pages Live Source Build
 
-- Updated `.github/workflows/pages.yml` so the Pages job calls `daily_snapshot_runner.py` without the committed snapshot fixture.
-- Added workflow env defaults for the live source wrapper commands so the job resolves the same live seams used locally.
-- Updated the handoff and architecture docs so they describe Pages as building from live capture on `main`.
+- Updated `.github/workflows/pages.yml` so the Pages job can use live source capture when repo secrets are configured and otherwise falls back to the committed snapshot fixture.
+- Added workflow env defaults for the live source wrapper commands and secret env wiring so the job resolves the same live seams used locally when secrets are available.
+- Updated the handoff and architecture docs so they describe the secret-aware Pages deployment path.
 
 ## Pages Constraint
 

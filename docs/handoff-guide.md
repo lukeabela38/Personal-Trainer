@@ -43,7 +43,7 @@ This repository builds a personal performance system for Luke.
 - `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot. Treat the snapshot payloads as generated build outputs, not committed source artifacts.
 - `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle.
 - `scripts/daily_snapshot_runner.py` writes the computed recommendation into `dist/snapshot.json`, and `scripts/build_site_artifacts.py` preserves that recommendation if it is already present so the published snapshot and UI stay aligned.
-- GitHub Pages deploys from the committed example snapshot file, not from live source capture.
+- GitHub Pages uses live source capture when the repo secrets are configured and falls back to the committed example snapshot file otherwise.
 - The long-term architecture should evolve toward a ledger plus direct logging, but the current implementation stays snapshot-first.
 
 ## Python Live-Source Seam
