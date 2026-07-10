@@ -9,6 +9,7 @@ import urllib.request
 from collections import defaultdict
 
 _API_BASE = "https://api.hevyapp.com/v1"
+_RECENT_WORKOUT_LIMIT = 30
 
 _TRACKED_EXERCISES = [
     ("Squat (Barbell)", "D04AC939"),
@@ -62,7 +63,7 @@ def fetch() -> dict:
     }
 
     try:
-        data = _get("/workouts?page=1&pageSize=10")
+        data = _get(f"/workouts?page=1&pageSize={_RECENT_WORKOUT_LIMIT}")
         workouts = data.get("workouts", [])
         if not isinstance(workouts, list):
             raise RuntimeError("unexpected response shape")

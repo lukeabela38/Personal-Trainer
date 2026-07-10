@@ -267,7 +267,7 @@ class HevyWrapperTests(TestCase):
                 os.environ["HEVY_API_KEY"] = original
 
         self.assertEqual(len(captured_requests), 1)
-        self.assertEqual(captured_requests[0].full_url, "https://api.hevyapp.com/v1/workouts?page=1&pageSize=10")
+        self.assertEqual(captured_requests[0].full_url, "https://api.hevyapp.com/v1/workouts?page=1&pageSize=30")
         self.assertEqual(captured_requests[0].headers["Api-key"], "test-hevy-key")
         self.assertEqual(payload["freshness"], "fresh")
         self.assertEqual(payload["last_workout"]["title"], "Lower Body")
