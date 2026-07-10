@@ -4,6 +4,16 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
+Switch GitHub Pages to build from live source capture instead of the committed example snapshot.
+
+## Pages Live Source Build
+
+- Updated `.github/workflows/pages.yml` so the Pages job calls `daily_snapshot_runner.py` without the committed snapshot fixture.
+- Added workflow env defaults for the live source wrapper commands so the job resolves the same live seams used locally.
+- Updated the handoff and architecture docs so they describe Pages as building from live capture on `main`.
+
+## Previous Task
+
 Remove the static site service worker.
 
 ## Pages Smoke Coverage

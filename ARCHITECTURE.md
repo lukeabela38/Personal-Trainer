@@ -79,7 +79,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - Pages: `index.html` (snapshot viewer), `strength.html` (Hevy PBs/1RM), `speed.html` (Garmin running PBs), `progress.html` (change comparison)
 - JS: Vanilla ES modules, no framework. Loads JSON from `data/snapshot.json`, `strength.json`, `speed.json`
 - CSS: Dark theme with custom properties, responsive layout
-- Deployment: GitHub Pages via `.github/workflows/pages.yml`, triggers on `site/**` changes
+- Deployment: GitHub Pages via `.github/workflows/pages.yml`, builds from live source capture on `main`
 
 ## Data Flow
 
