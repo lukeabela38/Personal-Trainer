@@ -142,16 +142,22 @@ def _run_optional_history_report(env_var: str, script: str, output_path: Path) -
     if not os.environ.get(env_var):
         print(f"Skipping {script}: {env_var} is not set", file=sys.stderr)
         return
-    subprocess.run(
-        [
-            sys.executable,
-            str(REPO_ROOT / "scripts" / script),
-            "--output",
-            str(output_path),
-        ],
-        check=True,
-        env=_with_pythonpath(),
-    )
+    try:
+        subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / script),
+                "--output",
+                str(output_path),
+            ],
+            check=True,
+            env=_with_pythonpath(),
+        )
+    except subprocess.CalledProcessError as exc:
+        print(
+            f"Skipping {script}: {env_var} failed with exit code {exc.returncode}",
+            file=sys.stderr,
+        )
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
