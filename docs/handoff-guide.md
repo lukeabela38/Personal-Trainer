@@ -41,9 +41,9 @@ This repository builds a personal performance system for Luke.
 - `scripts/mcp_client.py` is the reusable async MCP stdio client for calling tools on Garmin, Hevy, and Cronometer MCP servers.
 - `scripts/wrappers/` contains per-source wrapper scripts that each call MCP tools and emit source payload JSON to stdout.
 - `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot. Treat the snapshot payloads as generated build outputs, not committed source artifacts.
-- `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle used by GitHub Pages.
+- `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle.
 - `scripts/daily_snapshot_runner.py` writes the computed recommendation into `dist/snapshot.json`, and `scripts/build_site_artifacts.py` preserves that recommendation if it is already present so the published snapshot and UI stay aligned.
-- GitHub Pages deploys from live source capture on `main`, not from the committed example snapshot file.
+- GitHub Pages deploys from the committed example snapshot file, not from live source capture.
 - The long-term architecture should evolve toward a ledger plus direct logging, but the current implementation stays snapshot-first.
 
 ## Python Live-Source Seam

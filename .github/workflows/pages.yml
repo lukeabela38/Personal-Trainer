@@ -7,8 +7,7 @@ on:
       - main
     paths:
       - "site/**"
-      - "scripts/**"
-      - "personal_trainer/src/**"
+      - "personal_trainer/examples/**"
       - ".github/workflows/pages.yml"
 
 permissions:
@@ -27,15 +26,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Prepare site output
-        env:
-          PERSONAL_TRAINER_GARMIN_COMMAND: python3 scripts/wrappers/fetch_garmin.py
-          PERSONAL_TRAINER_HEVY_COMMAND: python3 scripts/wrappers/fetch_hevy.py
-          PERSONAL_TRAINER_CRONOMETER_COMMAND: python3 scripts/wrappers/fetch_cronometer.py
-          PERSONAL_TRAINER_MANUAL_COMMAND: python3 scripts/wrappers/fetch_manual.py
-          PERSONAL_TRAINER_GARMIN_SPEED_COMMAND: python3 scripts/wrappers/fetch_garmin_speed.py
-          PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND: python3 scripts/wrappers/fetch_hevy_strength.py
         run: >
           python3 ./scripts/daily_snapshot_runner.py
+          --sources-file personal_trainer/examples/snapshot-ready.json
           --snapshot-output dist/data/snapshot.json
           --site-output dist
       - name: Upload Pages artifact

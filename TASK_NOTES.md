@@ -12,6 +12,11 @@ Switch GitHub Pages to build from live source capture instead of the committed e
 - Added workflow env defaults for the live source wrapper commands so the job resolves the same live seams used locally.
 - Updated the handoff and architecture docs so they describe Pages as building from live capture on `main`.
 
+## Pages Constraint
+
+- GitHub Actions does not have access to the local Garmin, Hevy, or Cronometer secrets used by the live wrappers.
+- The Pages deployment must stay on the committed example snapshot until there is a supported secret-backed deployment path.
+
 ## Previous Task
 
 Remove the static site service worker.
