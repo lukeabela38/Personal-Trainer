@@ -65,5 +65,7 @@ export function hasLiveSnapshotData(snapshot) {
   const recentWorkouts = Array.isArray(snapshot?.hevy?.recent_workouts)
     ? snapshot.hevy.recent_workouts
     : [];
-  return Boolean(cronometerDays.length || recentRuns.length || recentWorkouts.length);
+  return Boolean(
+    cronometerDays.length || recentRuns.length || recentWorkouts.length,
+  );
 }

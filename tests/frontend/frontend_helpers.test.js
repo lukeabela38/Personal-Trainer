@@ -213,7 +213,10 @@ test("check-in panel renders fixed questions and answer chips", () => {
 });
 
 test("default food entry time formats a datetime-local value", () => {
-  assert.match(defaultFoodEntryTime(new Date("2026-07-10T12:00:00Z")), /^2026-07-10T/);
+  assert.match(
+    defaultFoodEntryTime(new Date("2026-07-10T12:00:00Z")),
+    /^2026-07-10T/,
+  );
 });
 
 test("history helpers summarize snapshots", () => {
@@ -279,13 +282,36 @@ test("live progress range summary stays on the live recent-day window", () => {
     {
       cronometer: {
         recent_days: [
-          { date: "2026-07-07", calories_consumed: 1800, protein_g: 140, carbs_g: 220, fat_g: 50, remaining_kcal: 100 },
-          { date: "2026-07-08", calories_consumed: 1900, protein_g: 150, carbs_g: 230, fat_g: 55, remaining_kcal: 50 },
-          { date: "2026-07-09", calories_consumed: 2100, protein_g: 160, carbs_g: 240, fat_g: 60, remaining_kcal: -25 },
+          {
+            date: "2026-07-07",
+            calories_consumed: 1800,
+            protein_g: 140,
+            carbs_g: 220,
+            fat_g: 50,
+            remaining_kcal: 100,
+          },
+          {
+            date: "2026-07-08",
+            calories_consumed: 1900,
+            protein_g: 150,
+            carbs_g: 230,
+            fat_g: 55,
+            remaining_kcal: 50,
+          },
+          {
+            date: "2026-07-09",
+            calories_consumed: 2100,
+            protein_g: 160,
+            carbs_g: 240,
+            fat_g: 60,
+            remaining_kcal: -25,
+          },
         ],
       },
       hevy: { recent_workouts: [{ startTimeLocal: "2026-07-08 19:00:00" }] },
-      garmin: { recent_runs: [{ startTimeGMT: "2026-07-09 06:00:00", distance: 10000 }] },
+      garmin: {
+        recent_runs: [{ startTimeGMT: "2026-07-09 06:00:00", distance: 10000 }],
+      },
     },
     "2026-07-07",
     "2026-07-09",

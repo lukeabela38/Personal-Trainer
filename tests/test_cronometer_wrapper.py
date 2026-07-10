@@ -94,7 +94,7 @@ class CronometerWrapperTests(unittest.TestCase):
             patch.object(cronometer, "_save_cached_session"),
             patch.object(cronometer, "_post", return_value=_diary_payload()) as post,
         ):
-            cronometer.fetch("2026-07-04")
+            payload = cronometer.fetch("2026-07-04")
 
         login.assert_called_once()
         self.assertEqual(post.call_count, 31)
