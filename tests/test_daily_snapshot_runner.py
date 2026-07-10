@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import tempfile
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
@@ -92,3 +94,39 @@ class DailySnapshotRunnerTest(TestCase):
             self.assertFalse(run.called)
             self.assertFalse((site_output / "strength.json").exists())
             self.assertFalse((site_output / "speed.json").exists())
+
+    def test_skips_optional_history_reports_when_commands_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            site_output = tmp_path / "dist"
+            stderr = StringIO()
+
+            with (
+                patch.dict(
+                    daily_snapshot_runner.os.environ,
+                    {"PERSONAL_TRAINER_GARMIN_SPEED_COMMAND": "python3 -c 'raise SystemExit(1)'"},
+                    clear=True,
+                ),
+                patch.object(
+                    daily_snapshot_runner.subprocess,
+                    "run",
+                    side_effect=daily_snapshot_runner.subprocess.CalledProcessError(
+                        returncode=1,
+                        cmd=[
+                            "python3",
+                            "scripts/speed_report.py",
+                            "--output",
+                            str(site_output / "speed.json"),
+                        ],
+                    ),
+                ) as run,
+                redirect_stderr(stderr),
+            ):
+                daily_snapshot_runner._run_optional_history_report(
+                    env_var="PERSONAL_TRAINER_GARMIN_SPEED_COMMAND",
+                    script="speed_report.py",
+                    output_path=site_output / "speed.json",
+                )
+
+            self.assertTrue(run.called)
+            self.assertIn("Skipping speed_report.py", stderr.getvalue())
