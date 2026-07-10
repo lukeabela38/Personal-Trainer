@@ -134,20 +134,14 @@ class BuildSiteArtifactsTest(TestCase):
             )
 
             self.assertEqual(exit_code, 0)
-            built_snapshot = json.loads(
-                (output_dir / "data" / "snapshot.json").read_text(encoding="utf-8")
-            )
-            self.assertEqual(
-                built_snapshot["recommendation"]["Priority"], "aerobic_quality"
-            )
+            built_snapshot = json.loads((output_dir / "data" / "snapshot.json").read_text(encoding="utf-8"))
+            self.assertEqual(built_snapshot["recommendation"]["Priority"], "aerobic_quality")
             self.assertTrue((output_dir / "raw.json").exists())
             self.assertTrue((output_dir / "progress.html").exists())
             self.assertTrue((output_dir / "progress.js").exists())
             self.assertTrue((output_dir / "strength.json").exists())
             self.assertFalse((output_dir / "sw.js").exists())
-            built_speed = json.loads(
-                (output_dir / "speed.json").read_text(encoding="utf-8")
-            )
+            built_speed = json.loads((output_dir / "speed.json").read_text(encoding="utf-8"))
             self.assertEqual(
                 [entry["value"] for entry in built_speed["entries"]],
                 ["3:36", "6:23", "20:51", "48:11", "1:43:39", "21.37 km"],
