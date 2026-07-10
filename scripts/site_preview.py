@@ -9,18 +9,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SITE_OUTPUT = REPO_ROOT / "dist"
 CONTAINER_ROOT = Path("/app")
-CONTAINER_DEFAULT_SNAPSHOT = (
-    CONTAINER_ROOT / "personal_trainer" / "examples" / "snapshot-ready.json"
-)
+CONTAINER_DEFAULT_SNAPSHOT = CONTAINER_ROOT / "personal_trainer" / "examples" / "snapshot-ready.json"
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Build the deploy-like site bundle and serve it locally."
-    )
-    parser.add_argument(
-        "--port", type=int, default=4173, help="Port for the local preview server."
-    )
+    parser = argparse.ArgumentParser(description="Build the deploy-like site bundle and serve it locally.")
+    parser.add_argument("--port", type=int, default=4173, help="Port for the local preview server.")
     parser.add_argument(
         "--site-output",
         type=Path,

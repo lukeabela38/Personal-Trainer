@@ -28,9 +28,7 @@ class SitePreviewTest(TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(run.call_count, 3)
         image_build_call = run.call_args_list[0]
-        self.assertEqual(
-            image_build_call.args[0], ["docker", "compose", "build", "app"]
-        )
+        self.assertEqual(image_build_call.args[0], ["docker", "compose", "build", "app"])
         self.assertEqual(image_build_call.kwargs["cwd"], site_preview.REPO_ROOT)
         build_call = run.call_args_list[1]
         self.assertEqual(
@@ -79,8 +77,6 @@ class SitePreviewTest(TestCase):
 
         self.assertEqual(exit_code, 0)
         image_build_call = run.call_args_list[0]
-        self.assertEqual(
-            image_build_call.args[0], ["docker", "compose", "build", "app"]
-        )
+        self.assertEqual(image_build_call.args[0], ["docker", "compose", "build", "app"])
         build_call = run.call_args_list[1]
         self.assertNotIn("--sources-file", build_call.args[0])
