@@ -4,7 +4,7 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Pages build hardening for post-deploy smoke verification.
+Remove the static site service worker.
 
 ## Pages Smoke Coverage
 
@@ -14,6 +14,13 @@ Pages build hardening for post-deploy smoke verification.
 - Hardened `scripts/daily_snapshot_runner.py` so Pages can skip optional Hevy/Garmin history overlays when the command env vars are not set, while keeping direct history scripts strict.
 - Added regression coverage in `tests/test_daily_snapshot_runner.py` for the optional history-report skip path.
 - Added a main-branch guard on the Pages deploy job so manual dispatches from feature branches do not hit the protected `github-pages` environment.
+
+## Service Worker Removal
+
+- Removed the page-level service worker registration from the site HTML.
+- Deleted `site/sw.js` and `dist/sw.js`.
+- Updated the build artifact copy list so `sw.js` is no longer published.
+- Added a regression assertion that the built site does not recreate `sw.js`.
 
 ## Guardrail Coverage
 

@@ -135,3 +135,22 @@ Implications:
 
 - Changes to snapshot or recommendation rules should update or add both a mutation test and a golden case.
 - Golden fixtures should stay small and representative rather than trying to cover every possible day.
+
+## 2026-07-10 — No Service Worker For The Static Site
+
+Decision:
+
+- The static site should not use a service worker.
+- The registration script and cache logic were removed rather than replaced with a more complex caching strategy.
+
+Reason:
+
+- The worker was effectively network-only and added maintenance overhead without meaningful offline value.
+- GitHub Pages already provides the delivery model this app needs.
+- Removing the worker reduces cache-debugging risk while the site continues to change quickly.
+
+Implications:
+
+- The site relies on normal browser and CDN caching instead of a custom worker.
+- Pages and dist builds should not copy or register `sw.js`.
+- If offline support becomes a real product need later, it should be added intentionally as a new decision rather than resurrecting dead worker code.

@@ -17,7 +17,6 @@ class BuildSiteArtifactsTest(TestCase):
             output_dir = tmp_path / "dist"
             site_dir.mkdir()
             for name in (
-                "sw.js",
                 "index.html",
                 "styles.css",
                 "app.js",
@@ -83,7 +82,10 @@ class BuildSiteArtifactsTest(TestCase):
                                 {"name": "Fastest Mile", "value": 383.03900146484375},
                                 {"name": "Fastest 5K", "value": 1251.10400390625},
                                 {"name": "Fastest 10K", "value": 2891.330078125},
-                                {"name": "Fastest Half Marathon", "value": 6219.27685546875},
+                                {
+                                    "name": "Fastest Half Marathon",
+                                    "value": 6219.27685546875,
+                                },
                                 {"name": "Longest Run", "value": 21370.650390625},
                             ],
                             "flags": [],
@@ -132,13 +134,20 @@ class BuildSiteArtifactsTest(TestCase):
             )
 
             self.assertEqual(exit_code, 0)
-            built_snapshot = json.loads((output_dir / "data" / "snapshot.json").read_text(encoding="utf-8"))
-            self.assertEqual(built_snapshot["recommendation"]["Priority"], "aerobic_quality")
+            built_snapshot = json.loads(
+                (output_dir / "data" / "snapshot.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                built_snapshot["recommendation"]["Priority"], "aerobic_quality"
+            )
             self.assertTrue((output_dir / "raw.json").exists())
             self.assertTrue((output_dir / "progress.html").exists())
             self.assertTrue((output_dir / "progress.js").exists())
             self.assertTrue((output_dir / "strength.json").exists())
-            built_speed = json.loads((output_dir / "speed.json").read_text(encoding="utf-8"))
+            self.assertFalse((output_dir / "sw.js").exists())
+            built_speed = json.loads(
+                (output_dir / "speed.json").read_text(encoding="utf-8")
+            )
             self.assertEqual(
                 [entry["value"] for entry in built_speed["entries"]],
                 ["3:36", "6:23", "20:51", "48:11", "1:43:39", "21.37 km"],
@@ -151,7 +160,7 @@ class BuildSiteArtifactsTest(TestCase):
             site_dir = tmp_path / "site"
             output_dir = tmp_path / "dist"
             site_dir.mkdir()
-            for name in ("sw.js", "index.html", "styles.css", "app.js"):
+            for name in ("index.html", "styles.css", "app.js"):
                 (site_dir / name).write_text(name, encoding="utf-8")
             snapshot.write_text(
                 json.dumps(
