@@ -78,12 +78,10 @@ def _with_recommendation(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
     for name in (
-        "sw.js",
         "index.html",
         "styles.css",
         "app.js",
         "data-helpers.js",
-        "sw.js",
         "progress.html",
         "progress.js",
         "progress.css",
