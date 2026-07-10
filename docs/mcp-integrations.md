@@ -162,6 +162,18 @@ Verified write commit:
 cd3c476a0cfa74c75b380eb2ffdc2d0292131cd4
 ```
 
+## GitHub Actions Secrets for Pages
+
+The GitHub Pages workflow can use live source capture when these repository secrets are configured:
+
+- `GARMIN_EMAIL`
+- `GARMIN_PASSWORD`
+- `HEVY_API_KEY`
+- `CRONOMETER_USERNAME`
+- `CRONOMETER_PASSWORD`
+
+If the secrets are missing, the workflow falls back to the committed snapshot fixture so Pages remains deployable.
+
 ## Live Data Wrappers
 
 The `scripts/wrappers/` directory contains Python scripts that connect to each MCP server and emit JSON in the expected source payload shape.

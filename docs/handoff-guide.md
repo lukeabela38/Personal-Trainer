@@ -67,3 +67,15 @@ Per-source MCP wrapper scripts that connect to Garmin, Hevy, and Cronometer MCP 
 - `scripts/wrappers/fetch_hevy_strength.py` → `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND`
 
 Each wrapper uses `scripts/mcp_client.py` (reusable async MCP stdio client) to start the server, call tools via JSON-RPC, and format the result. Failures per source are logged to stderr with fallback defaults emitted.
+
+## GitHub Actions Secrets
+
+The Pages workflow can build from live sources when these repository secrets are configured:
+
+- `GARMIN_EMAIL`
+- `GARMIN_PASSWORD`
+- `HEVY_API_KEY`
+- `CRONOMETER_USERNAME`
+- `CRONOMETER_PASSWORD`
+
+When they are absent, the workflow falls back to `personal_trainer/examples/snapshot-ready.json` so the deploy stays deterministic.
