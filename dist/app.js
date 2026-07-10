@@ -386,7 +386,8 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const cronometer = snapshot.cronometer ?? {};
   const manual = snapshot.manual_context ?? {};
   const derived = snapshot.derived ?? {};
-  const sourceIsLive = snapshot.source === "live" || hasLiveSnapshotData(snapshot);
+  const sourceIsLive =
+    snapshot.source === "live" || hasLiveSnapshotData(snapshot);
   const priority = formatPriorityLabel(
     recommendation.Priority ?? recommendation.priority ?? "No recommendation",
   );
@@ -400,7 +401,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   );
   const nutrition = formatSentenceValue(
     sourceIsLive
-      ? recommendation.Nutrition ?? recommendation.nutrition ?? "-"
+      ? (recommendation.Nutrition ?? recommendation.nutrition ?? "-")
       : "Unavailable",
   );
   const confidence =

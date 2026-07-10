@@ -179,3 +179,6 @@ Garmin auth/session caching card from the project board.
 - Progress now infers live data from real recent-day activity and surfaces VO2/strength trend fields instead of reading as nutrition-only.
 - Rebuilt `dist/` from the live snapshot pipeline; host `python3` is still 3.9 here, so live source wrappers for Garmin/Hevy fell back and produced an empty live snapshot.
 - Progress page was trimmed back down to nutrition averages plus VO2 only; removed workouts/runs, weekly run distance, and Hevy strength trend tiles from the live summary and range summary.
+- Playwright smoke now uses the empty dashboard shell as the readiness target because the no-fallback preview boots without a rendered freshness strip or summary stack.
+- Local `python3 scripts/build_site_artifacts.py` publishes `favicon.svg` plus `strength/index.html` and `speed/index.html`; the Docker build path here still leaves those files out of `dist/`.
+- Browser smoke passed after rebuilding locally and serving `dist/` from `./scripts/serve_site.sh --skip-build` in the same shell context.

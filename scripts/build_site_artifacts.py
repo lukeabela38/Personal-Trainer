@@ -86,24 +86,29 @@ def _with_recommendation(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 
 def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
-    for name in (
-        "index.html",
-        "styles.css",
-        "app.js",
-        "data-helpers.js",
-        "progress.html",
-        "progress.js",
-        "progress.css",
-        "strength.html",
-        "strength.css",
-        "strength.js",
-        "speed.html",
-        "speed.css",
-        "speed.js",
-        "history.js",
-        "goals.js",
+    for relative in (
+        Path("index.html"),
+        Path("styles.css"),
+        Path("app.js"),
+        Path("data-helpers.js"),
+        Path("favicon.svg"),
+        Path("progress.html"),
+        Path("progress.js"),
+        Path("progress.css"),
+        Path("strength.html"),
+        Path("strength.css"),
+        Path("strength.js"),
+        Path("strength/index.html"),
+        Path("speed.html"),
+        Path("speed.css"),
+        Path("speed.js"),
+        Path("speed/index.html"),
+        Path("history.js"),
+        Path("goals.js"),
     ):
-        shutil.copy2(site_dir / name, output_dir / name)
+        destination = output_dir / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(site_dir / relative, destination)
 
 
 _EXERCISE_NAMES = {

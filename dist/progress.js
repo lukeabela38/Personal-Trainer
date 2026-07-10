@@ -5,7 +5,6 @@ import {
   readNumber,
   readText,
   shouldRenderValue,
-  summarizeBests,
 } from "./data-helpers.js";
 
 const snapshotUrl = new URL("./data/snapshot.json", import.meta.url);
@@ -42,7 +41,11 @@ async function loadProgress() {
   } catch {
     sourceLabel.textContent = "Live data unavailable";
     statusBanner.textContent = "Waiting for live snapshot";
-    if (summaryEl) summaryEl.innerHTML = "";
+    if (summaryEl) {
+      renderSummaryStrip([
+        summaryTile("Live data", "Unavailable", "Waiting for a live snapshot"),
+      ]);
+    }
     grid.innerHTML = `<div class="item"><span>Progress</span><strong>Live snapshot not loaded</strong></div>`;
     if (trendEl) {
       trendEl.innerHTML = `
@@ -91,10 +94,14 @@ export function buildLiveHistorySummary(snapshot) {
   const calories = activeDays.map((day) => Number(day.calories_consumed) || 0);
   const protein = activeDays.map((day) => Number(day.protein_g) || 0);
   const avgCalories = calories.length
-    ? Math.round(calories.reduce((sum, value) => sum + value, 0) / calories.length)
+    ? Math.round(
+        calories.reduce((sum, value) => sum + value, 0) / calories.length,
+      )
     : 0;
   const avgProtein = protein.length
-    ? Math.round(protein.reduce((sum, value) => sum + value, 0) / protein.length)
+    ? Math.round(
+        protein.reduce((sum, value) => sum + value, 0) / protein.length,
+      )
     : 0;
 
   return {
@@ -128,7 +135,9 @@ export function buildLiveRangeSummary(snapshot, fromDate, toDate) {
     .sort((a, b) => a.date.localeCompare(b.date));
   if (!selectedDays.length) return null;
 
-  const calories = selectedDays.map((day) => Number(day.calories_consumed) || 0);
+  const calories = selectedDays.map(
+    (day) => Number(day.calories_consumed) || 0,
+  );
   const protein = selectedDays.map((day) => Number(day.protein_g) || 0);
   const carbs = selectedDays.map((day) => Number(day.carbs_g) || 0);
   const fat = selectedDays.map((day) => Number(day.fat_g) || 0);
@@ -149,12 +158,18 @@ export function buildLiveRangeSummary(snapshot, fromDate, toDate) {
     endProtein: protein.at(-1),
     startCarbs: carbs[0],
     endCarbs: carbs.at(-1),
-    avgCarbs: Math.round(carbs.reduce((sum, value) => sum + value, 0) / carbs.length),
+    avgCarbs: Math.round(
+      carbs.reduce((sum, value) => sum + value, 0) / carbs.length,
+    ),
     avgFat: Math.round(fat.reduce((sum, value) => sum + value, 0) / fat.length),
     startRemaining: remaining[0],
     endRemaining: remaining.at(-1),
-    avgCalories: Math.round(calories.reduce((sum, value) => sum + value, 0) / calories.length),
-    avgProtein: Math.round(protein.reduce((sum, value) => sum + value, 0) / protein.length),
+    avgCalories: Math.round(
+      calories.reduce((sum, value) => sum + value, 0) / calories.length,
+    ),
+    avgProtein: Math.round(
+      protein.reduce((sum, value) => sum + value, 0) / protein.length,
+    ),
     vo2: currentVo2,
     vo2Trend,
     latestDate: selectedDays.at(-1)?.date ?? null,
@@ -384,7 +399,11 @@ async function compareDates() {
       "Selected live window",
     ),
     summaryTile("Days", String(summary.days), "Live nutrition days"),
-    summaryTile("Avg calories", String(summary.avgCalories), "Across the selected range"),
+    summaryTile(
+      "Avg calories",
+      String(summary.avgCalories),
+      "Across the selected range",
+    ),
   ]);
   grid.innerHTML = renderLiveRangeSummary(summary);
 }
@@ -393,9 +412,13 @@ function getLiveRangeDates(snapshot) {
   const recentDays = Array.isArray(snapshot?.cronometer?.recent_days)
     ? snapshot.cronometer.recent_days
     : [];
-  return [...new Set(recentDays
-    .map((day) => (day && typeof day.date === "string" ? day.date : null))
-    .filter(Boolean))].sort();
+  return [
+    ...new Set(
+      recentDays
+        .map((day) => (day && typeof day.date === "string" ? day.date : null))
+        .filter(Boolean),
+    ),
+  ].sort();
 }
 
 function persistSnapshot(snapshot) {
