@@ -160,8 +160,9 @@ Also prefer `proc.stdout.read(65536)` + manual `b"\n"` splitting over `readline(
 
 ### 5. Test Credential Loading
 
-Wrappers that support direct API access (Garmin with `GARMIN_EMAIL`/`GARMIN_PASSWORD` in `.env`) must also handle the case when those credentials are absent or expired:
+Wrappers that support direct API access (Garmin with `GARMIN_EMAIL`/`GARMIN_PASSWORD` in the encrypted `.env`) must also handle the case when those credentials are absent or expired:
 
+- Unlock the repo-backed `.env` with `git-crypt` before running local live commands
 - Verify `.env` loading: `import scripts.mcp_client` should populate `os.environ` from `.env`
 - Test with and without credentials: the wrapper should fall back gracefully
 - Garmin Connect returns HTTP 429 after repeated logins. If the direct path fails, fall back to MCP mode automatically
@@ -207,7 +208,7 @@ Before pushing a new wrapper, verify:
 - [ ] All MCP tools discovered via `tools/list`, not guessed
 - [ ] Each tool tested individually with real MCP server
 - [ ] Empty/missing data produces sensible defaults, not crashes
-- [ ] Credentials can be set in `.env` (documented in `.env.example`)
+- [ ] `.env` can be unlocked with the repo key and the values are documented in `.env.example`
 - [ ] Direct API path and MCP fallback both tested
 - [ ] Wrapper output validates as JSON via `python3 -m json.tool`
 - [ ] Snapshot normalization accepts the output

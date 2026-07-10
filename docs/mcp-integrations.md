@@ -162,17 +162,13 @@ Verified write commit:
 cd3c476a0cfa74c75b380eb2ffdc2d0292131cd4
 ```
 
-## GitHub Actions Secrets for Pages
+## GitHub Actions Unlock
 
-The GitHub Pages workflow can use live source capture when these repository secrets are configured:
+The GitHub Actions workflows unlock the repo-backed encrypted `.env` file with one repository secret:
 
-- `GARMIN_EMAIL`
-- `GARMIN_PASSWORD`
-- `HEVY_API_KEY`
-- `CRONOMETER_USERNAME`
-- `CRONOMETER_PASSWORD`
+- `GIT_CRYPT_KEY`
 
-If the secrets are missing, the workflow falls back to the committed snapshot fixture so Pages remains deployable.
+That key is the base64-encoded `git-crypt export-key` output. After unlock, the workflows read the same `.env` file used locally.
 
 ## Live Data Wrappers
 
@@ -205,11 +201,10 @@ Reads check-in data from `PERSONAL_TRAINER_MANUAL_COMMAND` (shell command emitti
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` in the repo root and fill in your values:
+The canonical `.env` lives in the repo as an encrypted file. Unlock it with `git-crypt` before running live commands locally. `.env.example` remains the readable reference for the file structure:
 
 ```bash
-cp .env.example .env
-# edit .env to set REPO_ROOT to your local path
+git-crypt unlock /path/to/git-crypt.key
 ```
 
 `.env` is auto-loaded by `scripts/mcp_client.py` on import — no shell sourcing needed. Variables already set in your environment take precedence.

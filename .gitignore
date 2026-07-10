@@ -10,7 +10,6 @@ dist/history/
 dist/data/snapshot.json
 dist/raw.json
 .venv/
-.env
 .cache/
 test-results/
 playwright-report/
