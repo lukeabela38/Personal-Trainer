@@ -289,9 +289,9 @@ def _infer_snapshot_source(snapshot: dict[str, Any]) -> str:
     garmin = snapshot.get("garmin", {})
     hevy = snapshot.get("hevy", {})
     if (
-        (isinstance(cronometer.get("recent_days"), list) and cronometer["recent_days"]) or
-        (isinstance(garmin.get("recent_runs"), list) and garmin["recent_runs"]) or
-        (isinstance(hevy.get("recent_workouts"), list) and hevy["recent_workouts"])
+        (isinstance(cronometer.get("recent_days"), list) and cronometer["recent_days"])
+        or (isinstance(garmin.get("recent_runs"), list) and garmin["recent_runs"])
+        or (isinstance(hevy.get("recent_workouts"), list) and hevy["recent_workouts"])
     ):
         return "live"
     return "example"
