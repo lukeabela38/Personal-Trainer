@@ -75,6 +75,7 @@ Open:
 - [Daily recommendation contract](docs/daily-recommendation-contract.md)
 - [Data snapshot contract](docs/data-snapshot-contract.md)
 - [MCP integrations](docs/mcp-integrations.md)
+- [git-crypt rotation](docs/git-crypt-rotation.md)
 - [Handoff guide](docs/handoff-guide.md)
 - [Agent onboarding](docs/agent-onboarding.md)
 - [Project board execution order](docs/board-execution-order.md)

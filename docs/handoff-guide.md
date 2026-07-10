@@ -26,6 +26,7 @@ This repository builds a personal performance system for Luke.
 - [Live input boundary](./live-input-boundary.md)
 - [Daily recommendation contract](./daily-recommendation-contract.md)
 - [MCP integrations](./mcp-integrations.md)
+- [git-crypt rotation](./git-crypt-rotation.md)
 - [Repository README](../README.md)
 - [Agent onboarding](./agent-onboarding.md)
 - [Project board execution order](./board-execution-order.md)

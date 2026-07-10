@@ -75,6 +75,8 @@ jobs:
           key_file="$RUNNER_TEMP/git-crypt.key"
           printf '%s' "$GIT_CRYPT_KEY" | base64 --decode > "$key_file"
           git-crypt unlock "$key_file"
+      - name: Audit git-crypt coverage
+        run: python3 scripts/audit_git_crypt.py
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"

@@ -13,3 +13,5 @@ dist/raw.json
 .cache/
 test-results/
 playwright-report/
+/.docdex/
+/.docdex-state/
