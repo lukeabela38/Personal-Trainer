@@ -10,8 +10,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Audit git-crypt coverage for the repo-backed .env file.")
-    parser.add_argument("--path", default=".env", help="Tracked encrypted file to audit.")
+    parser = argparse.ArgumentParser(
+        description="Audit git-crypt coverage for the repo-backed .env file."
+    )
+    parser.add_argument(
+        "--path", default=".env", help="Tracked encrypted file to audit."
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -62,12 +66,16 @@ def _collect_path_status(path: str) -> list[str]:
     return [line for line in completed.stdout.splitlines() if line.strip()]
 
 
-def _evaluate(encrypted_paths: list[str], path_status: list[str], path: str) -> list[str]:
+def _evaluate(
+    encrypted_paths: list[str], path_status: list[str], path: str
+) -> list[str]:
     violations: list[str] = []
     if path not in encrypted_paths:
         violations.append(f"{path} is not listed as encrypted by git-crypt")
     if path_status:
-        violations.append(f"{path} has uncommitted working tree changes: {', '.join(path_status)}")
+        violations.append(
+            f"{path} has uncommitted working tree changes: {', '.join(path_status)}"
+        )
     return violations
 
 

@@ -45,7 +45,9 @@ class AuditGitCryptTest(TestCase):
                     stderr="",
                 )
             if command[:3] == ["git", "status", "--porcelain"]:
-                return subprocess.CompletedProcess(command, 0, stdout=" M .env\n", stderr="")
+                return subprocess.CompletedProcess(
+                    command, 0, stdout=" M .env\n", stderr=""
+                )
             raise AssertionError(f"unexpected command: {command}")
 
         with patch.object(audit_git_crypt.subprocess, "run", side_effect=fake_run):
