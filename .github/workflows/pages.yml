@@ -9,6 +9,8 @@ on:
       - "site/**"
       - "scripts/**"
       - "personal_trainer/src/**"
+      - "personal_trainer/examples/**"
+      - ".env"
       - ".github/workflows/pages.yml"
 
 permissions:
@@ -26,18 +28,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      - name: Prepare site output
+      - name: Install git-crypt
+        run: sudo apt-get update && sudo apt-get install -y git-crypt
+      - name: Unlock git-crypt
         env:
-          PERSONAL_TRAINER_GARMIN_COMMAND: python3 scripts/wrappers/fetch_garmin.py
-          PERSONAL_TRAINER_HEVY_COMMAND: python3 scripts/wrappers/fetch_hevy.py
-          PERSONAL_TRAINER_CRONOMETER_COMMAND: python3 scripts/wrappers/fetch_cronometer.py
-          PERSONAL_TRAINER_MANUAL_COMMAND: python3 scripts/wrappers/fetch_manual.py
-          PERSONAL_TRAINER_GARMIN_SPEED_COMMAND: python3 scripts/wrappers/fetch_garmin_speed.py
-          PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND: python3 scripts/wrappers/fetch_hevy_strength.py
-        run: >
-          python3 ./scripts/daily_snapshot_runner.py
-          --snapshot-output dist/data/snapshot.json
-          --site-output dist
+          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="$RUNNER_TEMP/git-crypt.key"
+          printf '%s' "$GIT_CRYPT_KEY" | base64 --decode > "$key_file"
+          git-crypt unlock "$key_file"
+      - name: Audit git-crypt coverage
+        run: python3 scripts/audit_git_crypt.py
+      - name: Prepare site output
+        run: |
+          set -euo pipefail
+          python3 ./scripts/daily_snapshot_runner.py \
+            --snapshot-output dist/data/snapshot.json \
+            --site-output dist
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:

@@ -139,15 +139,15 @@ def _infer_fatigue(workout: dict) -> dict:
         tpid = str(ex.get("exercise_template_id") or "")
         if tpid == "D04AC939":
             fatigue["legs"] = "high"
-            fatigue["posterior_chain"] = "medium"
+            fatigue["posterior_chain"] = "moderate"
         elif tpid == "5E10D0E6":
             fatigue["legs"] = "high"
         elif tpid in ("79D0BB3A", "28BB4A95", "392887AA"):
             fatigue["push"] = "high"
-            fatigue["shoulders_arms"] = "medium"
+            fatigue["shoulders_arms"] = "moderate"
         elif tpid in ("29083183", "F1E57334"):
             fatigue["pull"] = "high"
-            fatigue["posterior_chain"] = "medium"
+            fatigue["posterior_chain"] = "moderate"
         elif tpid == "8347DFD1":
             fatigue["shoulders_arms"] = "high"
     return fatigue

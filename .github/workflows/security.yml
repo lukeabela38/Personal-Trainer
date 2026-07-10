@@ -18,6 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Audit git-crypt coverage
+        run: python3 scripts/audit_git_crypt.py
+
       - name: Build Docker image
         run: docker build -t personal-trainer:security .
 

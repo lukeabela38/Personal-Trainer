@@ -1,62 +1,82 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Personal Trainer - Progress</title>
-  <link rel="stylesheet" href="./styles.css?v=10" />
-  <link rel="stylesheet" href="./progress.css?v=3" />
-</head>
-<body>
-  <nav class="bottom-nav">
-    <a class="bottom-nav-item" href="./index.html"><span class="bottom-nav-icon">&#9679;</span>Home</a>
-    <a class="bottom-nav-item" href="./strength.html"><span class="bottom-nav-icon">&#9651;</span>Strength</a>
-    <a class="bottom-nav-item" href="./speed.html"><span class="bottom-nav-icon">&#9654;</span>Speed</a>
-    <a class="bottom-nav-item is-active" href="./progress.html"><span class="bottom-nav-icon">&#8645;</span>Progress</a>
-  </nav>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Trainer - Progress</title>
+    <link rel="stylesheet" href="./styles.css?v=10" />
+    <link rel="stylesheet" href="./progress.css?v=3" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <nav class="bottom-nav">
+      <a class="bottom-nav-item" href="./index.html"
+        ><span class="bottom-nav-icon">&#9679;</span>Home</a
+      >
+      <a class="bottom-nav-item" href="./strength.html"
+        ><span class="bottom-nav-icon">&#9651;</span>Strength</a
+      >
+      <a class="bottom-nav-item" href="./speed.html"
+        ><span class="bottom-nav-icon">&#9654;</span>Speed</a
+      >
+      <a class="bottom-nav-item is-active" href="./progress.html"
+        ><span class="bottom-nav-icon">&#8645;</span>Progress</a
+      >
+    </nav>
 
-  <main class="shell">
-    <header class="hero">
-      <div>
-        <p class="eyebrow">Personal Trainer</p>
-        <h1>Progress</h1>
-        <p class="lede">Current snapshot versus the last loaded snapshot, summarized without raw payload noise.</p>
-      </div>
-    </header>
-
-    <section class="card shell-panel">
-      <div class="progress-header">
+    <main class="shell">
+      <header class="hero">
         <div>
-          <p class="label">Source</p>
-          <h2 id="source-label" class="skeleton" style="width:200px;height:16px">Loading…</h2>
+          <p class="eyebrow">Personal Trainer</p>
+          <h1>Progress</h1>
+          <p class="lede">
+            Current snapshot versus the last loaded snapshot, summarized without
+            raw payload noise.
+          </p>
         </div>
-        <span class="status-banner skeleton" id="status-banner" style="width:100px;height:28px">Waiting</span>
-      </div>
+      </header>
 
-      <div id="progress-summary" class="summary-strip progress-summary"></div>
-
-      <div class="progress-pickers" id="progress-pickers">
-        <div class="progress-picker">
-          <span class="label">From</span>
-          <select id="date-from" class="search-input"></select>
+      <section class="card shell-panel">
+        <div class="progress-header">
+          <div>
+            <p class="label">Source</p>
+            <h2
+              id="source-label"
+              class="skeleton"
+              style="width: 200px; height: 16px"
+            >
+              Loading…
+            </h2>
+          </div>
+          <span
+            class="status-banner skeleton"
+            id="status-banner"
+            style="width: 100px; height: 28px"
+            >Waiting</span
+          >
         </div>
-        <div class="progress-picker">
-          <span class="label">To</span>
-          <select id="date-to" class="search-input"></select>
+
+        <div id="progress-summary" class="summary-strip progress-summary"></div>
+
+        <div class="progress-pickers" id="progress-pickers">
+          <div class="progress-picker">
+            <span class="label">From</span>
+            <select id="date-from" class="search-input"></select>
+          </div>
+          <div class="progress-picker">
+            <span class="label">To</span>
+            <select id="date-to" class="search-input"></select>
+          </div>
+          <button id="compare-btn" class="button small secondary" type="button">
+            Compare
+          </button>
         </div>
-        <button id="compare-btn" class="button small secondary" type="button">Compare</button>
-      </div>
 
-      <div id="progress-trend" class="progress-trend"></div>
+        <div id="progress-trend" class="progress-trend"></div>
 
-      <div id="progress-grid" class="progress-grid"></div>
-    </section>
-  </main>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js?v=3").catch(() => {});
-    }
-  </script>
-  <script type="module" src="./progress.js?v=4"></script>
-</body>
+        <div id="progress-grid" class="progress-grid"></div>
+      </section>
+    </main>
+    <script type="module" src="./progress.js?v=4"></script>
+  </body>
 </html>

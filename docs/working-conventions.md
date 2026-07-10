@@ -50,6 +50,7 @@ If the decision is durable enough to outlive a single task, record it in [`DECIS
   - `scripts/**/*.py` needs a change in `tests/`
   - `site/**/*.js` needs a change in `tests/frontend/`
 - When changing the snapshot or recommendation contract, add at least one fuzz mutation test and one golden-file regression case.
+- When changing encrypted config or secret-handling workflows, run `scripts/audit_git_crypt.py` and keep `.env.example` in sync.
 
 ## Review Rule
 

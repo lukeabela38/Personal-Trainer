@@ -78,7 +78,7 @@ Purpose: Operational scripts for live data capture, site building, and reporting
 - `strength_report.py` — standalone strength PB report from Hevy history
 - `speed_report.py` — standalone speed PB report from Garmin records
 - `test_strength_report.py` — tests for `strength_report.py`
-- `serve_site.sh` — local static HTTP server
+- `serve_site.sh` — build-and-serve local deploy preview
 - `live_sources_example.sh` — example shell pipeline
 
 ### `scripts/wrappers/`
@@ -197,7 +197,7 @@ PYTHONPATH=personal_trainer/src python3 -m unittest discover -s personal_trainer
 # Run script integration tests
 python3 -m unittest discover -s tests -v
 
-# Serve static site locally
+# Build and serve the deploy-style preview locally
 ./scripts/serve_site.sh
 
 # Build site artifacts from example snapshot

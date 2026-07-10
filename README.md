@@ -15,15 +15,28 @@ This repository documents a personal performance system using training, nutritio
 - `personal_trainer/src/personal_trainer/` contains normalization, recommendation, and live-data seam code.
 - `site/` contains the static browser UI, including the main snapshot viewer and dedicated `/strength` and `/speed` pages.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
+- The repo-backed `.env` is encrypted with `git-crypt`; unlock it locally before running live source commands or the daily pipeline.
 
 ## Local Run
 
 Prefer Docker for Python 3.12 runs. Use local Python only if Docker is unavailable.
 
-Run local static server:
+If you need live source credentials, unlock the repo-backed `.env` first:
+
+```bash
+git-crypt unlock /path/to/git-crypt.key
+```
+
+Build the same artifact set used for Pages, then serve it locally:
 
 ```bash
 ./scripts/serve_site.sh
+```
+
+Add `--live` if you want the preview to pull from your unlocked `.env` and run the live daily pipeline before serving:
+
+```bash
+./scripts/serve_site.sh --live
 ```
 
 Build the static artifact set from one captured snapshot:
@@ -68,6 +81,7 @@ Open:
 - [Daily recommendation contract](docs/daily-recommendation-contract.md)
 - [Data snapshot contract](docs/data-snapshot-contract.md)
 - [MCP integrations](docs/mcp-integrations.md)
+- [git-crypt rotation](docs/git-crypt-rotation.md)
 - [Handoff guide](docs/handoff-guide.md)
 - [Agent onboarding](docs/agent-onboarding.md)
 - [Project board execution order](docs/board-execution-order.md)

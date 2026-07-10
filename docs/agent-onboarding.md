@@ -33,6 +33,7 @@ Agents should optimize for small, independent cards that can be completed withou
 - `scripts/mcp_client.py` is the reusable MCP stdio client that starts servers and calls tools via JSON-RPC.
 - `scripts/wrappers/` contains per-source MCP wrapper scripts (`fetch_garmin.py`, `fetch_hevy.py`, `fetch_cronometer.py`, `fetch_manual.py`, `fetch_garmin_speed.py`, `fetch_hevy_strength.py`) that each emit source payload JSON to stdout.
 - `scripts/daily_snapshot_runner.py` is the local end-to-end capture and build entrypoint.
+- `./scripts/serve_site.sh` builds the same `dist/` bundle used by Pages before serving it; use `--live` to preview the unlocked secret-backed pipeline.
 - `.github/workflows/pages.yml` publishes the static site.
 - `.github/workflows/security.yml` runs the weekly Trivy security scan and uploads SARIF to GitHub Security.
 
@@ -80,6 +81,7 @@ When a task touches live external data, keep the report tied to the exact comman
 Prefer Docker for Python 3.12 runs. Use local Python only as a fallback when Docker is unavailable.
 
 - `./scripts/serve_site.sh`
+- `./scripts/serve_site.sh --live`
 - `docker compose run --rm app python3 scripts/build_site_artifacts.py`
 - `docker compose run --rm app python3 scripts/daily_snapshot_runner.py`
 - `python3 ./scripts/wrappers/fetch_garmin.py`
@@ -160,8 +162,9 @@ Also prefer `proc.stdout.read(65536)` + manual `b"\n"` splitting over `readline(
 
 ### 5. Test Credential Loading
 
-Wrappers that support direct API access (Garmin with `GARMIN_EMAIL`/`GARMIN_PASSWORD` in `.env`) must also handle the case when those credentials are absent or expired:
+Wrappers that support direct API access (Garmin with `GARMIN_EMAIL`/`GARMIN_PASSWORD` in the encrypted `.env`) must also handle the case when those credentials are absent or expired:
 
+- Unlock the repo-backed `.env` with `git-crypt` before running local live commands
 - Verify `.env` loading: `import scripts.mcp_client` should populate `os.environ` from `.env`
 - Test with and without credentials: the wrapper should fall back gracefully
 - Garmin Connect returns HTTP 429 after repeated logins. If the direct path fails, fall back to MCP mode automatically
@@ -207,7 +210,7 @@ Before pushing a new wrapper, verify:
 - [ ] All MCP tools discovered via `tools/list`, not guessed
 - [ ] Each tool tested individually with real MCP server
 - [ ] Empty/missing data produces sensible defaults, not crashes
-- [ ] Credentials can be set in `.env` (documented in `.env.example`)
+- [ ] `.env` can be unlocked with the repo key and the values are documented in `.env.example`
 - [ ] Direct API path and MCP fallback both tested
 - [ ] Wrapper output validates as JSON via `python3 -m json.tool`
 - [ ] Snapshot normalization accepts the output

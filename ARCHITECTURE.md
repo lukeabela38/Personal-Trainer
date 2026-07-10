@@ -70,7 +70,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - `strength_report.py` — standalone strength report builder from Hevy history
 - `speed_report.py` — standalone speed report builder from Garmin records
 - `mcp_client.py` — shared async MCP stdio client used by all wrappers
-- `serve_site.sh` — local static server
+- `serve_site.sh` — build-and-serve local deploy preview
 
 ### Static Site (`site/`)
 
@@ -79,7 +79,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - Pages: `index.html` (snapshot viewer), `strength.html` (Hevy PBs/1RM), `speed.html` (Garmin running PBs), `progress.html` (change comparison)
 - JS: Vanilla ES modules, no framework. Loads JSON from `data/snapshot.json`, `strength.json`, `speed.json`
 - CSS: Dark theme with custom properties, responsive layout
-- Deployment: GitHub Pages via `.github/workflows/pages.yml`, builds from live source capture on `main`
+- Deployment: GitHub Pages via `.github/workflows/pages.yml`, uses live source capture when repo secrets are present and falls back to the committed example snapshot fixture otherwise
 
 ## Data Flow
 
@@ -88,7 +88,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 3. `build_snapshot()` in `snapshot.py` normalizes each source into the contract shape, infers derived fields (data quality, constraints, conflicts), and validates the result
 4. `build_daily_recommendation()` in `recommendation.py` reads the snapshot and applies decision rules (recovery > nutrition > table tennis > aerobic quality > aerobic base > strength progression)
 5. `build_site_artifacts.py` copies the site shell and emits `data/snapshot.json`, `raw.json`, `strength.json`, `speed.json` to `dist/`
-6. GitHub Pages serves `dist/` or `site/` as static files
+6. GitHub Pages serves `dist/` as static files
 
 ## Boundaries
 

@@ -56,18 +56,25 @@ async function loadGains() {
 
 function renderControls() {
   const counts = {};
-  entries.forEach((e) => { counts[e.category] = (counts[e.category] || 0) + 1; });
-  const categories = ["All", ...new Set(entries.map((e) => e.category).filter(Boolean))];
+  entries.forEach((e) => {
+    counts[e.category] = (counts[e.category] || 0) + 1;
+  });
+  const categories = [
+    "All",
+    ...new Set(entries.map((e) => e.category).filter(Boolean)),
+  ];
   filterPills.innerHTML = categories
     .map((cat) => {
-      const count = cat === "All" ? entries.length : counts[cat] ?? 0;
+      const count = cat === "All" ? entries.length : (counts[cat] ?? 0);
       return `<button class="pill${cat === activeCategory ? " is-active" : ""}" data-category="${cat}" type="button">${cat} (${count})</button>`;
     })
     .join("");
   filterPills.addEventListener("click", (e) => {
     const btn = e.target.closest(".pill");
     if (!btn) return;
-    filterPills.querySelectorAll(".pill").forEach((p) => p.classList.remove("is-active"));
+    filterPills
+      .querySelectorAll(".pill")
+      .forEach((p) => p.classList.remove("is-active"));
     btn.classList.add("is-active");
     activeCategory = btn.dataset.category;
     renderGrid();
@@ -100,7 +107,8 @@ function renderSummary() {
   const categories = new Set(entries.map((e) => e.category).filter(Boolean));
   const topEntry = [...entries].reduce((best, entry) => {
     const current = entry.estimated_one_rm_kg ?? entry.best_set?.weight_kg ?? 0;
-    const bestValue = best?.estimated_one_rm_kg ?? best?.best_set?.weight_kg ?? 0;
+    const bestValue =
+      best?.estimated_one_rm_kg ?? best?.best_set?.weight_kg ?? 0;
     return current > bestValue ? entry : best;
   }, entries[0]);
   const latestDate = [...entries]
@@ -152,7 +160,10 @@ function toggleView() {
 }
 
 function renderGrid() {
-  let visible = activeCategory === "All" ? entries : entries.filter((e) => e.category === activeCategory);
+  let visible =
+    activeCategory === "All"
+      ? entries
+      : entries.filter((e) => e.category === activeCategory);
 
   if (searchQuery) {
     visible = visible.filter((e) => e.name.toLowerCase().includes(searchQuery));
@@ -192,7 +203,10 @@ function renderInsights() {
     .map((e) => ({ entry: e, gain: gainsCache[findTemplateId(e.name)] }))
     .filter((x) => x.gain?.current != null && x.gain?.peak != null);
 
-  if (withGain.length < 2) { el.hidden = true; return; }
+  if (withGain.length < 2) {
+    el.hidden = true;
+    return;
+  }
 
   /* Category health */
   const catStats = {};
@@ -218,7 +232,9 @@ function renderInsights() {
   });
 
   /* Biggest gap */
-  const sorted = [...withGain].sort((a, b) => (a.gain.current / a.gain.peak) - (b.gain.current / b.gain.peak));
+  const sorted = [...withGain].sort(
+    (a, b) => a.gain.current / a.gain.peak - b.gain.current / b.gain.peak,
+  );
   const biggestGap = sorted[0];
 
   /* Render */
@@ -229,7 +245,10 @@ function renderInsights() {
       <div class="stat-group">
         <div class="stat-group-title">Category health — lower means more room to grow</div>
         <div style="display:grid;gap:8px">
-          ${catHealth.sort((a, b) => a.pct - b.pct).map((c) => `
+          ${catHealth
+            .sort((a, b) => a.pct - b.pct)
+            .map(
+              (c) => `
             <div class="macro-row">
               <div class="macro-row-header">
                 <span class="macro-row-label">${escapeHtml(c.cat)}</span>
@@ -239,7 +258,9 @@ function renderInsights() {
                 <div class="macro-fill macro-fill-${c.pct >= 80 ? "high" : c.pct >= 60 ? "medium" : "low"}" style="width:${c.pct}%"></div>
               </div>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
       </div>
     `);
@@ -250,12 +271,17 @@ function renderInsights() {
       <div class="stat-group">
         <div class="stat-group-title">Stalled — no progress in 30+ days</div>
         <div style="display:grid;gap:6px">
-          ${stalls.slice(0, 5).map((s) => `
+          ${stalls
+            .slice(0, 5)
+            .map(
+              (s) => `
             <div class="item">
               <span title="Hasn't improved in recent training">${escapeHtml(s.name)}</span>
               <strong class="delta-down" title="Peak was ${fmtNum(s.peak)} kg — currently at ${Math.round((s.current / s.peak) * 100)}%">${fmtNum(s.current)} kg · ${Math.round((s.current / s.peak) * 100)}% of peak</strong>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
       </div>
     `);
@@ -296,15 +322,17 @@ function renderCard(entry) {
   const best = entry.best_set ?? {};
   const cat = entry.category ?? "Strength";
   const hasWeight = best.weight_kg != null;
-  const bestLine = hasWeight ? `${formatNum(best.weight_kg)} kg × ${best.reps}` : `${best.reps} reps`;
+  const bestLine = hasWeight
+    ? `${formatNum(best.weight_kg)} kg × ${best.reps}`
+    : `${best.reps} reps`;
   const oneRm = entry.estimated_one_rm_kg ?? best.weight_kg ?? null;
   const oneRmStr = oneRm != null ? `${formatNum(oneRm)} kg` : "—";
   const date = best.workout_start_date ?? "";
 
   const tid = findTemplateId(entry.name);
   const gain = gainsCache?.[tid];
-  const peakStr = gain?.peak ? formatNum(gain.peak) + " kg" : null;
-  const pctOfPeak = oneRm != null && gain?.peak ? Math.round((oneRm / gain.peak) * 100) : null;
+  const pctOfPeak =
+    oneRm != null && gain?.peak ? Math.round((oneRm / gain.peak) * 100) : null;
 
   return `
     <article class="exercise-card${compactView ? "" : ""}" data-exercise-name="${escapeHtml(entry.name)}">
@@ -332,7 +360,8 @@ function renderCard(entry) {
 grid.addEventListener("click", async (e) => {
   const card = e.target.closest(".exercise-card");
   if (!card) return;
-  if (e.target.closest(".pill, .sort-btn, .search-input, .filter-pills")) return;
+  if (e.target.closest(".pill, .sort-btn, .search-input, .filter-pills"))
+    return;
   const name = card.dataset.exerciseName;
   const tid = findTemplateId(name);
   if (!tid) return;
@@ -346,32 +375,58 @@ grid.addEventListener("click", async (e) => {
   }
 });
 
-function findTemplateId(name) {
+export function findTemplateId(name) {
   const mapping = {
-    "Squat (Barbell)": "D04AC939", "Bench Press (Barbell)": "79D0BB3A", "Chin Up": "29083183",
-    "Triceps Dip": "28BB4A95", "Push Up": "392887AA", "Dumbbell Row": "F1E57334",
-    "Sumo Squat (Kettlebell)": "5E10D0E6", "Single Arm Tricep Extension (Dumbbell)": "8347DFD1",
-    "Deadlift (Barbell)": "A1B2C3D4", "Overhead Press (Barbell)": "B2C3D4E5", "Pull Up": "C3D4E5F6",
-    "Romanian Deadlift": "D4E5F6A7", "Bulgarian Split Squat": "E5F6A7B8", "Dumbbell Bench Press": "F6A7B8C9",
-    "Seated Cable Row": "A7B8C9D0", "Bicep Curl (Dumbbell)": "B8C9D0A1", "Tricep Pushdown": "C9D0A1B2",
-    "Lateral Raise": "D0A1B2C3", "Leg Press": "E1F2A3B4", "Hamstring Curl": "F2A3B4C5",
-    "Calf Raise": "A3B4C5D6", "Face Pull": "B4C5D6E7", "Pendlay Row": "C5D6E7F8",
-    "Front Squat": "D6E7F8A9", "Incline Bench Press": "E7F8A9B0", "Skull Crusher": "F8A9B0C1",
-    "Dumbbell Shoulder Press": "A9B0C1D2", "Barbell Hip Thrust": "B0C1D2E3", "Farmer Walk": "C1D2E3F4",
-    "Pistol Squat": "D2E3F4A5", "Weighted Plank": "E3F4A5B6", "Kettlebell Swing": "F4A5B6C7",
-    "Box Jump": "A5B6C7D8", "Dips (Weighted)": "B6C7D8E9",
+    "Squat (Barbell)": "D04AC939",
+    "Bench Press (Barbell)": "79D0BB3A",
+    "Chin Up": "29083183",
+    "Triceps Dip": "28BB4A95",
+    "Push Up": "392887AA",
+    "Dumbbell Row": "F1E57334",
+    "Sumo Squat (Kettlebell)": "5E10D0E6",
+    "Single Arm Tricep Extension (Dumbbell)": "8347DFD1",
+    "Deadlift (Barbell)": "A1B2C3D4",
+    "Overhead Press (Barbell)": "B2C3D4E5",
+    "Pull Up": "C3D4E5F6",
+    "Romanian Deadlift": "D4E5F6A7",
+    "Bulgarian Split Squat": "E5F6A7B8",
+    "Dumbbell Bench Press": "F6A7B8C9",
+    "Seated Cable Row": "A7B8C9D0",
+    "Bicep Curl (Dumbbell)": "B8C9D0A1",
+    "Tricep Pushdown": "C9D0A1B2",
+    "Lateral Raise": "D0A1B2C3",
+    "Leg Press": "E1F2A3B4",
+    "Hamstring Curl": "F2A3B4C5",
+    "Calf Raise": "A3B4C5D6",
+    "Face Pull": "B4C5D6E7",
+    "Pendlay Row": "C5D6E7F8",
+    "Front Squat": "D6E7F8A9",
+    "Incline Bench Press": "E7F8A9B0",
+    "Skull Crusher": "F8A9B0C1",
+    "Dumbbell Shoulder Press": "A9B0C1D2",
+    "Barbell Hip Thrust": "B0C1D2E3",
+    "Farmer Walk": "C1D2E3F4",
+    "Pistol Squat": "D2E3F4A5",
+    "Weighted Plank": "E3F4A5B6",
+    "Kettlebell Swing": "F4A5B6C7",
+    "Box Jump": "A5B6C7D8",
+    "Dips (Weighted)": "B6C7D8E9",
   };
   return mapping[name] ?? null;
 }
 
 function showTrendModal(name, history) {
-  const oneRms = history.map((h) => h.estimated_one_rm_kg).filter((v) => v != null);
+  const oneRms = history
+    .map((h) => h.estimated_one_rm_kg)
+    .filter((v) => v != null);
   const weights = history.map((h) => h.weight_kg).filter((v) => v != null);
   const latest = history[history.length - 1];
   const firstOneRm = oneRms[0];
   const lastOneRm = oneRms[oneRms.length - 1];
   const oneRmChange = lastOneRm - firstOneRm;
-  const oneRmPct = firstOneRm ? Math.round((oneRmChange / firstOneRm) * 100) : 0;
+  const oneRmPct = firstOneRm
+    ? Math.round((oneRmChange / firstOneRm) * 100)
+    : 0;
   const peak = Math.max(...oneRms);
   const trendUp = oneRmChange >= 0;
   const recent = history.slice(-10).reverse();
@@ -392,18 +447,26 @@ function showTrendModal(name, history) {
           ${trendUp ? "+" : ""}${oneRmPct}% over ${history.length} days
         </span>
       </div>
-      ${oneRms.length > 1 ? `
+      ${
+        oneRms.length > 1
+          ? `
         <div class="modal-section">
           <p class="label">Estimated 1RM trend</p>
           ${renderSparkline(oneRms, 300, 72, { dots: true, labels: true, color: "var(--accent)" })}
         </div>
-      ` : ""}
-      ${weights.length > 1 ? `
+      `
+          : ""
+      }
+      ${
+        weights.length > 1
+          ? `
         <div class="modal-section">
           <p class="label">Working weight trend</p>
           ${renderSparkline(weights, 300, 56, { dots: true, color: "var(--accent-2)" })}
         </div>
-      ` : ""}
+      `
+          : ""
+      }
       <div class="modal-stats">
         <div class="stat-item">
           <span class="stat-item-label">Current 1RM</span>
@@ -425,13 +488,17 @@ function showTrendModal(name, history) {
       <details class="modal-history">
         <summary><span class="label">Recent history (last ${recent.length})</span></summary>
         <div class="modal-history-list">
-          ${recent.map((h) => `
+          ${recent
+            .map(
+              (h) => `
             <div class="modal-history-row">
               <span class="modal-history-date">${escapeHtml(h.date.slice(5))}</span>
               <span>${h.weight_kg != null ? `${h.weight_kg} kg × ${h.reps}` : `${h.reps} reps`}</span>
               <span class="modal-history-1rm">${h.estimated_one_rm_kg != null ? `${h.estimated_one_rm_kg} kg` : "—"}</span>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
       </details>
     </div>
@@ -447,10 +514,11 @@ function showTrendModal(name, history) {
   document.body.appendChild(modal);
 
   /* Focus trap */
-  const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  const focusable = modal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  );
   if (focusable.length) {
     const first = focusable[0];
-    const last = focusable[focusable.length - 1];
     setTimeout(() => first.focus(), 50);
   }
 
@@ -461,25 +529,37 @@ function showTrendModal(name, history) {
     }
     if (e.key === "Escape") {
       const m = document.querySelector(".modal-overlay");
-      if (m) { m.remove(); document.body.focus(); }
+      if (m) {
+        m.remove();
+        document.body.focus();
+      }
       return;
     }
     if (e.key === "Tab" && focusable.length) {
-      const foc = document.querySelectorAll('.modal-content button, .modal-content [href], .modal-content input, .modal-content select, .modal-content textarea, .modal-content [tabindex]:not([tabindex="-1"])');
+      const foc = document.querySelectorAll(
+        '.modal-content button, .modal-content [href], .modal-content input, .modal-content select, .modal-content textarea, .modal-content [tabindex]:not([tabindex="-1"])',
+      );
       if (!foc.length) return;
       const f = foc[0];
       const l = foc[foc.length - 1];
-      if (e.shiftKey && document.activeElement === f) { e.preventDefault(); l.focus(); }
-      else if (!e.shiftKey && document.activeElement === l) { e.preventDefault(); f.focus(); }
+      if (e.shiftKey && document.activeElement === f) {
+        e.preventDefault();
+        l.focus();
+      } else if (!e.shiftKey && document.activeElement === l) {
+        e.preventDefault();
+        f.focus();
+      }
     }
   });
 }
 
-function formatNum(value) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
+export function formatNum(value) {
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(1).replace(/\.0$/, "");
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
