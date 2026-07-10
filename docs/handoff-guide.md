@@ -46,6 +46,7 @@ This repository builds a personal performance system for Luke.
 - `scripts/daily_snapshot_runner.py` writes the computed recommendation into `dist/snapshot.json`, and `scripts/build_site_artifacts.py` preserves that recommendation if it is already present so the published snapshot and UI stay aligned.
 - The canonical repo config lives in an encrypted `.env` file managed with `git-crypt`.
 - GitHub Actions unlocks that file with one repo secret (`GIT_CRYPT_KEY`) before running tests or Pages deploys.
+- `./scripts/serve_site.sh` now builds the deploy-style `dist/` bundle before serving it locally; add `--live` to preview the live daily pipeline if your secrets are unlocked.
 - The long-term architecture should evolve toward a ledger plus direct logging, but the current implementation stays snapshot-first.
 
 ## Python Live-Source Seam

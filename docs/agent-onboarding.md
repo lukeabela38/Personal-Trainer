@@ -33,6 +33,7 @@ Agents should optimize for small, independent cards that can be completed withou
 - `scripts/mcp_client.py` is the reusable MCP stdio client that starts servers and calls tools via JSON-RPC.
 - `scripts/wrappers/` contains per-source MCP wrapper scripts (`fetch_garmin.py`, `fetch_hevy.py`, `fetch_cronometer.py`, `fetch_manual.py`, `fetch_garmin_speed.py`, `fetch_hevy_strength.py`) that each emit source payload JSON to stdout.
 - `scripts/daily_snapshot_runner.py` is the local end-to-end capture and build entrypoint.
+- `./scripts/serve_site.sh` builds the same `dist/` bundle used by Pages before serving it; use `--live` to preview the unlocked secret-backed pipeline.
 - `.github/workflows/pages.yml` publishes the static site.
 - `.github/workflows/security.yml` runs the weekly Trivy security scan and uploads SARIF to GitHub Security.
 
@@ -80,6 +81,7 @@ When a task touches live external data, keep the report tied to the exact comman
 Prefer Docker for Python 3.12 runs. Use local Python only as a fallback when Docker is unavailable.
 
 - `./scripts/serve_site.sh`
+- `./scripts/serve_site.sh --live`
 - `docker compose run --rm app python3 scripts/build_site_artifacts.py`
 - `docker compose run --rm app python3 scripts/daily_snapshot_runner.py`
 - `python3 ./scripts/wrappers/fetch_garmin.py`

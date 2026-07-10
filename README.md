@@ -27,10 +27,16 @@ If you need live source credentials, unlock the repo-backed `.env` first:
 git-crypt unlock /path/to/git-crypt.key
 ```
 
-Run local static server:
+Build the same artifact set used for Pages, then serve it locally:
 
 ```bash
 ./scripts/serve_site.sh
+```
+
+Add `--live` if you want the preview to pull from your unlocked `.env` and run the live daily pipeline before serving:
+
+```bash
+./scripts/serve_site.sh --live
 ```
 
 Build the static artifact set from one captured snapshot:
