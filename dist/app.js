@@ -8,6 +8,7 @@ import {
 } from "./goals.js";
 import {
   escapeHtml,
+  hasLiveSnapshotData,
   formatDisplayValue,
   readNumber,
   readText,
@@ -113,9 +114,8 @@ async function loadHistory() {
 function noHistoryHTML() {
   return `<div class="stat-group">
     <div class="stat-group-title">No history data</div>
-    <p class="lede" style="margin:6px 0">Generate 90 days of example data:</p>
-    <pre style="background:rgba(255,255,255,0.04);padding:10px 14px;border-radius:10px;font-size:0.8rem;overflow-x:auto;margin:6px 0">PYTHONPATH=personal_trainer/src python3 scripts/generate_history.py</pre>
-    <p class="lede" style="margin:4px 0 0">Then reload this page and click <strong>Load 30-day history</strong> again.</p>
+    <p class="lede" style="margin:6px 0">Live history is unavailable for this snapshot.</p>
+    <p class="muted" style="margin:4px 0 0">No example or generated fallback data is loaded here.</p>
   </div>`;
 }
 
@@ -160,7 +160,17 @@ async function handleFile(event) {
 
 async function loadFromUrl(url, sourceLabel) {
   const response = await fetch(url);
-  renderPayload(await response.json(), sourceLabel);
+  const payload = await response.json();
+  const snapshot = payload.snapshot ?? payload;
+  if (payload.source && payload.source !== "live") {
+    renderEmptyState(`Live data unavailable from ${sourceLabel}.`);
+    return;
+  }
+  if (!payload.source && !hasLiveSnapshotData(snapshot)) {
+    renderEmptyState(`Live data unavailable from ${sourceLabel}.`);
+    return;
+  }
+  renderPayload(payload, sourceLabel);
 }
 
 function renderPayload(payload, sourceLabel) {
@@ -184,7 +194,7 @@ function renderEmptyState() {
   if (guidanceDate) guidanceDate.textContent = "Latest snapshot";
   if (guidanceGuardrail)
     guidanceGuardrail.textContent =
-      "Load a snapshot to see the guardrail for today.";
+      "Load a live snapshot to see today's guardrail.";
   if (checkInShell) {
     checkInShell.innerHTML = `
       <div class="checkin-shell-header">
@@ -254,8 +264,6 @@ function renderFoodShell() {
   if (foodHelp) foodHelp.textContent = help;
   if (foodStatus) foodStatus.textContent = summary;
   if (foodList) foodList.innerHTML = renderFoodList(todayEntries);
-  if (foodTime && !foodTime.value)
-    foodTime.value = formatDateTimeLocal(new Date());
 
   document.querySelectorAll("[data-food-timing]").forEach((button) => {
     const active =
@@ -270,7 +278,7 @@ function addFoodEntry() {
   if (!item) return;
   const entry = normalizeFoodEntry({
     item,
-    time: foodTime?.value || formatDateTimeLocal(new Date()),
+    time: foodTime?.value || defaultFoodEntryTime(),
     barcode: foodBarcode?.value.trim() ?? "",
     timing: state.foodTiming ?? "flexible",
   });
@@ -283,7 +291,7 @@ function addFoodEntry() {
 function resetFoodForm(clearTiming = true) {
   if (foodItem) foodItem.value = "";
   if (foodBarcode) foodBarcode.value = "";
-  if (foodTime) foodTime.value = formatDateTimeLocal(new Date());
+  if (foodTime) foodTime.value = "";
   if (clearTiming) {
     state.foodTiming = "flexible";
     persistFoodTiming(state.foodTiming);
@@ -378,6 +386,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const cronometer = snapshot.cronometer ?? {};
   const manual = snapshot.manual_context ?? {};
   const derived = snapshot.derived ?? {};
+  const sourceIsLive = snapshot.source === "live" || hasLiveSnapshotData(snapshot);
   const priority = formatPriorityLabel(
     recommendation.Priority ?? recommendation.priority ?? "No recommendation",
   );
@@ -390,7 +399,9 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     recommendation.Session ?? recommendation.session ?? "-",
   );
   const nutrition = formatSentenceValue(
-    recommendation.Nutrition ?? recommendation.nutrition ?? "-",
+    sourceIsLive
+      ? recommendation.Nutrition ?? recommendation.nutrition ?? "-"
+      : "Unavailable",
   );
   const confidence =
     recommendation.Confidence ?? recommendation.confidence ?? "-";
@@ -422,7 +433,11 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     });
   }
   if (guidanceTargets) {
-    guidanceTargets.innerHTML = renderGuidanceTargets(macros, today);
+    guidanceTargets.innerHTML = renderGuidanceTargets(
+      macros,
+      today,
+      sourceIsLive,
+    );
   }
   if (guidanceConfidence)
     guidanceConfidence.textContent = `Confidence: ${formatDisplayValue(confidence)}`;
@@ -434,7 +449,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   renderCheckInShell(snapshot, recommendation);
   statGroups.innerHTML = [
     renderRecGroup(recommendation, derived),
-    renderNutritionGroup(macros, today),
+    renderNutritionGroup(macros, today, sourceIsLive),
     renderRecoveryGroup(garmin, cronometer, manual, hevy),
   ].join("");
   recActions.innerHTML = renderSessionLog(priority);
@@ -511,7 +526,16 @@ function renderGuidanceTilesEmpty() {
   });
 }
 
-function renderGuidanceTargets(macros, today) {
+function renderGuidanceTargets(macros, today, sourceIsLive) {
+  if (!sourceIsLive) {
+    return `
+      <div class="target-pill">
+        <span class="target-pill-label">Nutrition targets</span>
+        <strong class="target-pill-value">Unavailable</strong>
+        <span class="target-pill-current">Load live data</span>
+      </div>
+    `;
+  }
   const targetItems = [
     {
       label: "Calories",
@@ -548,7 +572,7 @@ function renderGuidanceTargets(macros, today) {
 }
 
 function renderGuidanceTargetsEmpty() {
-  return renderGuidanceTargets({}, {});
+  return renderGuidanceTargets({}, {}, false);
 }
 
 function renderCheckInQuestion(question, response) {
@@ -677,6 +701,10 @@ function formatDateTimeLocal(date) {
   const pad = (value) => String(value).padStart(2, "0");
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
+}
+
+export function defaultFoodEntryTime(date = new Date()) {
+  return formatDateTimeLocal(date);
 }
 
 export function formatSessionModeLabel(mode) {
@@ -810,7 +838,18 @@ function renderRecGroup(rec, derived) {
   return groupCard("Recommendation", items);
 }
 
-function renderNutritionGroup(macros, today) {
+function renderNutritionGroup(macros, today, sourceIsLive) {
+  if (!sourceIsLive) {
+    return groupCard(
+      "Nutrition Targets",
+      `
+        <div class="stat-item">
+          <span class="stat-item-label">Status</span>
+          <span class="stat-item-value">Unavailable until live data loads</span>
+        </div>
+      `,
+    );
+  }
   const cal = macros.calories ? `${macros.calories} kcal` : "-";
   const pro = macros.protein_g ? `${macros.protein_g} g` : "-";
   const car = macros.carbs_g ? `${macros.carbs_g} g` : "-";

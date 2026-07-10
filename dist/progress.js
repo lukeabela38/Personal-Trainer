@@ -1,15 +1,7 @@
 import {
-  loadLastDays,
-  extractVo2,
-  extractBodyWeight,
-  weeklySummary,
-  loadIndex,
-  loadSnapshot,
-} from "./history.js";
-import { renderSparkline, fmtNum } from "./goals.js";
-import {
   escapeHtml,
   formatDisplayValue as formatValue,
+  hasLiveSnapshotData,
   readNumber,
   readText,
   shouldRenderValue,
@@ -27,111 +19,211 @@ const dateTo = document.getElementById("date-to");
 
 const state = {
   previous: readStoredSnapshot(),
+  currentSnapshot: null,
+  historyMode: null,
 };
 
-loadProgress();
-loadHistoryTrends();
+await loadProgress();
+await loadHistoryTrends();
 setupDatePickers();
 
 async function loadProgress() {
   try {
     const response = await fetch(`${snapshotUrl.pathname}?v=${Date.now()}`);
     const snapshot = await response.json();
+    if (snapshot.source && snapshot.source !== "live") {
+      throw new Error("Live snapshot not loaded");
+    }
+    if (!snapshot.source && !hasLiveSnapshotData(snapshot)) {
+      throw new Error("Live snapshot not loaded");
+    }
+    state.currentSnapshot = snapshot;
     renderProgress(snapshot);
   } catch {
-    sourceLabel.textContent = "Unavailable";
-    statusBanner.textContent = "Could not load snapshot data";
+    sourceLabel.textContent = "Live data unavailable";
+    statusBanner.textContent = "Waiting for live snapshot";
     if (summaryEl) summaryEl.innerHTML = "";
-    grid.innerHTML = `<div class="item"><span>Progress</span><strong>Failed to load data</strong></div>`;
+    grid.innerHTML = `<div class="item"><span>Progress</span><strong>Live snapshot not loaded</strong></div>`;
+    if (trendEl) {
+      trendEl.innerHTML = `
+        <div class="stat-group">
+          <div class="stat-group-title">Live data unavailable</div>
+          <p class="lede" style="margin:6px 0">This page only shows live snapshot data.</p>
+        </div>
+      `;
+    }
   }
 }
 
 async function loadHistoryTrends() {
-  try {
-    const snaps = await loadLastDays(60);
-    const vo2 = extractVo2(snaps);
-    const bw = extractBodyWeight(snaps);
-    const summary = weeklySummary(snaps);
-    if (trendEl) {
-      const parts = [];
-      if (summary) {
-        parts.push(`
-          <div class="stat-group">
-            <div class="stat-group-title">Last 7 days</div>
-            <div class="stat-group-grid">
-              <div class="stat-item">
-                <span class="stat-item-label">Quality sessions</span>
-                <span class="stat-item-value">${summary.hardDays}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-item-label">Recovery days</span>
-                <span class="stat-item-value">${summary.recoveryDays}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-item-label">Avg calories</span>
-                <span class="stat-item-value">${summary.avgCalories}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-item-label">Avg protein</span>
-                <span class="stat-item-value">${summary.avgProtein}g</span>
-              </div>
-            </div>
-          </div>
-        `);
-      }
-      if (vo2.length > 1) {
-        const vals = vo2.map((d) => d.value);
-        const vo2Delta = vals[vals.length - 1] - vals[0];
-        const vo2Dir =
-          vo2Delta > 0
-            ? "improved"
-            : vo2Delta < 0
-              ? "declined"
-              : "remained stable";
-        parts.push(`
-          <div class="stat-group">
-            <div class="stat-group-title">VO2 max (${vo2.length} days)</div>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="VO2 max ${vo2Dir} by ${fmtNum(Math.abs(vo2Delta))} over ${vo2.length} days">
-              ${renderSparkline(vals, 240, 56)}
-              <div style="display:grid;gap:2px">
-                <span class="stat-item-label">Start</span>
-                <span class="stat-item-value">${fmtNum(vals[0])}</span>
-                <span class="stat-item-label">Current</span>
-                <span class="stat-item-value">${fmtNum(vals[vals.length - 1])}</span>
-              </div>
-            </div>
-          </div>
-        `);
-      }
-      if (bw.length > 1) {
-        const vals = bw.map((d) => d.value);
-        const bwDelta = vals[vals.length - 1] - vals[0];
-        const bwDir =
-          bwDelta < 0
-            ? "decreased"
-            : bwDelta > 0
-              ? "increased"
-              : "remained stable";
-        parts.push(`
-          <div class="stat-group">
-            <div class="stat-group-title">Body weight (${bw.length} days)</div>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir} by ${fmtNum(Math.abs(bwDelta))} kg over ${bw.length} days">
-              ${renderSparkline(vals, 240, 56)}
-              <div style="display:grid;gap:2px">
-                <span class="stat-item-label">Start</span>
-                <span class="stat-item-value">${fmtNum(vals[0])} kg</span>
-                <span class="stat-item-label">Current</span>
-                <span class="stat-item-value">${fmtNum(vals[vals.length - 1])} kg</span>
-              </div>
-            </div>
-          </div>
-        `);
-      }
-      trendEl.innerHTML = parts.join("");
-    }
-  } catch {
-    // history not available
+  const liveSummary = buildLiveHistorySummary(state.currentSnapshot);
+  if (liveSummary && trendEl) {
+    trendEl.innerHTML = renderLiveHistorySummary(liveSummary);
+    return;
   }
+  if (trendEl) {
+    trendEl.innerHTML = `
+      <div class="stat-group">
+        <div class="stat-group-title">Live history unavailable</div>
+        <p class="lede" style="margin:6px 0">The current live snapshot does not include a recent 30-day window.</p>
+        <p class="muted" style="margin:0">Load a snapshot with live Cronometer, Hevy, and Garmin history to enable this section.</p>
+      </div>
+    `;
+  }
+}
+
+export function buildLiveHistorySummary(snapshot) {
+  const cronometerDays = Array.isArray(snapshot?.cronometer?.recent_days)
+    ? snapshot.cronometer.recent_days
+    : [];
+  const recentRuns = Array.isArray(snapshot?.garmin?.recent_runs)
+    ? snapshot.garmin.recent_runs
+    : [];
+  const currentVo2 = snapshot?.garmin?.current_vo2max ?? null;
+  const vo2Trend = snapshot?.garmin?.vo2max_trend ?? "unknown";
+  if (!cronometerDays.length && !recentRuns.length) {
+    return null;
+  }
+
+  const activeDays = cronometerDays.filter(
+    (day) => day && typeof day === "object" && day.calories_consumed != null,
+  );
+  const calories = activeDays.map((day) => Number(day.calories_consumed) || 0);
+  const protein = activeDays.map((day) => Number(day.protein_g) || 0);
+  const avgCalories = calories.length
+    ? Math.round(calories.reduce((sum, value) => sum + value, 0) / calories.length)
+    : 0;
+  const avgProtein = protein.length
+    ? Math.round(protein.reduce((sum, value) => sum + value, 0) / protein.length)
+    : 0;
+
+  return {
+    days: activeDays.length,
+    latestDate: activeDays.at(-1)?.date ?? snapshot?.snapshot_date ?? null,
+    avgCalories,
+    avgProtein,
+    vo2: currentVo2,
+    vo2Trend,
+  };
+}
+
+export function buildLiveRangeSummary(snapshot, fromDate, toDate) {
+  if (!fromDate || !toDate) return null;
+  const from = fromDate <= toDate ? fromDate : toDate;
+  const to = fromDate <= toDate ? toDate : fromDate;
+
+  const recentDays = Array.isArray(snapshot?.cronometer?.recent_days)
+    ? snapshot.cronometer.recent_days
+    : [];
+  const selectedDays = recentDays
+    .filter(
+      (day) =>
+        day &&
+        typeof day === "object" &&
+        typeof day.date === "string" &&
+        day.date >= from &&
+        day.date <= to &&
+        day.calories_consumed != null,
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (!selectedDays.length) return null;
+
+  const calories = selectedDays.map((day) => Number(day.calories_consumed) || 0);
+  const protein = selectedDays.map((day) => Number(day.protein_g) || 0);
+  const carbs = selectedDays.map((day) => Number(day.carbs_g) || 0);
+  const fat = selectedDays.map((day) => Number(day.fat_g) || 0);
+  const remaining = selectedDays.map((day) => Number(day.remaining_kcal) || 0);
+
+  const currentVo2 = snapshot?.garmin?.current_vo2max ?? null;
+  const vo2Trend = snapshot?.garmin?.vo2max_trend ?? "unknown";
+
+  return {
+    from,
+    to,
+    days: selectedDays.length,
+    startDate: selectedDays[0]?.date ?? from,
+    endDate: selectedDays.at(-1)?.date ?? to,
+    startCalories: calories[0],
+    endCalories: calories.at(-1),
+    startProtein: protein[0],
+    endProtein: protein.at(-1),
+    startCarbs: carbs[0],
+    endCarbs: carbs.at(-1),
+    avgCarbs: Math.round(carbs.reduce((sum, value) => sum + value, 0) / carbs.length),
+    avgFat: Math.round(fat.reduce((sum, value) => sum + value, 0) / fat.length),
+    startRemaining: remaining[0],
+    endRemaining: remaining.at(-1),
+    avgCalories: Math.round(calories.reduce((sum, value) => sum + value, 0) / calories.length),
+    avgProtein: Math.round(protein.reduce((sum, value) => sum + value, 0) / protein.length),
+    vo2: currentVo2,
+    vo2Trend,
+    latestDate: selectedDays.at(-1)?.date ?? null,
+  };
+}
+
+function renderLiveHistorySummary(summary) {
+  if (!summary) return "";
+  return `
+    <div class="stat-group">
+      <div class="stat-group-title">Live 30-day window</div>
+      <div class="stat-group-grid">
+        <div class="stat-item">
+          <span class="stat-item-label">Nutrition days</span>
+          <span class="stat-item-value">${summary.days}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg calories</span>
+          <span class="stat-item-value">${summary.avgCalories}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg protein</span>
+          <span class="stat-item-value">${summary.avgProtein}g</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Current VO2 max</span>
+          <span class="stat-item-value">${summary.vo2 ?? "—"}</span>
+        </div>
+      </div>
+      <p class="muted" style="margin:10px 0 0">Latest live date: ${escapeHtml(summary.latestDate ?? "unknown")}</p>
+    </div>
+  `;
+}
+
+function renderLiveRangeSummary(summary) {
+  if (!summary) return "";
+
+  return `
+    <div class="stat-group">
+      <div class="stat-group-title">Live range summary</div>
+      <div class="stat-group-grid">
+        <div class="stat-item">
+          <span class="stat-item-label">Days</span>
+          <span class="stat-item-value">${summary.days}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg calories</span>
+          <span class="stat-item-value">${summary.avgCalories}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg protein</span>
+          <span class="stat-item-value">${summary.avgProtein}g</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg carbs</span>
+          <span class="stat-item-value">${summary.avgCarbs}g</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Avg fat</span>
+          <span class="stat-item-value">${summary.avgFat}g</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Current VO2 max</span>
+          <span class="stat-item-value">${summary.vo2 ?? "—"}</span>
+        </div>
+      </div>
+      <p class="muted" style="margin:10px 0 0">Range: ${escapeHtml(summary.startDate)} → ${escapeHtml(summary.endDate)}</p>
+    </div>
+  `;
 }
 
 function renderProgress(snapshot) {
@@ -156,16 +248,6 @@ function renderProgress(snapshot) {
       readNumber(previous, ["cronometer", "today", "remaining_kcal"]),
       readNumber(snapshot, ["cronometer", "today", "remaining_kcal"]),
     ),
-    deltaRow(
-      "Strength trend",
-      readText(previous, ["hevy", "strength_trend"]),
-      readText(snapshot, ["hevy", "strength_trend"]),
-    ),
-    deltaRow(
-      "Running bests",
-      summarizeBests(previous),
-      summarizeBests(snapshot),
-    ),
   ].filter(Boolean);
 
   renderSummaryStrip([
@@ -183,11 +265,6 @@ function renderProgress(snapshot) {
       "Changes",
       rows.length ? `${rows.length} changed` : "No changes",
       rows.length ? "Compared with previous snapshot" : "Nothing moved",
-    ),
-    summaryTile(
-      "Running bests",
-      summarizeBests(snapshot),
-      "Strength / running",
     ),
   ]);
 
@@ -256,9 +333,21 @@ function renderSummaryStrip(tiles) {
 
 async function setupDatePickers() {
   try {
-    const index = await loadIndex();
-    if (!index?.dates?.length || !dateFrom || !dateTo) return;
-    const dates = index.dates;
+    const dates = getLiveRangeDates(state.currentSnapshot);
+    if (!dates.length || !dateFrom || !dateTo) {
+      if (dateFrom) dateFrom.disabled = true;
+      if (dateTo) dateTo.disabled = true;
+      if (trendEl && !trendEl.innerHTML) {
+        trendEl.innerHTML = `
+          <div class="stat-group">
+            <div class="stat-group-title">Live range unavailable</div>
+            <p class="lede" style="margin:6px 0">No live recent-day data was loaded, so the date range controls are disabled.</p>
+          </div>
+        `;
+      }
+      return;
+    }
+    state.historyMode = "live";
     dateFrom.innerHTML = dates
       .map((d) => `<option value="${d}">${d}</option>`)
       .join("");
@@ -266,7 +355,8 @@ async function setupDatePickers() {
       .reverse()
       .map((d) => `<option value="${d}">${d}</option>`)
       .join("");
-    dateFrom.value = dates[0];
+    const defaultStartIndex = Math.max(0, dates.length - 3);
+    dateFrom.value = dates[defaultStartIndex];
     dateTo.value = dates[dates.length - 1];
     document
       .getElementById("compare-btn")
@@ -278,82 +368,34 @@ async function compareDates() {
   const from = dateFrom?.value;
   const to = dateTo?.value;
   if (!from || !to || from === to) return;
-  try {
-    const a = await loadSnapshot(from);
-    const b = await loadSnapshot(to);
-    renderComparison(from, a, to, b);
-  } catch {}
-}
-
-function renderComparison(fromDate, snapA, toDate, snapB) {
-  const prev = snapA ?? {};
-  const current = snapB ?? {};
-  sourceLabel.textContent = `${fromDate} → ${toDate}`;
-  const rows = [
-    deltaRow(
-      "VO2 max",
-      readNumber(prev, ["garmin", "current_vo2max"]),
-      readNumber(current, ["garmin", "current_vo2max"]),
-    ),
-    deltaRow(
-      "Body weight",
-      readNumber(prev, ["athlete", "body_weight_kg"]),
-      readNumber(current, ["athlete", "body_weight_kg"]),
-    ),
-    deltaRow(
-      "Fueling",
-      readText(prev, ["cronometer", "fueling_status"]),
-      readText(current, ["cronometer", "fueling_status"]),
-    ),
-    deltaRow(
-      "Sleep",
-      readText(prev, ["manual_context", "sleep_quality"]),
-      readText(current, ["manual_context", "sleep_quality"]),
-    ),
-    deltaRow(
-      "Remaining kcal",
-      readNumber(prev, ["cronometer", "today", "remaining_kcal"]),
-      readNumber(current, ["cronometer", "today", "remaining_kcal"]),
-    ),
-    deltaRow(
-      "Strength trend",
-      readText(prev, ["hevy", "strength_trend"]),
-      readText(current, ["hevy", "strength_trend"]),
-    ),
-  ].filter(Boolean);
+  if (state.historyMode !== "live" || !state.currentSnapshot) return;
+  const summary = buildLiveRangeSummary(state.currentSnapshot, from, to);
+  if (!summary) {
+    statusBanner.textContent = "Live range unavailable";
+    grid.innerHTML = `<div class="item"><span>Progress</span><strong>No live daily data exists for that range</strong></div>`;
+    return;
+  }
+  sourceLabel.textContent = `${from} → ${to}`;
+  statusBanner.textContent = `${summary.days} live days`;
   renderSummaryStrip([
     summaryTile(
       "Range",
-      `${fromDate} → ${toDate}`,
-      "Selected comparison window",
+      `${summary.startDate} → ${summary.endDate}`,
+      "Selected live window",
     ),
-    summaryTile(
-      "Baseline",
-      prev.snapshot_date ?? fromDate,
-      prev.snapshot_date ? "Earlier snapshot" : "Selected start date",
-    ),
-    summaryTile(
-      "Changes",
-      rows.length ? `${rows.length} changed` : "No changes",
-      rows.length ? "Differences detected" : "Matched exactly",
-    ),
-    summaryTile("Running bests", summarizeBests(current), "Current snapshot"),
+    summaryTile("Days", String(summary.days), "Live nutrition days"),
+    summaryTile("Avg calories", String(summary.avgCalories), "Across the selected range"),
   ]);
-  statusBanner.textContent = rows.length
-    ? `${rows.length} changes`
-    : "No changes";
-  grid.innerHTML = rows.length
-    ? rows
-        .map(
-          (row) => `
-      <article class="item">
-        <span>${escapeHtml(row.label)}</span>
-        <strong class="${row.deltaClass}">${escapeHtml(row.value)}</strong>
-      </article>
-    `,
-        )
-        .join("")
-    : `<div class="item"><span>Progress</span><strong>No change between these dates</strong></div>`;
+  grid.innerHTML = renderLiveRangeSummary(summary);
+}
+
+function getLiveRangeDates(snapshot) {
+  const recentDays = Array.isArray(snapshot?.cronometer?.recent_days)
+    ? snapshot.cronometer.recent_days
+    : [];
+  return [...new Set(recentDays
+    .map((day) => (day && typeof day.date === "string" ? day.date : null))
+    .filter(Boolean))].sort();
 }
 
 function persistSnapshot(snapshot) {

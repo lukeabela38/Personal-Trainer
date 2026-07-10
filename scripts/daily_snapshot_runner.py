@@ -59,7 +59,11 @@ def main(argv: list[str] | None = None) -> int:
             _write_json(args.sources_output, sources)
         snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
         recommendation = build_daily_recommendation(snapshot)
-        _write_json(args.snapshot_output, {**snapshot, "recommendation": recommendation})
+        source_kind = "example" if args.sources_file is not None else _infer_live_source_kind(sources)
+        _write_json(
+            args.snapshot_output,
+            {**snapshot, "source": source_kind, "recommendation": recommendation},
+        )
         _build_site_artifacts(args.snapshot_output, args.site_output)
         _build_history_artifacts(args.site_output)
         print(args.site_output)
@@ -163,6 +167,14 @@ def _run_optional_history_report(env_var: str, script: str, output_path: Path) -
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _infer_live_source_kind(sources: dict[str, Any]) -> str:
+    live_sections = ("garmin", "hevy", "cronometer")
+    for key in live_sections:
+        if sources.get(key):
+            return "live"
+    return "unavailable"
 
 
 if __name__ == "__main__":
