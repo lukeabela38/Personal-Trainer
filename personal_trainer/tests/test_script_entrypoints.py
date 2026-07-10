@@ -275,6 +275,7 @@ class HevyWrapperTests(TestCase):
         self.assertEqual(len(payload["recent_workouts"]), 2)
         self.assertEqual(payload["muscle_group_fatigue"]["legs"], "high")
         self.assertEqual(payload["muscle_group_fatigue"]["push"], "high")
+        self.assertEqual(payload["muscle_group_fatigue"]["posterior_chain"], "moderate")
         self.assertEqual(payload["muscle_group_fatigue"]["pull"], "unknown")
         self.assertEqual(len(payload["recent_bests"]), 3)
         best_by_template = {row["exercise_template_id"]: row for row in payload["recent_bests"]}

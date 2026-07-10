@@ -70,6 +70,7 @@ def _build_preview_artifacts(
     snapshot_output: Path,
     sources_file: Path | None,
 ) -> None:
+    subprocess.run(["docker", "compose", "build", "app"], cwd=REPO_ROOT, check=True)
     command = [
         "docker",
         "compose",

@@ -1,49 +1,54 @@
 {
   "source": "Hevy exercise history",
-  "snapshot_date": "2026-07-02",
+  "snapshot_date": "2026-07-10",
   "entries": [
     {
       "name": "Squat (Barbell)",
       "category": "Lower body",
       "best_set": {
-        "weight_kg": 100,
-        "reps": 5
+        "weight_kg": 100.0,
+        "reps": 8,
+        "workout_start_date": "2026-06-16"
       },
-      "estimated_one_rm_kg": 113
+      "estimated_one_rm_kg": 126.7
     },
     {
       "name": "Bench Press (Barbell)",
       "category": "Push",
       "best_set": {
-        "weight_kg": 75,
-        "reps": 8
+        "weight_kg": 65.0,
+        "reps": 12,
+        "workout_start_date": "2025-09-28"
       },
-      "estimated_one_rm_kg": 93
+      "estimated_one_rm_kg": 91.0
     },
     {
       "name": "Chin Up",
       "category": "Pull",
       "best_set": {
-        "weight_kg": 88,
-        "reps": 6
+        "weight_kg": null,
+        "reps": 19,
+        "workout_start_date": "2025-08-12"
       },
-      "estimated_one_rm_kg": 102
+      "estimated_one_rm_kg": null
     },
     {
       "name": "Triceps Dip",
-      "category": "Push",
+      "category": "Accessory",
       "best_set": {
-        "weight_kg": 20,
-        "reps": 12
+        "weight_kg": null,
+        "reps": 10,
+        "workout_start_date": "2026-05-19"
       },
-      "estimated_one_rm_kg": 28
+      "estimated_one_rm_kg": null
     },
     {
       "name": "Push Up",
-      "category": "Push",
+      "category": "Accessory",
       "best_set": {
         "weight_kg": null,
-        "reps": 40
+        "reps": 30,
+        "workout_start_date": "2025-07-29"
       },
       "estimated_one_rm_kg": null
     },
@@ -51,262 +56,31 @@
       "name": "Dumbbell Row",
       "category": "Pull",
       "best_set": {
-        "weight_kg": 36,
-        "reps": 10
+        "weight_kg": 35.0,
+        "reps": 8,
+        "workout_start_date": "2026-07-02"
       },
-      "estimated_one_rm_kg": 48
+      "estimated_one_rm_kg": 44.3
     },
     {
       "name": "Sumo Squat (Kettlebell)",
       "category": "Lower body",
       "best_set": {
-        "weight_kg": 32,
-        "reps": 12
+        "weight_kg": 36.0,
+        "reps": 12,
+        "workout_start_date": "2026-07-02"
       },
-      "estimated_one_rm_kg": 45
+      "estimated_one_rm_kg": 50.4
     },
     {
       "name": "Single Arm Tricep Extension (Dumbbell)",
       "category": "Accessory",
       "best_set": {
-        "weight_kg": 14,
-        "reps": 15
+        "weight_kg": 12.5,
+        "reps": 12,
+        "workout_start_date": "2026-02-18"
       },
-      "estimated_one_rm_kg": 22
-    },
-    {
-      "name": "Deadlift (Barbell)",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 130,
-        "reps": 5
-      },
-      "estimated_one_rm_kg": 146
-    },
-    {
-      "name": "Overhead Press (Barbell)",
-      "category": "Push",
-      "best_set": {
-        "weight_kg": 50,
-        "reps": 8
-      },
-      "estimated_one_rm_kg": 62
-    },
-    {
-      "name": "Pull Up",
-      "category": "Pull",
-      "best_set": {
-        "weight_kg": 85,
-        "reps": 8
-      },
-      "estimated_one_rm_kg": 105
-    },
-    {
-      "name": "Romanian Deadlift",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 90,
-        "reps": 10
-      },
-      "estimated_one_rm_kg": 120
-    },
-    {
-      "name": "Bulgarian Split Squat",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 34,
-        "reps": 10
-      },
-      "estimated_one_rm_kg": 45
-    },
-    {
-      "name": "Dumbbell Bench Press",
-      "category": "Push",
-      "best_set": {
-        "weight_kg": 32,
-        "reps": 10
-      },
-      "estimated_one_rm_kg": 43
-    },
-    {
-      "name": "Seated Cable Row",
-      "category": "Pull",
-      "best_set": {
-        "weight_kg": 60,
-        "reps": 10
-      },
-      "estimated_one_rm_kg": 80
-    },
-    {
-      "name": "Bicep Curl (Dumbbell)",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 18,
-        "reps": 12
-      },
-      "estimated_one_rm_kg": 25
-    },
-    {
-      "name": "Tricep Pushdown",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 25,
-        "reps": 12
-      },
-      "estimated_one_rm_kg": 35
-    },
-    {
-      "name": "Lateral Raise",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 12,
-        "reps": 15
-      },
-      "estimated_one_rm_kg": 18
-    },
-    {
-      "name": "Leg Press",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 140,
-        "reps": 12
-      },
-      "estimated_one_rm_kg": 196
-    },
-    {
-      "name": "Hamstring Curl",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 55,
-        "reps": 12
-      },
-      "estimated_one_rm_kg": 77
-    },
-    {
-      "name": "Calf Raise",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 80,
-        "reps": 15
-      },
-      "estimated_one_rm_kg": 120
-    },
-    {
-      "name": "Face Pull",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 20,
-        "reps": 15
-      },
-      "estimated_one_rm_kg": 30
-    },
-    {
-      "name": "Pendlay Row",
-      "category": "Pull",
-      "best_set": {
-        "weight_kg": 50,
-        "reps": 10
-      },
-      "estimated_one_rm_kg": 67
-    },
-    {
-      "name": "Front Squat",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 70,
-        "reps": 8
-      },
-      "estimated_one_rm_kg": 87
-    },
-    {
-      "name": "Incline Bench Press",
-      "category": "Push",
-      "best_set": {
-        "weight_kg": 60,
-        "reps": 8
-      },
-      "estimated_one_rm_kg": 74
-    },
-    {
-      "name": "Skull Crusher",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 16,
-        "reps": 12
-      },
-      "estimated_one_rm_kg": 23
-    },
-    {
-      "name": "Dumbbell Shoulder Press",
-      "category": "Push",
-      "best_set": {
-        "weight_kg": 22,
-        "reps": 10
-      },
-      "estimated_one_rm_kg": 29
-    },
-    {
-      "name": "Barbell Hip Thrust",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": 100,
-        "reps": 10
-      },
-      "estimated_one_rm_kg": 133
-    },
-    {
-      "name": "Farmer Walk",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 40,
-        "reps": 30
-      },
-      "estimated_one_rm_kg": null
-    },
-    {
-      "name": "Pistol Squat",
-      "category": "Lower body",
-      "best_set": {
-        "weight_kg": null,
-        "reps": 5
-      },
-      "estimated_one_rm_kg": null
-    },
-    {
-      "name": "Weighted Plank",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 20,
-        "reps": 60
-      },
-      "estimated_one_rm_kg": null
-    },
-    {
-      "name": "Kettlebell Swing",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": 24,
-        "reps": 20
-      },
-      "estimated_one_rm_kg": null
-    },
-    {
-      "name": "Box Jump",
-      "category": "Accessory",
-      "best_set": {
-        "weight_kg": null,
-        "reps": 12
-      },
-      "estimated_one_rm_kg": null
-    },
-    {
-      "name": "Dips (Weighted)",
-      "category": "Push",
-      "best_set": {
-        "weight_kg": 28,
-        "reps": 8
-      },
-      "estimated_one_rm_kg": 35
+      "estimated_one_rm_kg": 17.5
     }
   ]
 }

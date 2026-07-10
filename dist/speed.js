@@ -77,12 +77,24 @@ function renderSummary(entries) {
     {
       label: "Fastest",
       value: fastest?.name ?? "Unknown",
-      subvalue: fastest ? formatSpeedValue(fastest.name, fastest.value, fastest.context?.raw_value) : "Top current race effort",
+      subvalue: fastest
+        ? formatSpeedValue(
+            fastest.name,
+            fastest.value,
+            fastest.context?.raw_value,
+          )
+        : "Top current race effort",
     },
     {
       label: "Longest",
       value: longest?.name ?? "Unknown",
-      subvalue: longest ? formatSpeedValue(longest.name, longest.value, longest.context?.raw_value) : "Best endurance marker",
+      subvalue: longest
+        ? formatSpeedValue(
+            longest.name,
+            longest.value,
+            longest.context?.raw_value,
+          )
+        : "Best endurance marker",
     },
     {
       label: "Latest PB",
@@ -102,17 +114,30 @@ function renderSummary(entries) {
     .join("");
 }
 
-function sortEntries(entries) {
-  const order = ["Fastest 1K", "Fastest Mile", "Fastest 5K", "Fastest 10K", "Fastest Half Marathon", "Longest Run"];
-  return [...entries].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
+export function sortEntries(entries) {
+  const order = [
+    "Fastest 1K",
+    "Fastest Mile",
+    "Fastest 5K",
+    "Fastest 10K",
+    "Fastest Half Marathon",
+    "Longest Run",
+  ];
+  return [...entries].sort(
+    (a, b) => order.indexOf(a.name) - order.indexOf(b.name),
+  );
 }
 
 function renderSpeedGoals(payload) {
   if (!goalsContainer) return;
-  const snapshot = { garmin: { recent_bests: payload.entries.map((e) => ({
-    record_type: e.name ?? "",
-    value: e.value ?? null,
-  }))}};
+  const snapshot = {
+    garmin: {
+      recent_bests: payload.entries.map((e) => ({
+        record_type: e.name ?? "",
+        value: e.value ?? null,
+      })),
+    },
+  };
   const goals = updateGoalCurrent(loadGoals(), snapshot);
   const speedGoals = goals.filter((g) => g.type === "speed");
   if (!speedGoals.length) return;
@@ -136,11 +161,16 @@ function renderSpeedGoals(payload) {
   goalsContainer.removeAttribute("hidden");
 }
 
-function formatSpeedValue(recordType, value, rawValue = null) {
+export function formatSpeedValue(recordType, value, rawValue = null) {
   if (value == null || value === "") return "-";
   const type = String(recordType ?? "");
   const numeric = typeof value === "number" ? value : Number(value);
-  const rawNumeric = typeof rawValue === "number" ? rawValue : Number(rawValue);
+  const rawNumeric =
+    rawValue == null || rawValue === ""
+      ? null
+      : typeof rawValue === "number"
+        ? rawValue
+        : Number(rawValue);
   const source = Number.isFinite(rawNumeric) ? rawNumeric : numeric;
 
   if (type === "Longest Run") {
@@ -156,20 +186,23 @@ function formatSpeedValue(recordType, value, rawValue = null) {
   return String(value);
 }
 
-function formatDuration(seconds) {
+export function formatDuration(seconds) {
   const wholeSeconds = Math.floor(seconds);
   const hours = Math.floor(wholeSeconds / 3600);
   const minutes = Math.floor((wholeSeconds % 3600) / 60);
   const secs = wholeSeconds % 60;
-  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  if (hours > 0)
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   return `${minutes}:${String(secs).padStart(2, "0")}`;
 }
 
-function formatDistanceKm(meters) {
-  return (Math.floor((meters / 1000) * 100) / 100).toFixed(2).replace(/\.00$/, "");
+export function formatDistanceKm(meters) {
+  return (Math.floor((meters / 1000) * 100) / 100)
+    .toFixed(2)
+    .replace(/\.00$/, "");
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
