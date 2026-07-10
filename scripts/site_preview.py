@@ -7,8 +7,11 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SNAPSHOT = REPO_ROOT / "personal_trainer" / "examples" / "snapshot-ready.json"
 DEFAULT_SITE_OUTPUT = REPO_ROOT / "dist"
+CONTAINER_ROOT = Path("/app")
+CONTAINER_DEFAULT_SNAPSHOT = (
+    CONTAINER_ROOT / "personal_trainer" / "examples" / "snapshot-ready.json"
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -33,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--sources-file",
         type=Path,
-        default=DEFAULT_SNAPSHOT,
+        default=REPO_ROOT / "personal_trainer" / "examples" / "snapshot-ready.json",
         help="Use a captured source payload instead of live commands.",
     )
     parser.add_argument(
@@ -76,12 +79,12 @@ def _build_preview_artifacts(
         "python3",
         "scripts/daily_snapshot_runner.py",
         "--snapshot-output",
-        str(snapshot_output),
+        str(_container_path(snapshot_output)),
         "--site-output",
-        str(site_output),
+        str(_container_path(site_output)),
     ]
     if sources_file is not None:
-        command.extend(["--sources-file", str(sources_file)])
+        command.extend(["--sources-file", str(_container_path(sources_file))])
     subprocess.run(command, cwd=REPO_ROOT, check=True)
 
 
@@ -89,6 +92,14 @@ def _serve_directory(site_output: Path, port: int) -> int:
     command = [sys.executable, "-m", "http.server", str(port)]
     subprocess.run(command, cwd=site_output, check=True)
     return 0
+
+
+def _container_path(path: Path) -> Path:
+    try:
+        relative = path.resolve().relative_to(REPO_ROOT)
+    except ValueError:
+        return path
+    return CONTAINER_ROOT / relative
 
 
 if __name__ == "__main__":
