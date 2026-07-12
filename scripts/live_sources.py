@@ -112,11 +112,20 @@ def _load_payload(command: str | None, source_name: str) -> dict[str, Any]:
 
     completed = subprocess.run(
         shlex.split(command),
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
         env=env,
     )
+    if completed.stderr:
+        sys.stderr.write(completed.stderr)
+    if completed.returncode != 0:
+        raise subprocess.CalledProcessError(
+            completed.returncode,
+            completed.args,
+            output=completed.stdout,
+            stderr=completed.stderr,
+        )
     payload = json.loads(completed.stdout)
     if not isinstance(payload, dict):
         raise ValueError(f"{source_name} command must emit a JSON object")

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -18,6 +19,14 @@ HEVY_COMMAND = os.environ.get(
     "npx -y -p node@26 -p hevy-mcp hevy-mcp",
 )
 
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+
+
 _TRACKED_EXERCISES = [
     ("Squat (Barbell)", "D04AC939"),
     ("Bench Press (Barbell)", "79D0BB3A"),
@@ -32,9 +41,11 @@ _TRACKED_EXERCISES = [
 
 async def fetch() -> list[dict]:
     all_rows: list[dict] = []
+    logger.info("[hevy-strength] fetching recent strength history")
 
     for name, template_id in _TRACKED_EXERCISES:
         try:
+            logger.info("[hevy-strength] capturing history for %s", name)
             history = await call_tool(
                 HEVY_COMMAND,
                 "get-exercise-history",
@@ -45,14 +56,18 @@ async def fetch() -> list[dict]:
                 if isinstance(row, dict):
                     row["_exercise_name"] = name
                     all_rows.append(row)
+            logger.info("[hevy-strength] captured history for %s", name)
         except McpError as e:
             print(f"[hevy-strength] {name} history unavailable: {e}", file=sys.stderr)
+            logger.warning("[hevy-strength] %s history unavailable: %s", name, e)
 
+    logger.info("[hevy-strength] collected %d rows", len(all_rows))
     return all_rows
 
 
 def main() -> int:
     try:
+        _configure_logging()
         payload = asyncio.run(fetch())
         json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 from .contracts import Macros, Recommendation
 from .macros import build_macros
 
 Snapshot = dict[str, Any]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -64,109 +67,125 @@ def build_daily_recommendation(snapshot: Snapshot) -> Recommendation:
     athlete_macros = _athlete_for_macros(snapshot)
 
     if _has_any(constraints, {"pain_risk", "poor_recovery"}) or _manual_high_fatigue(manual):
-        return Decision(
-            priority="recovery",
-            session="rest, mobility, or an easy walk depending on soreness",
-            nutrition="eat at maintenance or slight deficit only if protein is protected",
-            macros=build_macros(**athlete_macros, priority="recovery"),
-            reason=_first_reason(
-                [
-                    ("pain_risk" in constraints, "pain or movement-quality risk is present"),
-                    ("poor_recovery" in constraints, "recovery is currently the limiting factor"),
-                    (_manual_high_fatigue(manual), "manual fatigue signal is high"),
-                ]
-            ),
-            guardrail="do not turn a low-readiness day into intensity or heavy lifting",
-            confidence=_confidence(snapshot, fallback="medium"),
-            needs_check_in=_yes_no(check_in_required or _manual_context_missing(manual)),
-        ).as_dict()
+        return _decision(
+            Decision(
+                priority="recovery",
+                session="rest, mobility, or an easy walk depending on soreness",
+                nutrition="eat at maintenance or slight deficit only if protein is protected",
+                macros=build_macros(**athlete_macros, priority="recovery"),
+                reason=_first_reason(
+                    [
+                        ("pain_risk" in constraints, "pain or movement-quality risk is present"),
+                        ("poor_recovery" in constraints, "recovery is currently the limiting factor"),
+                        (_manual_high_fatigue(manual), "manual fatigue signal is high"),
+                    ]
+                ),
+                guardrail="do not turn a low-readiness day into intensity or heavy lifting",
+                confidence=_confidence(snapshot, fallback="medium"),
+                needs_check_in=_yes_no(check_in_required or _manual_context_missing(manual)),
+            )
+        )
 
     if _has_any(constraints, {"under_fueled"}) or _has_any(flags, {"under_fueled_today", "protein_low_today"}):
-        return Decision(
-            priority="nutrition_repair",
-            session="easy walk, light mobility, or rest",
-            nutrition="close the calorie, protein, or carbohydrate gap before adding stress",
-            macros=build_macros(**athlete_macros, priority="nutrition_repair"),
-            reason="recent fueling does not support another hard session",
-            guardrail="avoid combining a large deficit with intensity",
-            confidence=_confidence(snapshot, fallback="medium"),
-            needs_check_in=_yes_no(True),
-        ).as_dict()
+        return _decision(
+            Decision(
+                priority="nutrition_repair",
+                session="easy walk, light mobility, or rest",
+                nutrition="close the calorie, protein, or carbohydrate gap before adding stress",
+                macros=build_macros(**athlete_macros, priority="nutrition_repair"),
+                reason="recent fueling does not support another hard session",
+                guardrail="avoid combining a large deficit with intensity",
+                confidence=_confidence(snapshot, fallback="medium"),
+                needs_check_in=_yes_no(True),
+            )
+        )
 
     if "table_tennis_conflict" in constraints or _table_tennis_is_important(manual):
-        return Decision(
-            priority="table_tennis_readiness",
-            session="protect freshness; avoid grip-heavy, shoulder-heavy, or leg-depleting work",
-            nutrition="normal fueling with protein protected",
-            macros=build_macros(**athlete_macros, priority="table_tennis_readiness"),
-            reason="table tennis readiness is a meaningful constraint today",
-            guardrail="do not add fatigue that reduces coordination or shoulder/arm quality",
-            confidence=_confidence(snapshot, fallback="medium"),
-            needs_check_in=_yes_no(check_in_required),
-        ).as_dict()
+        return _decision(
+            Decision(
+                priority="table_tennis_readiness",
+                session="protect freshness; avoid grip-heavy, shoulder-heavy, or leg-depleting work",
+                nutrition="normal fueling with protein protected",
+                macros=build_macros(**athlete_macros, priority="table_tennis_readiness"),
+                reason="table tennis readiness is a meaningful constraint today",
+                guardrail="do not add fatigue that reduces coordination or shoulder/arm quality",
+                confidence=_confidence(snapshot, fallback="medium"),
+                needs_check_in=_yes_no(check_in_required),
+            )
+        )
 
     if _power_available(snapshot, hevy, manual):
-        return Decision(
-            priority="power_and_athleticism",
-            session="low-volume explosive work, speed, jumps, or throws with full recoveries",
-            nutrition="normal fueling or slight surplus around training, protein target protected",
-            macros=build_macros(**athlete_macros, priority="power_and_athleticism"),
-            reason="the current block and strength trend support a power-focused day",
-            guardrail="keep the volume low enough to preserve speed and the next run quality",
-            confidence=_confidence(snapshot, fallback="medium"),
-            needs_check_in=_yes_no(check_in_required),
-        ).as_dict()
+        return _decision(
+            Decision(
+                priority="power_and_athleticism",
+                session="low-volume explosive work, speed, jumps, or throws with full recoveries",
+                nutrition="normal fueling or slight surplus around training, protein target protected",
+                macros=build_macros(**athlete_macros, priority="power_and_athleticism"),
+                reason="the current block and strength trend support a power-focused day",
+                guardrail="keep the volume low enough to preserve speed and the next run quality",
+                confidence=_confidence(snapshot, fallback="medium"),
+                needs_check_in=_yes_no(check_in_required),
+            )
+        )
 
     if (
         _hard_session_allowed(snapshot)
         and _aerobic_block(snapshot)
         and not _has_any(constraints, {"leg_fatigue", "under_fueled"})
     ):
-        return Decision(
-            priority="aerobic_quality",
-            session="threshold, tempo, or VO2-focused run selected after warm-up readiness",
-            nutrition="higher-carbohydrate day, protein target protected",
-            macros=build_macros(**athlete_macros, priority="aerobic_quality"),
-            reason="aerobic block is active and no major constraint blocks quality work",
-            guardrail="do not add heavy lower-body volume after the run",
-            confidence=_confidence(snapshot, fallback="medium"),
-            needs_check_in=_yes_no(check_in_required),
-        ).as_dict()
+        return _decision(
+            Decision(
+                priority="aerobic_quality",
+                session="threshold, tempo, or VO2-focused run selected after warm-up readiness",
+                nutrition="higher-carbohydrate day, protein target protected",
+                macros=build_macros(**athlete_macros, priority="aerobic_quality"),
+                reason="aerobic block is active and no major constraint blocks quality work",
+                guardrail="do not add heavy lower-body volume after the run",
+                confidence=_confidence(snapshot, fallback="medium"),
+                needs_check_in=_yes_no(check_in_required),
+            )
+        )
 
     if "heavy_legs_vs_quality_run" in conflicts or "leg_fatigue" in constraints:
-        return Decision(
-            priority="aerobic_base",
-            session="easy aerobic work only, keeping legs fresh for the next quality session",
-            nutrition="normal fueling; do not force a large deficit",
-            macros=build_macros(**athlete_macros, priority="aerobic_base"),
-            reason="leg fatigue conflicts with hard running or heavy lower-body work",
-            guardrail="keep the session easy enough to improve recovery, not compete with it",
-            confidence=_confidence(snapshot, fallback="medium"),
-            needs_check_in=_yes_no(check_in_required),
-        ).as_dict()
+        return _decision(
+            Decision(
+                priority="aerobic_base",
+                session="easy aerobic work only, keeping legs fresh for the next quality session",
+                nutrition="normal fueling; do not force a large deficit",
+                macros=build_macros(**athlete_macros, priority="aerobic_base"),
+                reason="leg fatigue conflicts with hard running or heavy lower-body work",
+                guardrail="keep the session easy enough to improve recovery, not compete with it",
+                confidence=_confidence(snapshot, fallback="medium"),
+                needs_check_in=_yes_no(check_in_required),
+            )
+        )
 
     if _strength_available(flags, hevy):
-        return Decision(
-            priority="strength_progression",
-            session="gym session with progression intent and controlled volume",
-            nutrition="normal or slight surplus around training, protein target protected",
-            macros=build_macros(**athlete_macros, priority="strength_progression"),
-            reason="recent training state supports productive strength work",
-            guardrail="keep lower-body work compatible with the next quality run",
-            confidence=_confidence(snapshot, fallback="medium"),
-            needs_check_in=_yes_no(check_in_required),
-        ).as_dict()
+        return _decision(
+            Decision(
+                priority="strength_progression",
+                session="gym session with progression intent and controlled volume",
+                nutrition="normal or slight surplus around training, protein target protected",
+                macros=build_macros(**athlete_macros, priority="strength_progression"),
+                reason="recent training state supports productive strength work",
+                guardrail="keep lower-body work compatible with the next quality run",
+                confidence=_confidence(snapshot, fallback="medium"),
+                needs_check_in=_yes_no(check_in_required),
+            )
+        )
 
-    return Decision(
-        priority="aerobic_base",
-        session="easy run, low-intensity cardio, or brisk walk",
-        nutrition="normal fueling with protein protected",
-        macros=build_macros(**athlete_macros, priority="aerobic_base"),
-        reason="no higher-priority hard session is clearly supported by the snapshot",
-        guardrail="do not drift into a medium-hard session without a reason",
-        confidence=_confidence(snapshot, fallback="low"),
-        needs_check_in=_yes_no(check_in_required or _data_quality(snapshot) == "low"),
-    ).as_dict()
+    return _decision(
+        Decision(
+            priority="aerobic_base",
+            session="easy run, low-intensity cardio, or brisk walk",
+            nutrition="normal fueling with protein protected",
+            macros=build_macros(**athlete_macros, priority="aerobic_base"),
+            reason="no higher-priority hard session is clearly supported by the snapshot",
+            guardrail="do not drift into a medium-hard session without a reason",
+            confidence=_confidence(snapshot, fallback="low"),
+            needs_check_in=_yes_no(check_in_required or _data_quality(snapshot) == "low"),
+        )
+    )
 
 
 def _source_flags(*sources: dict[str, Any]) -> set[str]:
@@ -178,6 +197,16 @@ def _source_flags(*sources: dict[str, Any]) -> set[str]:
 
 def _list(value: Any) -> list[str]:
     return value if isinstance(value, list) else []
+
+
+def _decision(decision: Decision) -> Recommendation:
+    logger.info(
+        "selected recommendation priority=%s confidence=%s check_in=%s",
+        decision.priority,
+        decision.confidence,
+        decision.needs_check_in,
+    )
+    return decision.as_dict()
 
 
 def _has_any(values: set[str], targets: set[str]) -> bool:

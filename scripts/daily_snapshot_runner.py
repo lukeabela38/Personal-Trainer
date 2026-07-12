@@ -88,8 +88,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
             _log_line(deployment_log, f"wrote_sources: {args.sources_output}")
+        _log_line(deployment_log, "building_snapshot: start")
         snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
+        _log_line(deployment_log, "building_snapshot: done")
+        _log_line(deployment_log, "building_recommendation: start")
         recommendation = build_daily_recommendation(snapshot)
+        _log_line(deployment_log, "building_recommendation: done")
         source_kind = "example" if args.sources_file is not None else _infer_live_source_kind(sources)
         _write_json(
             args.snapshot_output,

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import sys
 import urllib.error
@@ -25,6 +26,13 @@ _APP_AUTH_TEMPLATE = {
     "build": "2807",
     "flavour": "free",
 }
+
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
 
 class CronometerAPIError(RuntimeError):
@@ -124,6 +132,7 @@ def _post(user_id: int, token: str, path: str, payload: dict) -> dict:
 
 def fetch(date_str: str | None = None) -> dict:
     day = date_str or datetime.now(UTC).strftime("%Y-%m-%d")
+    logger.info("[cronometer] fetching nutrition data for %s", day)
 
     payload: dict = {
         "freshness": "fresh",
@@ -173,9 +182,11 @@ def fetch(date_str: str | None = None) -> dict:
         payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
         payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
         payload["carb_availability"] = _carb_status(td["carbs_g"])
+        logger.info("[cronometer] built nutrition payload for %s", day)
 
     except Exception as e:
         print(f"[cronometer] nutrition unavailable: {e}", file=sys.stderr)
+        logger.warning("[cronometer] nutrition unavailable: %s", e)
 
     flags = payload["flags"]
     if payload["fueling_status"] == "low":
@@ -225,6 +236,7 @@ def _build_recent_days(user_id: int, token: str, day: str) -> list[dict]:
             diary = _fetch_diary_with_retry(user_id, token, day_str)
         except CronometerAPIError as e:
             print(f"[cronometer] skipping {day_str}: {e}", file=sys.stderr)
+            logger.warning("[cronometer] skipping %s: %s", day_str, e)
             continue
         summary = (diary or {}).get("summary") or {}
         macros = summary.get("macros") or {}
@@ -294,6 +306,7 @@ def _safe_float(v) -> float | None:
 
 def main() -> int:
     try:
+        _configure_logging()
         parser = argparse.ArgumentParser(description="Emit a live Cronometer source payload.")
         parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
         args = parser.parse_args()

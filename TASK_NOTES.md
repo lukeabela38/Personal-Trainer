@@ -207,3 +207,9 @@ Garmin auth/session caching card from the project board.
 - The log file records the run mode, live capture command, captured live-source stderr, and the final build status.
 - The generated file is served from the local preview bundle so it can be inspected during review.
 - The dashboard Actions menu now includes an `Open deployment log` entry, and the browser smoke test opens the menu before checking it.
+
+## 2026-07-13 Pipeline Logging Expansion
+
+- The live source wrappers now emit plain-text logging for their own capture steps and fallback paths.
+- `scripts/live_sources.py` forwards wrapper stderr so the runner log can include upstream capture messages instead of dropping them.
+- `personal_trainer.recommendation` now logs the selected recommendation priority, confidence, and check-in state.
