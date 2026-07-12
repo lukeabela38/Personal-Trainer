@@ -7,7 +7,7 @@ import logging
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     deployment_log: list[str] = []
     status = "failed"
     try:
-        _log_line(deployment_log, f"started_at: {datetime.now(timezone.utc).isoformat()}")
+        _log_line(deployment_log, f"started_at: {datetime.now(UTC).isoformat()}")
         _log_line(deployment_log, f"timezone: {args.timezone}")
         _log_line(
             deployment_log,
@@ -183,9 +183,7 @@ def _build_site_artifacts(snapshot_path: Path, site_output: Path) -> None:
     subprocess.run(command, check=True, env=_with_pythonpath())
 
 
-def _build_history_artifacts(
-    site_output: Path, deployment_log: list[str] | None = None
-) -> None:
+def _build_history_artifacts(site_output: Path, deployment_log: list[str] | None = None) -> None:
     _run_optional_history_report(
         env_var="PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND",
         script="strength_report.py",
