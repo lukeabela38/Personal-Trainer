@@ -53,7 +53,14 @@ class SitePreviewTest(TestCase):
         serve_call = run.call_args_list[2]
         self.assertEqual(
             serve_call.args[0],
-            [site_preview.sys.executable, "-m", "http.server", "4173"],
+            [
+                site_preview.sys.executable,
+                "-m",
+                "http.server",
+                "4173",
+                "--bind",
+                "127.0.0.1",
+            ],
         )
         self.assertEqual(serve_call.kwargs["cwd"], site_output)
 

@@ -21,19 +21,24 @@ class BuildSiteArtifactsTest(TestCase):
                 "styles.css",
                 "app.js",
                 "data-helpers.js",
+                "favicon.svg",
                 "progress.html",
                 "progress.js",
                 "progress.css",
                 "strength.html",
                 "strength.css",
                 "strength.js",
+                "strength/index.html",
                 "speed.html",
                 "speed.css",
                 "speed.js",
+                "speed/index.html",
                 "history.js",
                 "goals.js",
             ):
-                (site_dir / name).write_text(name, encoding="utf-8")
+                path = site_dir / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name, encoding="utf-8")
             snapshot.write_text(
                 json.dumps(
                     {
@@ -155,7 +160,9 @@ class BuildSiteArtifactsTest(TestCase):
             output_dir = tmp_path / "dist"
             site_dir.mkdir()
             for name in ("index.html", "styles.css", "app.js"):
-                (site_dir / name).write_text(name, encoding="utf-8")
+                path = site_dir / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name, encoding="utf-8")
             snapshot.write_text(
                 json.dumps(
                     {
