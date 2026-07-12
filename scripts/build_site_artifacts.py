@@ -71,30 +71,40 @@ def main(argv: list[str] | None = None) -> int:
 
 def _with_recommendation(snapshot: dict[str, Any]) -> dict[str, Any]:
     recommendation = snapshot.get("recommendation")
+    source = snapshot.get("source") or _infer_snapshot_source(snapshot)
     if isinstance(recommendation, dict):
-        return snapshot
-    return {**snapshot, "recommendation": build_daily_recommendation(snapshot)}
+        return {**snapshot, "source": source}
+    return {
+        **snapshot,
+        "source": source,
+        "recommendation": build_daily_recommendation(snapshot),
+    }
 
 
 def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
-    for name in (
-        "index.html",
-        "styles.css",
-        "app.js",
-        "data-helpers.js",
-        "progress.html",
-        "progress.js",
-        "progress.css",
-        "strength.html",
-        "strength.css",
-        "strength.js",
-        "speed.html",
-        "speed.css",
-        "speed.js",
-        "history.js",
-        "goals.js",
+    for relative in (
+        Path("index.html"),
+        Path("styles.css"),
+        Path("app.js"),
+        Path("data-helpers.js"),
+        Path("favicon.svg"),
+        Path("progress.html"),
+        Path("progress.js"),
+        Path("progress.css"),
+        Path("strength.html"),
+        Path("strength.css"),
+        Path("strength.js"),
+        Path("strength/index.html"),
+        Path("speed.html"),
+        Path("speed.css"),
+        Path("speed.js"),
+        Path("speed/index.html"),
+        Path("history.js"),
+        Path("goals.js"),
     ):
-        shutil.copy2(site_dir / name, output_dir / name)
+        destination = output_dir / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(site_dir / relative, destination)
 
 
 _EXERCISE_NAMES = {
@@ -264,6 +274,19 @@ def _format_duration(seconds: float) -> str:
 
 def _format_distance_km(meters: float) -> str:
     return f"{math.floor((meters / 1000) * 100) / 100:.2f} km"
+
+
+def _infer_snapshot_source(snapshot: dict[str, Any]) -> str:
+    cronometer = snapshot.get("cronometer", {})
+    garmin = snapshot.get("garmin", {})
+    hevy = snapshot.get("hevy", {})
+    if (
+        (isinstance(cronometer.get("recent_days"), list) and cronometer["recent_days"])
+        or (isinstance(garmin.get("recent_runs"), list) and garmin["recent_runs"])
+        or (isinstance(hevy.get("recent_workouts"), list) and hevy["recent_workouts"])
+    ):
+        return "live"
+    return "example"
 
 
 def _load_json(path: Path) -> dict[str, Any]:

@@ -4,7 +4,15 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Switch GitHub Pages to build from live source capture instead of the committed example snapshot.
+Make the progress page use only live recent-day data and stop falling back to generated archive history.
+
+## Progress Live-Only Fix
+
+- Progress page date controls now prefer the live recent-day window from the current snapshot.
+- Removed the archive/history fallback from the progress page so missing live data is reported instead of substituting generated history.
+- Added coverage for the live recent-day range summary helper and kept the UI limited to live dates only.
+- Snapshot builds now carry explicit source metadata so the dashboard can suppress example snapshots instead of rendering fake Today/nutrition values.
+- Live progress summaries now include current VO2 max and recent strength-best counts so the section surfaces training progress, not only fueling changes.
 
 ## Pages Live Source Build
 
@@ -165,3 +173,17 @@ Garmin auth/session caching card from the project board.
 ## Follow-ups
 
 - None for this task.
+## 2026-07-10
+
+- Removed synthetic/example fallback wording from the history UI.
+- Progress now infers live data from real recent-day activity and surfaces VO2/strength trend fields instead of reading as nutrition-only.
+- Rebuilt `dist/` from the live snapshot pipeline; host `python3` is still 3.9 here, so live source wrappers for Garmin/Hevy fell back and produced an empty live snapshot.
+- Progress page was trimmed back down to nutrition averages plus VO2 only; removed workouts/runs, weekly run distance, and Hevy strength trend tiles from the live summary and range summary.
+- Playwright smoke now uses the empty dashboard shell as the readiness target because the no-fallback preview boots without a rendered freshness strip or summary stack.
+- Local `python3 scripts/build_site_artifacts.py` publishes `favicon.svg` plus `strength/index.html` and `speed/index.html`; the Docker build path here still leaves those files out of `dist/`.
+- Browser smoke passed after rebuilding locally and serving `dist/` from `./scripts/serve_site.sh --skip-build` in the same shell context.
+## 2026-07-12
+
+- CI lint failure reproduced only when running Ruff from `personal_trainer/`, matching the workflow.
+- `scripts/build_site_artifacts.py` and `scripts/wrappers/fetch_cronometer.py` were reformatted to satisfy that context.
+- Root-level Ruff still differs on those files, but the CI job uses the package directory config and now passes there.

@@ -84,7 +84,14 @@ def _build_preview_artifacts(
 
 
 def _serve_directory(site_output: Path, port: int) -> int:
-    command = [sys.executable, "-m", "http.server", str(port)]
+    command = [
+        sys.executable,
+        "-m",
+        "http.server",
+        str(port),
+        "--bind",
+        "127.0.0.1",
+    ]
     subprocess.run(command, cwd=site_output, check=True)
     return 0
 

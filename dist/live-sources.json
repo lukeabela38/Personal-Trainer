@@ -296,15 +296,15 @@
         "endTimeGMT": "2026-07-09 17:51:34",
         "qualifyingDive": false,
         "activityUUID": "eb94dd31-b8ef-4ff4-aff8-b463e065ab10",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23538602459,
@@ -540,15 +540,15 @@
         "endTimeGMT": "2026-07-09 17:44:22",
         "qualifyingDive": false,
         "activityUUID": "d12fa26d-3027-4b90-ba65-47728643cc39",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23537832869,
@@ -741,15 +741,15 @@
         "endTimeGMT": "2026-07-09 16:42:42",
         "qualifyingDive": false,
         "activityUUID": "141485d8-cc13-4194-85d6-69ef9ac4c9f9",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23514059462,
@@ -935,15 +935,15 @@
         "endTimeGMT": "2026-07-07 18:06:51",
         "qualifyingDive": false,
         "activityUUID": "42142e35-1648-492c-8ab0-c328bc710faf",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23513968746,
@@ -1150,15 +1150,15 @@
         "endTimeGMT": "2026-07-07 17:58:55",
         "qualifyingDive": false,
         "activityUUID": "bea9b443-7667-4b7c-a419-1d92cae9d059",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23513964541,
@@ -1361,15 +1361,15 @@
         "endTimeGMT": "2026-07-07 16:45:14",
         "qualifyingDive": false,
         "activityUUID": "57bef7c7-bcad-468b-a963-89201a1caa4a",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23469247625,
@@ -1576,15 +1576,15 @@
         "endTimeGMT": "2026-07-03 20:27:43",
         "qualifyingDive": false,
         "activityUUID": "5b997f78-cabc-4b25-b5cc-dfdfdbf12a3e",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23456621528,
@@ -1771,15 +1771,15 @@
         "endTimeGMT": "2026-07-02 17:57:12",
         "qualifyingDive": false,
         "activityUUID": "bd53f39f-545a-4036-9738-6f2d24ce4026",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23456620790,
@@ -2015,15 +2015,15 @@
         "endTimeGMT": "2026-07-02 17:49:47",
         "qualifyingDive": false,
         "activityUUID": "990d0fee-bf52-4125-b920-b3a0a52f577a",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       },
       {
         "activityId": 23455688414,
@@ -2225,15 +2225,15 @@
         "endTimeGMT": "2026-07-02 16:40:32",
         "qualifyingDive": false,
         "activityUUID": "1d761523-757d-44b6-9883-97237f5061bc",
-        "favorite": false,
-        "purposeful": false,
-        "elevationCorrected": false,
-        "atpActivity": false,
-        "autoCalcCalories": false,
         "decoDive": false,
+        "purposeful": false,
         "manualActivity": false,
         "pr": false,
-        "parent": false
+        "autoCalcCalories": false,
+        "elevationCorrected": false,
+        "atpActivity": false,
+        "parent": false,
+        "favorite": false
       }
     ],
     "last_quality_run": null,
@@ -2248,125 +2248,18 @@
   },
   "hevy": {
     "freshness": "fresh",
-    "recent_workouts": [
-      {
-        "title": "Loft",
-        "start_time": "2026-07-08T05:16:07+00:00",
-        "end_time": "2026-07-08T06:41:41+00:00",
-        "exercise_count": 6
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-07-06T05:12:48+00:00",
-        "end_time": "2026-07-06T06:36:45+00:00",
-        "exercise_count": 5
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-07-03T05:12:44+00:00",
-        "end_time": "2026-07-03T06:25:21+00:00",
-        "exercise_count": 4
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-07-02T05:15:50+00:00",
-        "end_time": "2026-07-02T06:36:31+00:00",
-        "exercise_count": 5
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-06-30T05:15:15+00:00",
-        "end_time": "2026-06-30T06:33:39+00:00",
-        "exercise_count": 4
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-06-26T04:41:57+00:00",
-        "end_time": "2026-06-26T05:54:39+00:00",
-        "exercise_count": 4
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-06-24T05:15:01+00:00",
-        "end_time": "2026-06-24T06:27:13+00:00",
-        "exercise_count": 5
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-06-22T04:58:48+00:00",
-        "end_time": "2026-06-22T06:21:29+00:00",
-        "exercise_count": 5
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-06-16T05:09:32+00:00",
-        "end_time": "2026-06-16T06:42:45+00:00",
-        "exercise_count": 4
-      },
-      {
-        "title": "Loft",
-        "start_time": "2026-06-15T05:15:13+00:00",
-        "end_time": "2026-06-15T06:31:38+00:00",
-        "exercise_count": 5
-      }
-    ],
-    "last_workout": {
-      "title": "Loft",
-      "start_time": "2026-07-08T05:16:07+00:00",
-      "end_time": "2026-07-08T06:41:41+00:00",
-      "exercise_count": 6
-    },
+    "recent_workouts": [],
+    "last_workout": null,
     "muscle_group_fatigue": {
       "legs": "unknown",
       "posterior_chain": "unknown",
-      "push": "high",
+      "push": "unknown",
       "pull": "unknown",
-      "shoulders_arms": "moderate",
+      "shoulders_arms": "unknown",
       "core": "unknown"
     },
     "strength_trend": "unknown",
-    "recent_bests": [
-      {
-        "exercise_template_id": "F1E57334",
-        "weight_kg": 35.0,
-        "reps": 8,
-        "estimated_one_rm_kg": 44.3,
-        "workout_start_time": "2026-07-02T05:15:50+00:00",
-        "workout_title": "Loft"
-      },
-      {
-        "exercise_template_id": "79D0BB3A",
-        "weight_kg": 60.0,
-        "reps": 10,
-        "estimated_one_rm_kg": 80.0,
-        "workout_start_time": "2026-06-26T04:41:57+00:00",
-        "workout_title": "Loft"
-      },
-      {
-        "exercise_template_id": "8347DFD1",
-        "weight_kg": 10.0,
-        "reps": 12,
-        "estimated_one_rm_kg": 14.0,
-        "workout_start_time": "2026-06-22T04:58:48+00:00",
-        "workout_title": "Loft"
-      },
-      {
-        "exercise_template_id": "D04AC939",
-        "weight_kg": 100.0,
-        "reps": 8,
-        "estimated_one_rm_kg": 126.7,
-        "workout_start_time": "2026-06-16T05:09:32+00:00",
-        "workout_title": "Loft"
-      },
-      {
-        "exercise_template_id": "5E10D0E6",
-        "weight_kg": 36.0,
-        "reps": 12,
-        "estimated_one_rm_kg": 50.4,
-        "workout_start_time": "2026-07-02T05:15:50+00:00",
-        "workout_title": "Loft"
-      }
-    ],
+    "recent_bests": [],
     "flags": []
   },
   "cronometer": {
@@ -2381,7 +2274,338 @@
       "remaining_kcal": -45.24000000000001,
       "log_completeness": "complete"
     },
-    "recent_days": [],
+    "recent_days": [
+      {
+        "date": "2026-06-11",
+        "calories_consumed": 2050.58,
+        "calories_target": 1878.0,
+        "protein_g": 140.85,
+        "carbs_g": 234.75,
+        "fat_g": 41.733333333333334,
+        "fiber_g": null,
+        "remaining_kcal": -172.57999999999993,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-12",
+        "calories_consumed": 2175.72,
+        "calories_target": 1912.0,
+        "protein_g": 143.4,
+        "carbs_g": 239.0,
+        "fat_g": 42.488888888888894,
+        "fiber_g": null,
+        "remaining_kcal": -263.7199999999998,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-13",
+        "calories_consumed": 2594.02,
+        "calories_target": 3077.0,
+        "protein_g": 230.77499999999998,
+        "carbs_g": 384.625,
+        "fat_g": 68.3777777777778,
+        "fiber_g": null,
+        "remaining_kcal": 482.98,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-14",
+        "calories_consumed": 2881.57,
+        "calories_target": 2914.0,
+        "protein_g": 218.54999999999998,
+        "carbs_g": 364.25,
+        "fat_g": 64.75555555555556,
+        "fiber_g": null,
+        "remaining_kcal": 32.429999999999836,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-15",
+        "calories_consumed": 2597.12,
+        "calories_target": 2753.0,
+        "protein_g": 206.475,
+        "carbs_g": 344.125,
+        "fat_g": 61.17777777777778,
+        "fiber_g": null,
+        "remaining_kcal": 155.8800000000001,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-16",
+        "calories_consumed": 2198.31,
+        "calories_target": 2149.0,
+        "protein_g": 161.17499999999998,
+        "carbs_g": 268.625,
+        "fat_g": 47.75555555555556,
+        "fiber_g": null,
+        "remaining_kcal": -49.309999999999945,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-17",
+        "calories_consumed": 1969.09,
+        "calories_target": 2262.0,
+        "protein_g": 169.65,
+        "carbs_g": 282.75,
+        "fat_g": 50.26666666666667,
+        "fiber_g": null,
+        "remaining_kcal": 292.9100000000001,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-18",
+        "calories_consumed": 2405.58,
+        "calories_target": 2939.0,
+        "protein_g": 220.42499999999998,
+        "carbs_g": 367.375,
+        "fat_g": 65.31111111111112,
+        "fiber_g": null,
+        "remaining_kcal": 533.4200000000001,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-19",
+        "calories_consumed": 2081.47,
+        "calories_target": 1967.0,
+        "protein_g": 147.525,
+        "carbs_g": 245.875,
+        "fat_g": 43.711111111111116,
+        "fiber_g": null,
+        "remaining_kcal": -114.4699999999998,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-20",
+        "calories_consumed": 1699.76,
+        "calories_target": 2820.0,
+        "protein_g": 211.5,
+        "carbs_g": 352.5,
+        "fat_g": 62.666666666666664,
+        "fiber_g": null,
+        "remaining_kcal": 1120.24,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-21",
+        "calories_consumed": 1967.36,
+        "calories_target": 1962.0,
+        "protein_g": 147.15,
+        "carbs_g": 245.25,
+        "fat_g": 43.6,
+        "fiber_g": null,
+        "remaining_kcal": -5.3599999999999,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-22",
+        "calories_consumed": 2307.65,
+        "calories_target": 3129.0,
+        "protein_g": 234.67499999999998,
+        "carbs_g": 391.125,
+        "fat_g": 69.53333333333335,
+        "fiber_g": null,
+        "remaining_kcal": 821.3499999999999,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-23",
+        "calories_consumed": 2465.98,
+        "calories_target": 2472.0,
+        "protein_g": 185.4,
+        "carbs_g": 309.0,
+        "fat_g": 54.93333333333334,
+        "fiber_g": null,
+        "remaining_kcal": 6.019999999999982,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-24",
+        "calories_consumed": 2537.91,
+        "calories_target": 2562.0,
+        "protein_g": 192.15,
+        "carbs_g": 320.25,
+        "fat_g": 56.93333333333333,
+        "fiber_g": null,
+        "remaining_kcal": 24.090000000000146,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-25",
+        "calories_consumed": 2518.59,
+        "calories_target": 2953.0,
+        "protein_g": 221.475,
+        "carbs_g": 369.125,
+        "fat_g": 65.62222222222222,
+        "fiber_g": null,
+        "remaining_kcal": 434.40999999999985,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-26",
+        "calories_consumed": 2584.34,
+        "calories_target": 2541.0,
+        "protein_g": 190.575,
+        "carbs_g": 317.625,
+        "fat_g": 56.46666666666667,
+        "fiber_g": null,
+        "remaining_kcal": -43.340000000000146,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-27",
+        "calories_consumed": 2584.41,
+        "calories_target": 2818.0,
+        "protein_g": 211.35,
+        "carbs_g": 352.25,
+        "fat_g": 62.62222222222223,
+        "fiber_g": null,
+        "remaining_kcal": 233.59000000000015,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-28",
+        "calories_consumed": 2498.25,
+        "calories_target": 3068.0,
+        "protein_g": 230.1,
+        "carbs_g": 383.5,
+        "fat_g": 68.17777777777778,
+        "fiber_g": null,
+        "remaining_kcal": 569.75,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-29",
+        "calories_consumed": 2149.2,
+        "calories_target": 1909.0,
+        "protein_g": 143.17499999999998,
+        "carbs_g": 238.625,
+        "fat_g": 42.422222222222224,
+        "fiber_g": null,
+        "remaining_kcal": -240.19999999999982,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-06-30",
+        "calories_consumed": 2804.97,
+        "calories_target": 2884.0,
+        "protein_g": 216.29999999999998,
+        "carbs_g": 360.5,
+        "fat_g": 64.0888888888889,
+        "fiber_g": null,
+        "remaining_kcal": 79.0300000000002,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-01",
+        "calories_consumed": 1737.75,
+        "calories_target": 1919.0,
+        "protein_g": 143.92499999999998,
+        "carbs_g": 239.875,
+        "fat_g": 42.644444444444446,
+        "fiber_g": null,
+        "remaining_kcal": 181.25,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-02",
+        "calories_consumed": 2972.22,
+        "calories_target": 3019.0,
+        "protein_g": 226.42499999999998,
+        "carbs_g": 377.375,
+        "fat_g": 67.0888888888889,
+        "fiber_g": null,
+        "remaining_kcal": 46.7800000000002,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-03",
+        "calories_consumed": 2897.51,
+        "calories_target": 3385.0,
+        "protein_g": 253.875,
+        "carbs_g": 423.125,
+        "fat_g": 75.22222222222223,
+        "fiber_g": null,
+        "remaining_kcal": 487.4899999999998,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-04",
+        "calories_consumed": 1957.58,
+        "calories_target": 1929.0,
+        "protein_g": 144.67499999999998,
+        "carbs_g": 241.125,
+        "fat_g": 42.86666666666667,
+        "fiber_g": null,
+        "remaining_kcal": -28.579999999999927,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-05",
+        "calories_consumed": 1686.71,
+        "calories_target": 1847.0,
+        "protein_g": 138.525,
+        "carbs_g": 230.875,
+        "fat_g": 41.04444444444445,
+        "fiber_g": null,
+        "remaining_kcal": 160.28999999999996,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-06",
+        "calories_consumed": 2314.62,
+        "calories_target": 2363.0,
+        "protein_g": 177.225,
+        "carbs_g": 295.375,
+        "fat_g": 52.51111111111111,
+        "fiber_g": null,
+        "remaining_kcal": 48.38000000000011,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-07",
+        "calories_consumed": 2804.84,
+        "calories_target": 2972.0,
+        "protein_g": 222.9,
+        "carbs_g": 371.5,
+        "fat_g": 66.04444444444444,
+        "fiber_g": null,
+        "remaining_kcal": 167.15999999999985,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-08",
+        "calories_consumed": 2375.13,
+        "calories_target": 2508.0,
+        "protein_g": 188.1,
+        "carbs_g": 313.5,
+        "fat_g": 55.733333333333334,
+        "fiber_g": null,
+        "remaining_kcal": 132.8699999999999,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-09",
+        "calories_consumed": 2689.03,
+        "calories_target": 2860.0,
+        "protein_g": 214.5,
+        "carbs_g": 357.5,
+        "fat_g": 63.55555555555556,
+        "fiber_g": null,
+        "remaining_kcal": 170.9699999999998,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-10",
+        "calories_consumed": 1744.24,
+        "calories_target": 1699.0,
+        "protein_g": 127.425,
+        "carbs_g": 212.375,
+        "fat_g": 37.75555555555556,
+        "fiber_g": null,
+        "remaining_kcal": -45.24000000000001,
+        "log_completeness": "complete"
+      }
+    ],
     "fueling_status": "high",
     "protein_status": "high",
     "carb_availability": "high",

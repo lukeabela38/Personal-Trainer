@@ -185,6 +185,7 @@ Calls `get_personal_records` and filters for running records (1K, Mile, 5K, 10K,
 ### Hevy — `scripts/wrappers/fetch_hevy.py`
 
 Calls `get_latest_workout`, `get_workout_history`, and `get_exercise_history` for tracked exercises. Infers muscle group fatigue from the latest workout. Used by `PERSONAL_TRAINER_HEVY_COMMAND`.
+The live Hevy wrapper now pulls a wider recent workout window so the deploy-time snapshot reflects roughly the last 30 days instead of only a short sample.
 
 ### Hevy Strength — `scripts/wrappers/fetch_hevy_strength.py`
 
@@ -194,6 +195,7 @@ Calls `get_exercise_history` for all tracked template IDs and returns raw rows f
 
 Calls `get_daily_nutrition_summary` and `get_macro_targets`. Computes fueling/protein/carb status and log completeness. Used by `PERSONAL_TRAINER_CRONOMETER_COMMAND`.
 The wrapper caches Cronometer session state in `~/.cronometer_session.json` by default and reuses it before falling back to a fresh login. The Docker pipeline overrides `CRONOMETER_SESSION_FILE` to `/app/.cronometer_session/session.json` and mounts that directory as a named volume so the token survives repeated `docker compose run` invocations.
+The live Cronometer wrapper now backfills `recent_days` for the last 30 days so the deploy snapshot can surface a short live nutrition history without a database.
 
 ### Manual Check-In — `scripts/wrappers/fetch_manual.py`
 

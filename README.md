@@ -52,6 +52,7 @@ docker compose run --rm app python3 scripts/daily_snapshot_runner.py
 ```
 
 This also refreshes the dedicated `strength.json` and `speed.json` history artifacts used by the `/strength` and `/speed` pages.
+The live build path now widens the recent source windows so deploys can show a short live 30-day nutrition and workout history without adding a database.
 The speed artifact normalizes Garmin personal records into human-readable durations and distances before publishing them.
 
 History snapshots are generated locally when needed and are not committed. To create the archive used by the progress/history UI, run:

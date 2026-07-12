@@ -54,3 +54,18 @@ export function summarizeBests(snapshot) {
   const garmin = snapshot?.garmin?.recent_bests?.length ?? 0;
   return `${hevy} strength / ${garmin} running`;
 }
+
+export function hasLiveSnapshotData(snapshot) {
+  const cronometerDays = Array.isArray(snapshot?.cronometer?.recent_days)
+    ? snapshot.cronometer.recent_days
+    : [];
+  const recentRuns = Array.isArray(snapshot?.garmin?.recent_runs)
+    ? snapshot.garmin.recent_runs
+    : [];
+  const recentWorkouts = Array.isArray(snapshot?.hevy?.recent_workouts)
+    ? snapshot.hevy.recent_workouts
+    : [];
+  return Boolean(
+    cronometerDays.length || recentRuns.length || recentWorkouts.length,
+  );
+}

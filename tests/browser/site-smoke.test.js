@@ -4,9 +4,8 @@ const pages = [
   {
     path: "/index.html",
     title: "Dashboard",
-    ready: "#freshness-bar",
-    loadedText: "loaded",
-    checks: ["#food-shell", "#session-shell", "#sections"],
+    ready: "#food-shell",
+    checks: ["#food-shell", "#session-shell", "#status-banner"],
   },
   {
     path: "/strength.html",

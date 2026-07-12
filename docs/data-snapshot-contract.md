@@ -153,7 +153,7 @@ Flags are evidence, not final decisions.
 Minimum useful Hevy data to capture:
 
 - last workout date and title
-- recent workouts, at least the last 7-14 days
+- recent workouts, at least the last 7-14 days and ideally a wider recent window when the live pipeline can fetch it
 - exercises performed, sets, reps, weight, and RPE if available
 - recent bests that show progression markers
 - muscle-group exposure from recent workouts
@@ -189,7 +189,7 @@ Minimum useful Cronometer data to capture:
 - calorie balance
 - protein intake
 - carbohydrate availability
-- recent day summaries
+- recent day summaries, ideally a live 30-day window when the deploy pipeline can fetch it
 - log completeness
 
 ### Nutrition Status Values

@@ -7,7 +7,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 _API_BASE = "https://mobile.cronometer.com/api/v2"
@@ -17,6 +17,7 @@ _DEFAULT_SESSION_FILE = Path.home() / ".cronometer_session.json"
 _CALORIES_PER_G_PROTEIN = 4
 _CALORIES_PER_G_CARBS = 4
 _CALORIES_PER_G_FAT = 9
+_RECENT_DAYS_LIMIT = 30
 
 _APP_AUTH_TEMPLATE = {
     "api": 3,
@@ -144,20 +145,10 @@ def fetch(date_str: str | None = None) -> dict:
     }
 
     try:
-        diary = None
-        cached_session = _load_cached_session()
-        if cached_session is not None:
-            try:
-                diary = _post(cached_session[0], cached_session[1], "/get_diary", {"day": day})
-            except CronometerAPIError as e:
-                if e.code not in {401, 403}:
-                    raise
-                diary = None
-
+        user_id, token = _load_session()
+        diary = _fetch_diary_with_retry(user_id, token, day)
         if diary is None:
-            user_id, token = _login()
-            _save_cached_session(user_id, token)
-            diary = _post(user_id, token, "/get_diary", {"day": day})
+            raise RuntimeError(f"unable to fetch diary for {day}")
 
         summary = (diary or {}).get("summary") or {}
         target = (summary.get("macros") or {}).get("energy")
@@ -176,6 +167,8 @@ def fetch(date_str: str | None = None) -> dict:
         td["carbs_g"] = _safe_float(entry_macros.get("carbs") or entry_macros.get("net_carbs"))
         td["fat_g"] = _safe_float(entry_macros.get("fat"))
         td["fiber_g"] = _safe_float(entry_macros.get("fiber"))
+
+        payload["recent_days"] = _build_recent_days(user_id, token, day)
 
         payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
         payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
@@ -196,6 +189,63 @@ def fetch(date_str: str | None = None) -> dict:
     payload["flags"] = sorted(set(flags))
 
     return payload
+
+
+def _load_session() -> tuple[int, str]:
+    cached_session = _load_cached_session()
+    if cached_session is not None:
+        return cached_session
+    user_id, token = _login()
+    _save_cached_session(user_id, token)
+    return user_id, token
+
+
+def _fetch_diary_with_retry(user_id: int, token: str, day: str) -> dict | None:
+    try:
+        return _post(user_id, token, "/get_diary", {"day": day})
+    except CronometerAPIError as e:
+        if e.code not in {401, 403}:
+            raise
+        refreshed_user_id, refreshed_token = _login()
+        _save_cached_session(refreshed_user_id, refreshed_token)
+        return _post(refreshed_user_id, refreshed_token, "/get_diary", {"day": day})
+
+
+def _build_recent_days(user_id: int, token: str, day: str) -> list[dict]:
+    try:
+        base_day = date.fromisoformat(day)
+    except ValueError:
+        return []
+
+    recent_days: list[dict] = []
+    for offset in range(_RECENT_DAYS_LIMIT - 1, -1, -1):
+        current_day = base_day - timedelta(days=offset)
+        day_str = current_day.isoformat()
+        try:
+            diary = _fetch_diary_with_retry(user_id, token, day_str)
+        except CronometerAPIError as e:
+            print(f"[cronometer] skipping {day_str}: {e}", file=sys.stderr)
+            continue
+        summary = (diary or {}).get("summary") or {}
+        macros = summary.get("macros") or {}
+        consumed = (summary.get("consumed") or {}).get("total")
+        target = macros.get("energy")
+        recent_days.append(
+            {
+                "date": day_str,
+                "calories_consumed": _safe_float(consumed),
+                "calories_target": _safe_float(target),
+                "protein_g": _safe_float(macros.get("protein")),
+                "carbs_g": _safe_float(macros.get("carbs") or macros.get("net_carbs")),
+                "fat_g": _safe_float(macros.get("fat")),
+                "fiber_g": _safe_float(macros.get("fiber")),
+                "remaining_kcal": _safe_float(target - consumed)
+                if target is not None and consumed is not None
+                else None,
+                "log_completeness": "complete" if consumed and consumed > 0 else "incomplete",
+            }
+        )
+    return recent_days
 
 
 def _fueling_status(calories: float | None, target: float | None) -> str:

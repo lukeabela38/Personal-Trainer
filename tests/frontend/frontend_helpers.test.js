@@ -106,6 +106,8 @@ const speed = await import("../../site/speed.js");
 const strength = await import("../../site/strength.js");
 const app = await import("../../site/app.js");
 const progress = await import("../../site/progress.js");
+const { defaultFoodEntryTime, renderCheckInPanel } = app;
+const { buildLiveHistorySummary, buildLiveRangeSummary } = progress;
 
 test("shared data helpers format and read values", () => {
   assert.equal(sharedEscapeHtml(`<&>"'`), "&lt;&amp;&gt;&quot;&#39;");
@@ -185,7 +187,7 @@ test("goals save and load round-trip through localStorage", () => {
 });
 
 test("check-in panel renders fixed questions and answer chips", () => {
-  const html = app.renderCheckInPanel({
+  const html = renderCheckInPanel({
     snapshotDate: "2026-07-06",
     needsCheckIn: true,
     checkInQuestions: [
@@ -208,6 +210,13 @@ test("check-in panel renders fixed questions and answer chips", () => {
   assert.match(html, /How recovered do you feel today\?/);
   assert.match(html, /data-checkin-answer="poor"/);
   assert.match(html, /Selected: Okay/);
+});
+
+test("default food entry time formats a datetime-local value", () => {
+  assert.match(
+    defaultFoodEntryTime(new Date("2026-07-10T12:00:00Z")),
+    /^2026-07-10T/,
+  );
 });
 
 test("history helpers summarize snapshots", () => {
@@ -243,6 +252,93 @@ test("history helpers summarize snapshots", () => {
   assert.equal(weeklySummary(snapshots)?.recoveryDays, 1);
   assert.equal(weeklySummary(snapshots)?.avgCalories, 2050);
   assert.equal(weeklySummary(snapshots)?.avgProtein, 165);
+});
+
+test("live progress summary prefers the current snapshot windows", () => {
+  const summary = buildLiveHistorySummary({
+    snapshot_date: "2026-07-10",
+    hevy: { recent_workouts: [{}, {}, {}] },
+    garmin: { recent_runs: [{}, {}] },
+    cronometer: {
+      recent_days: [
+        { date: "2026-07-08", calories_consumed: 1900, protein_g: 160 },
+        { date: "2026-07-09", calories_consumed: 2000, protein_g: 170 },
+      ],
+    },
+  });
+
+  assert.deepEqual(summary, {
+    days: 2,
+    latestDate: "2026-07-09",
+    avgCalories: 1950,
+    avgProtein: 165,
+    vo2: null,
+    vo2Trend: "unknown",
+  });
+});
+
+test("live progress range summary stays on the live recent-day window", () => {
+  const summary = buildLiveRangeSummary(
+    {
+      cronometer: {
+        recent_days: [
+          {
+            date: "2026-07-07",
+            calories_consumed: 1800,
+            protein_g: 140,
+            carbs_g: 220,
+            fat_g: 50,
+            remaining_kcal: 100,
+          },
+          {
+            date: "2026-07-08",
+            calories_consumed: 1900,
+            protein_g: 150,
+            carbs_g: 230,
+            fat_g: 55,
+            remaining_kcal: 50,
+          },
+          {
+            date: "2026-07-09",
+            calories_consumed: 2100,
+            protein_g: 160,
+            carbs_g: 240,
+            fat_g: 60,
+            remaining_kcal: -25,
+          },
+        ],
+      },
+      hevy: { recent_workouts: [{ startTimeLocal: "2026-07-08 19:00:00" }] },
+      garmin: {
+        recent_runs: [{ startTimeGMT: "2026-07-09 06:00:00", distance: 10000 }],
+      },
+    },
+    "2026-07-07",
+    "2026-07-09",
+  );
+
+  assert.deepEqual(summary, {
+    from: "2026-07-07",
+    to: "2026-07-09",
+    days: 3,
+    startDate: "2026-07-07",
+    endDate: "2026-07-09",
+    startCalories: 1800,
+    endCalories: 2100,
+    startProtein: 140,
+    endProtein: 160,
+    startCarbs: 220,
+    endCarbs: 240,
+    avgCarbs: 230,
+    avgFat: 55,
+    startRemaining: 100,
+    endRemaining: -25,
+    avgCalories: 1933,
+    avgProtein: 150,
+    vo2: null,
+    vo2Trend: "unknown",
+    latestDate: "2026-07-09",
+  });
 });
 
 test("speed helpers normalize pace and distance records", () => {

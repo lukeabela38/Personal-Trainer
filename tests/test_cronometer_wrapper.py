@@ -44,13 +44,14 @@ class CronometerWrapperTests(unittest.TestCase):
                 payload = cronometer.fetch()
 
         login.assert_not_called()
-        post.assert_called_once()
+        self.assertEqual(post.call_count, 31)
         self.assertEqual(post.call_args.args[:3], (12, "cached-token", "/get_diary"))
         self.assertEqual(set(post.call_args.args[3].keys()), {"day"})
         self.assertRegex(post.call_args.args[3]["day"], r"^\d{4}-\d{2}-\d{2}$")
         self.assertEqual(payload["today"]["calories_consumed"], 1500.0)
         self.assertEqual(payload["today"]["calories_target"], 2000.0)
         self.assertEqual(payload["fueling_status"], "adequate")
+        self.assertEqual(len(payload["recent_days"]), 30)
 
     def test_fetch_refreshes_expired_session_and_updates_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -82,6 +83,7 @@ class CronometerWrapperTests(unittest.TestCase):
                 json.loads(session_file.read_text(encoding="utf-8")),
                 {"userId": 99, "sessionKey": "fresh-token"},
             )
+            self.assertEqual(len(payload["recent_days"]), 30)
             self.assertEqual(payload["today"]["calories_consumed"], 1500.0)
             self.assertEqual(payload["fueling_status"], "adequate")
 
@@ -92,11 +94,13 @@ class CronometerWrapperTests(unittest.TestCase):
             patch.object(cronometer, "_save_cached_session"),
             patch.object(cronometer, "_post", return_value=_diary_payload()) as post,
         ):
-            cronometer.fetch("2026-07-04")
+            payload = cronometer.fetch("2026-07-04")
 
         login.assert_called_once()
+        self.assertEqual(post.call_count, 31)
         self.assertEqual(post.call_args.args[:3], (12, "cached-token", "/get_diary"))
         self.assertEqual(post.call_args.args[3], {"day": "2026-07-04"})
+        self.assertEqual(len(payload["recent_days"]), 30)
 
 
 if __name__ == "__main__":
