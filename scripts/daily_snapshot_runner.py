@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -61,17 +62,32 @@ def main(argv: list[str] | None = None) -> int:
         help="Where to write the published site artifacts.",
     )
     parser.add_argument(
+        "--deploy-log-output",
+        type=Path,
+        default=Path("dist/deploy-log.txt"),
+        help="Where to write a deployment log file.",
+    )
+    parser.add_argument(
         "--require-garmin-vo2max",
         action="store_true",
         help="Fail the build when live Garmin data does not include current_vo2max.",
     )
     args = parser.parse_args(argv)
 
+    deployment_log: list[str] = []
+    status = "failed"
     try:
-        sources = _load_sources(args.sources_file, args.date, args.timezone)
+        _log_line(deployment_log, f"started_at: {datetime.now(timezone.utc).isoformat()}")
+        _log_line(deployment_log, f"timezone: {args.timezone}")
+        _log_line(
+            deployment_log,
+            f"sources_mode: {'file' if args.sources_file is not None else 'live'}",
+        )
+        sources = _load_sources(args.sources_file, args.date, args.timezone, deployment_log)
         _validate_live_sources(sources, require_garmin_vo2max=args.require_garmin_vo2max)
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
+            _log_line(deployment_log, f"wrote_sources: {args.sources_output}")
         snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
         recommendation = build_daily_recommendation(snapshot)
         source_kind = "example" if args.sources_file is not None else _infer_live_source_kind(sources)
@@ -79,8 +95,14 @@ def main(argv: list[str] | None = None) -> int:
             args.snapshot_output,
             {**snapshot, "source": source_kind, "recommendation": recommendation},
         )
+        _log_line(deployment_log, f"wrote_snapshot: {args.snapshot_output}")
+        _log_line(deployment_log, "building_site_artifacts: start")
         _build_site_artifacts(args.snapshot_output, args.site_output)
-        _build_history_artifacts(args.site_output)
+        _log_line(deployment_log, "building_history_artifacts: start")
+        _build_history_artifacts(args.site_output, deployment_log)
+        _log_line(deployment_log, f"wrote_site_output: {args.site_output}")
+        status = "succeeded"
+        _write_deploy_log(args.deploy_log_output, deployment_log, status=status)
         print(args.site_output)
         return 0
     except (
@@ -89,17 +111,25 @@ def main(argv: list[str] | None = None) -> int:
         ValueError,
         subprocess.CalledProcessError,
     ) as exc:
+        _log_line(deployment_log, f"error: {exc}")
+        _write_deploy_log(args.deploy_log_output, deployment_log, status=status)
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
 
-def _load_sources(path: Path | None, date: str | None, timezone: str) -> dict[str, Any]:
+def _load_sources(
+    path: Path | None,
+    date: str | None,
+    timezone: str,
+    deployment_log: list[str],
+) -> dict[str, Any]:
     if path is not None:
+        _log_line(deployment_log, f"loaded_sources_file: {path}")
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("sources file must contain a JSON object")
         return payload
-    return _capture_live_sources(date, timezone)
+    return _capture_live_sources(date, timezone, deployment_log)
 
 
 def _with_pythonpath() -> dict[str, str]:
@@ -113,11 +143,16 @@ def _with_pythonpath() -> dict[str, str]:
     return env
 
 
-def _capture_live_sources(date: str | None, timezone: str) -> dict[str, Any]:
+def _capture_live_sources(
+    date: str | None,
+    timezone: str,
+    deployment_log: list[str],
+) -> dict[str, Any]:
     command = [sys.executable, str(REPO_ROOT / "scripts" / "live_sources.py")]
     if date:
         command.extend(["--date", date])
     command.extend(["--timezone", timezone])
+    _log_line(deployment_log, f"capture_command: {' '.join(command)}")
     completed = subprocess.run(
         command,
         check=True,
@@ -128,9 +163,11 @@ def _capture_live_sources(date: str | None, timezone: str) -> dict[str, Any]:
     )
     if completed.stderr:
         sys.stderr.write(completed.stderr)
+        _append_log_block(deployment_log, "live_sources_stderr", completed.stderr)
     payload = json.loads(completed.stdout)
     if not isinstance(payload, dict):
         raise ValueError("live sources payload must be a JSON object")
+    _log_line(deployment_log, "captured_live_sources: true")
     return payload
 
 
@@ -146,22 +183,34 @@ def _build_site_artifacts(snapshot_path: Path, site_output: Path) -> None:
     subprocess.run(command, check=True, env=_with_pythonpath())
 
 
-def _build_history_artifacts(site_output: Path) -> None:
+def _build_history_artifacts(
+    site_output: Path, deployment_log: list[str] | None = None
+) -> None:
     _run_optional_history_report(
         env_var="PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND",
         script="strength_report.py",
         output_path=site_output / "strength.json",
+        deployment_log=deployment_log,
     )
     _run_optional_history_report(
         env_var="PERSONAL_TRAINER_GARMIN_SPEED_COMMAND",
         script="speed_report.py",
         output_path=site_output / "speed.json",
+        deployment_log=deployment_log,
     )
 
 
-def _run_optional_history_report(env_var: str, script: str, output_path: Path) -> None:
+def _run_optional_history_report(
+    env_var: str,
+    script: str,
+    output_path: Path,
+    deployment_log: list[str] | None = None,
+) -> None:
     if not os.environ.get(env_var):
-        print(f"Skipping {script}: {env_var} is not set", file=sys.stderr)
+        message = f"Skipping {script}: {env_var} is not set"
+        print(message, file=sys.stderr)
+        if deployment_log is not None:
+            _log_line(deployment_log, message)
         return
     try:
         subprocess.run(
@@ -175,15 +224,34 @@ def _run_optional_history_report(env_var: str, script: str, output_path: Path) -
             env=_with_pythonpath(),
         )
     except subprocess.CalledProcessError as exc:
-        print(
-            f"Skipping {script}: {env_var} failed with exit code {exc.returncode}",
-            file=sys.stderr,
-        )
+        message = f"Skipping {script}: {env_var} failed with exit code {exc.returncode}"
+        print(message, file=sys.stderr)
+        if deployment_log is not None:
+            _log_line(deployment_log, message)
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _write_deploy_log(path: Path, deployment_log: list[str], *, status: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        f"status: {status}",
+        *deployment_log,
+    ]
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def _log_line(deployment_log: list[str], message: str) -> None:
+    deployment_log.append(message)
+
+
+def _append_log_block(deployment_log: list[str], heading: str, block: str) -> None:
+    deployment_log.append(f"{heading}:")
+    for line in block.rstrip().splitlines():
+        deployment_log.append(f"  {line}")
 
 
 def _infer_live_source_kind(sources: dict[str, Any]) -> str:

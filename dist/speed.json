@@ -1,42 +1,72 @@
 {
   "source": "Garmin personal records",
-  "snapshot_date": "2026-07-02",
+  "snapshot_date": "2026-07-12",
   "entries": [
     {
-      "name": "Fastest 5K",
+      "name": "Fastest 1K",
       "category": "Running",
-      "value": "19:42",
-      "date": "2026-06-28"
-    },
-    {
-      "name": "Fastest 10K",
-      "category": "Running",
-      "value": "41:15",
-      "date": "2026-06-14"
+      "value": 216.9720001220703,
+      "unit": "",
+      "date": null,
+      "context": {
+        "activity_id": 22817326323,
+        "type_id": 1
+      }
     },
     {
       "name": "Fastest Mile",
       "category": "Running",
-      "value": "5:58",
-      "date": "2026-06-21"
+      "value": 383.03900146484375,
+      "unit": "",
+      "date": null,
+      "context": {
+        "activity_id": 22744719812,
+        "type_id": 2
+      }
     },
     {
-      "name": "Fastest 1K",
+      "name": "Fastest 5K",
       "category": "Running",
-      "value": "3:32",
-      "date": "2026-06-07"
+      "value": 1251.10400390625,
+      "unit": "",
+      "date": null,
+      "context": {
+        "activity_id": 22744719812,
+        "type_id": 3
+      }
+    },
+    {
+      "name": "Fastest 10K",
+      "category": "Running",
+      "value": 2891.330078125,
+      "unit": "",
+      "date": null,
+      "context": {
+        "activity_id": 22256132339,
+        "type_id": 4
+      }
     },
     {
       "name": "Fastest Half Marathon",
       "category": "Running",
-      "value": "1:31:44",
-      "date": "2026-05-10"
+      "value": 6219.27685546875,
+      "unit": "",
+      "date": null,
+      "context": {
+        "activity_id": 22256132339,
+        "type_id": 5
+      }
     },
     {
       "name": "Longest Run",
       "category": "Running",
-      "value": "18.2 km",
-      "date": "2026-05-10"
+      "value": 21370.650390625,
+      "unit": "",
+      "date": null,
+      "context": {
+        "activity_id": 22256132339,
+        "type_id": 7
+      }
     }
   ]
 }

@@ -1,0 +1,18 @@
+status: succeeded
+started_at: 2026-07-12T22:15:29.718899+00:00
+timezone: Europe/Malta
+sources_mode: live
+capture_command: /usr/local/bin/python3 /app/scripts/live_sources.py --timezone Europe/Malta
+live_sources_stderr:
+  INFO capturing Garmin source
+  INFO captured Garmin source
+  INFO capturing Hevy source
+  INFO captured Hevy source
+  INFO capturing Cronometer source
+  INFO captured Cronometer source
+captured_live_sources: true
+wrote_sources: dist/live-sources.json
+wrote_snapshot: dist/snapshot.json
+building_site_artifacts: start
+building_history_artifacts: start
+wrote_site_output: dist

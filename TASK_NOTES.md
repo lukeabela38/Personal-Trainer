@@ -4,7 +4,7 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Make the progress page use only live recent-day data and stop falling back to generated archive history.
+Add a deployment log artifact for live preview runs so the build output can be inspected after deployment.
 
 ## Progress Live-Only Fix
 
@@ -194,3 +194,16 @@ Garmin auth/session caching card from the project board.
 - Added a strict Pages preflight that fails when Garmin/Hevy/Cronometer coverage is effectively empty after live capture.
 - Pages workflow now enables the strict live coverage gate.
 - Added daily runner coverage tests for both the success path and the fail-loud path.
+
+## 2026-07-12 Import Status UI
+
+- Added an explicit home-page import status banner above the existing freshness markers.
+- The banner distinguishes live import success, live import failure, example snapshots, and generic unavailable states.
+- Browser smoke now checks that the import status banner renders on the dashboard.
+
+## 2026-07-12 Deployment Log Artifact
+
+- The live snapshot runner now writes `dist/deploy-log.txt` alongside the published site bundle.
+- The log file records the run mode, live capture command, captured live-source stderr, and the final build status.
+- The generated file is served from the local preview bundle so it can be inspected during review.
+- The dashboard Actions menu now includes an `Open deployment log` entry, and the browser smoke test opens the menu before checking it.

@@ -18,6 +18,7 @@ class DailySnapshotRunnerTest(TestCase):
             sources_output = tmp_path / "live-sources.json"
             snapshot_output = tmp_path / "snapshot.json"
             site_output = tmp_path / "dist"
+            deploy_log_output = tmp_path / "deploy-log.txt"
 
             with (
                 patch.object(
@@ -78,20 +79,26 @@ class DailySnapshotRunnerTest(TestCase):
                         str(snapshot_output),
                         "--site-output",
                         str(site_output),
+                        "--deploy-log-output",
+                        str(deploy_log_output),
                     ]
                 )
 
             self.assertEqual(exit_code, 0)
             self.assertTrue(sources_output.exists())
             self.assertTrue(snapshot_output.exists())
+            self.assertTrue(deploy_log_output.exists())
             build_site_artifacts.assert_called_once()
             build_history_artifacts.assert_called_once_with(site_output)
 
             saved_sources = json.loads(sources_output.read_text(encoding="utf-8"))
             saved_snapshot = json.loads(snapshot_output.read_text(encoding="utf-8"))
+            deploy_log = deploy_log_output.read_text(encoding="utf-8")
             self.assertEqual(saved_sources["garmin"]["current_vo2max"], 52)
             self.assertEqual(saved_snapshot["garmin"]["current_vo2max"], 52)
             self.assertEqual(saved_snapshot["recommendation"]["Priority"], "aerobic_quality")
+            self.assertIn("status: succeeded", deploy_log)
+            self.assertIn("wrote_snapshot:", deploy_log)
 
     def test_requires_live_coverage_before_publishing_pages_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -99,6 +106,7 @@ class DailySnapshotRunnerTest(TestCase):
             sources_output = tmp_path / "live-sources.json"
             snapshot_output = tmp_path / "snapshot.json"
             site_output = tmp_path / "dist"
+            deploy_log_output = tmp_path / "deploy-log.txt"
             stderr = StringIO()
 
             with (
@@ -142,6 +150,8 @@ class DailySnapshotRunnerTest(TestCase):
                         str(snapshot_output),
                         "--site-output",
                         str(site_output),
+                        "--deploy-log-output",
+                        str(deploy_log_output),
                         "--require-garmin-vo2max",
                     ]
                 )
@@ -150,6 +160,8 @@ class DailySnapshotRunnerTest(TestCase):
             self.assertIn("live snapshot missing coverage for", stderr.getvalue())
             self.assertFalse(sources_output.exists())
             self.assertFalse(snapshot_output.exists())
+            self.assertTrue(deploy_log_output.exists())
+            self.assertIn("status: failed", deploy_log_output.read_text(encoding="utf-8"))
             build_recommendation.assert_not_called()
             build_site_artifacts.assert_not_called()
             build_history_artifacts.assert_not_called()

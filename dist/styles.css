@@ -672,8 +672,12 @@ input[type="file"] {
 }
 
 /* Freshness bar */
-.freshness-bar {
+.freshness-stack {
   margin-bottom: 16px;
+  display: grid;
+  gap: 8px;
+}
+.freshness-bar {
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 0.8rem;
@@ -681,6 +685,7 @@ input[type="file"] {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .freshness-bar.fresh {
   background: rgba(127, 209, 185, 0.08);
@@ -693,6 +698,16 @@ input[type="file"] {
 .freshness-bar.missing {
   background: rgba(230, 105, 110, 0.08);
   color: var(--red);
+}
+.freshness-bar-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.freshness-bar-detail {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: inherit;
 }
 
 /* Stat groups */
