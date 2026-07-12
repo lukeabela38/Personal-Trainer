@@ -159,27 +159,19 @@ def fetch(date_str: str | None = None) -> dict:
             td["calories_target"] = _safe_float(target)
         if consumed is not None:
             td["calories_consumed"] = _safe_float(consumed)
-            td["remaining_kcal"] = (
-                _safe_float(target - consumed) if target is not None else None
-            )
+            td["remaining_kcal"] = _safe_float(target - consumed) if target is not None else None
             td["log_completeness"] = "complete" if consumed > 0 else "incomplete"
 
         entry_macros = summary.get("macros") or {}
         td["protein_g"] = _safe_float(entry_macros.get("protein"))
-        td["carbs_g"] = _safe_float(
-            entry_macros.get("carbs") or entry_macros.get("net_carbs")
-        )
+        td["carbs_g"] = _safe_float(entry_macros.get("carbs") or entry_macros.get("net_carbs"))
         td["fat_g"] = _safe_float(entry_macros.get("fat"))
         td["fiber_g"] = _safe_float(entry_macros.get("fiber"))
 
         payload["recent_days"] = _build_recent_days(user_id, token, day)
 
-        payload["fueling_status"] = _fueling_status(
-            td["calories_consumed"], td["calories_target"]
-        )
-        payload["protein_status"] = _protein_status(
-            td["protein_g"], td["calories_target"]
-        )
+        payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
+        payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
         payload["carb_availability"] = _carb_status(td["carbs_g"])
 
     except Exception as e:
@@ -250,9 +242,7 @@ def _build_recent_days(user_id: int, token: str, day: str) -> list[dict]:
                 "remaining_kcal": _safe_float(target - consumed)
                 if target is not None and consumed is not None
                 else None,
-                "log_completeness": "complete"
-                if consumed and consumed > 0
-                else "incomplete",
+                "log_completeness": "complete" if consumed and consumed > 0 else "incomplete",
             }
         )
     return recent_days
@@ -304,9 +294,7 @@ def _safe_float(v) -> float | None:
 
 def main() -> int:
     try:
-        parser = argparse.ArgumentParser(
-            description="Emit a live Cronometer source payload."
-        )
+        parser = argparse.ArgumentParser(description="Emit a live Cronometer source payload.")
         parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
         args = parser.parse_args()
 

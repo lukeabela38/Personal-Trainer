@@ -182,3 +182,8 @@ Garmin auth/session caching card from the project board.
 - Playwright smoke now uses the empty dashboard shell as the readiness target because the no-fallback preview boots without a rendered freshness strip or summary stack.
 - Local `python3 scripts/build_site_artifacts.py` publishes `favicon.svg` plus `strength/index.html` and `speed/index.html`; the Docker build path here still leaves those files out of `dist/`.
 - Browser smoke passed after rebuilding locally and serving `dist/` from `./scripts/serve_site.sh --skip-build` in the same shell context.
+## 2026-07-12
+
+- CI lint failure reproduced only when running Ruff from `personal_trainer/`, matching the workflow.
+- `scripts/build_site_artifacts.py` and `scripts/wrappers/fetch_cronometer.py` were reformatted to satisfy that context.
+- Root-level Ruff still differs on those files, but the CI job uses the package directory config and now passes there.
