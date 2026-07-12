@@ -26,9 +26,22 @@ class DailySnapshotRunnerTest(TestCase):
                     return_value={
                         "snapshot_date": "2026-07-06",
                         "timezone": "Europe/Malta",
-                        "garmin": {"current_vo2max": 52, "recent_bests": []},
-                        "hevy": {"recent_bests": []},
-                        "cronometer": {"today": {}, "fueling_status": "adequate"},
+                        "garmin": {
+                            "current_vo2max": 52,
+                            "recent_activities": [{"name": "Run"}],
+                            "recent_bests": [],
+                            "readiness": {"body_battery": 70},
+                        },
+                        "hevy": {
+                            "recent_workouts": [{"title": "Upper"}],
+                            "last_workout": {"title": "Upper"},
+                            "recent_bests": [],
+                        },
+                        "cronometer": {
+                            "today": {"calories_consumed": 2100},
+                            "recent_days": [{"date": "2026-07-05", "calories_consumed": 2100}],
+                            "fueling_status": "adequate",
+                        },
                         "manual_context": {
                             "sleep_quality": "good",
                             "motivation": "normal",
@@ -79,6 +92,67 @@ class DailySnapshotRunnerTest(TestCase):
             self.assertEqual(saved_sources["garmin"]["current_vo2max"], 52)
             self.assertEqual(saved_snapshot["garmin"]["current_vo2max"], 52)
             self.assertEqual(saved_snapshot["recommendation"]["Priority"], "aerobic_quality")
+
+    def test_requires_live_coverage_before_publishing_pages_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            sources_output = tmp_path / "live-sources.json"
+            snapshot_output = tmp_path / "snapshot.json"
+            site_output = tmp_path / "dist"
+            stderr = StringIO()
+
+            with (
+                patch.object(
+                    daily_snapshot_runner,
+                    "_capture_live_sources",
+                    return_value={
+                        "snapshot_date": "2026-07-06",
+                        "timezone": "Europe/Malta",
+                        "garmin": {
+                            "current_vo2max": None,
+                            "recent_activities": [],
+                            "recent_runs": [],
+                            "recent_bests": [],
+                            "readiness": {},
+                        },
+                        "hevy": {"recent_workouts": [], "last_workout": None, "recent_bests": []},
+                        "cronometer": {
+                            "today": {},
+                            "recent_days": [],
+                            "fueling_status": "unknown",
+                            "protein_status": "unknown",
+                            "carb_availability": "unknown",
+                        },
+                        "manual_context": {
+                            "sleep_quality": "good",
+                            "motivation": "normal",
+                        },
+                    },
+                ),
+                patch.object(daily_snapshot_runner, "build_daily_recommendation") as build_recommendation,
+                patch.object(daily_snapshot_runner, "_build_site_artifacts") as build_site_artifacts,
+                patch.object(daily_snapshot_runner, "_build_history_artifacts") as build_history_artifacts,
+                redirect_stderr(stderr),
+            ):
+                exit_code = daily_snapshot_runner.main(
+                    [
+                        "--sources-output",
+                        str(sources_output),
+                        "--snapshot-output",
+                        str(snapshot_output),
+                        "--site-output",
+                        str(site_output),
+                        "--require-garmin-vo2max",
+                    ]
+                )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("live snapshot missing coverage for", stderr.getvalue())
+            self.assertFalse(sources_output.exists())
+            self.assertFalse(snapshot_output.exists())
+            build_recommendation.assert_not_called()
+            build_site_artifacts.assert_not_called()
+            build_history_artifacts.assert_not_called()
 
     def test_skips_optional_history_reports_when_commands_are_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

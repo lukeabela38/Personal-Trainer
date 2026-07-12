@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -22,8 +23,16 @@ _load_dotenv()
 
 from personal_trainer import build_daily_recommendation, build_snapshot
 
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+
 
 def main(argv: list[str] | None = None) -> int:
+    _configure_logging()
     parser = argparse.ArgumentParser(description="Pull live sources, build a snapshot, and emit site artifacts.")
     parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
     parser.add_argument("--timezone", default="Europe/Malta", help="Snapshot timezone")
@@ -51,10 +60,16 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("dist"),
         help="Where to write the published site artifacts.",
     )
+    parser.add_argument(
+        "--require-garmin-vo2max",
+        action="store_true",
+        help="Fail the build when live Garmin data does not include current_vo2max.",
+    )
     args = parser.parse_args(argv)
 
     try:
         sources = _load_sources(args.sources_file, args.date, args.timezone)
+        _validate_live_sources(sources, require_garmin_vo2max=args.require_garmin_vo2max)
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
         snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
@@ -111,6 +126,8 @@ def _capture_live_sources(date: str | None, timezone: str) -> dict[str, Any]:
         cwd=str(REPO_ROOT),
         env=_with_pythonpath(),
     )
+    if completed.stderr:
+        sys.stderr.write(completed.stderr)
     payload = json.loads(completed.stdout)
     if not isinstance(payload, dict):
         raise ValueError("live sources payload must be a JSON object")
@@ -175,6 +192,81 @@ def _infer_live_source_kind(sources: dict[str, Any]) -> str:
         if sources.get(key):
             return "live"
     return "unavailable"
+
+
+def _validate_live_sources(sources: dict[str, Any], *, require_garmin_vo2max: bool) -> None:
+    if not require_garmin_vo2max:
+        return
+
+    missing = []
+
+    garmin = sources.get("garmin")
+    if not _has_garmin_coverage(garmin):
+        missing.append("garmin")
+
+    hevy = sources.get("hevy")
+    if not _has_hevy_coverage(hevy):
+        missing.append("hevy")
+
+    cronometer = sources.get("cronometer")
+    if not _has_cronometer_coverage(cronometer):
+        missing.append("cronometer")
+
+    if missing:
+        logger.error("live snapshot missing coverage for: %s", ", ".join(missing))
+        raise ValueError("live snapshot missing useful data after capture; refusing to publish a Pages snapshot")
+
+
+def _has_garmin_coverage(garmin: Any) -> bool:
+    if not isinstance(garmin, dict):
+        return False
+    return any(
+        (
+            garmin.get("current_vo2max") is not None,
+            isinstance(garmin.get("recent_runs"), list) and bool(garmin["recent_runs"]),
+            isinstance(garmin.get("recent_activities"), list) and bool(garmin["recent_activities"]),
+            isinstance(garmin.get("recent_bests"), list) and bool(garmin["recent_bests"]),
+            bool(garmin.get("readiness")),
+        )
+    )
+
+
+def _has_hevy_coverage(hevy: Any) -> bool:
+    if not isinstance(hevy, dict):
+        return False
+    return any(
+        (
+            isinstance(hevy.get("recent_workouts"), list) and bool(hevy["recent_workouts"]),
+            hevy.get("last_workout") is not None,
+            isinstance(hevy.get("recent_bests"), list) and bool(hevy["recent_bests"]),
+        )
+    )
+
+
+def _has_cronometer_coverage(cronometer: Any) -> bool:
+    if not isinstance(cronometer, dict):
+        return False
+    today = cronometer.get("today")
+    return any(
+        (
+            isinstance(today, dict)
+            and any(
+                today.get(key) is not None
+                for key in (
+                    "calories_consumed",
+                    "calories_target",
+                    "protein_g",
+                    "carbs_g",
+                    "fat_g",
+                    "remaining_kcal",
+                )
+            ),
+            isinstance(cronometer.get("recent_days"), list) and bool(cronometer["recent_days"]),
+            cronometer.get("fueling_status") not in (None, "unknown"),
+            cronometer.get("protein_status") not in (None, "unknown"),
+            cronometer.get("carb_availability") not in (None, "unknown"),
+        )
+    )
 
 
 if __name__ == "__main__":

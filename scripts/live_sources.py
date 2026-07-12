@@ -6,6 +6,7 @@ import os
 import shlex
 import subprocess
 import sys
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -17,8 +18,16 @@ from scripts.mcp_client import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+
 
 def main(argv: list[str] | None = None) -> int:
+    _configure_logging()
     parser = argparse.ArgumentParser(description="Emit a live Personal Trainer source payload.")
     parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
     parser.add_argument("--timezone", default="Europe/Malta", help="Snapshot timezone")
@@ -34,25 +43,33 @@ def main(argv: list[str] | None = None) -> int:
     garmin, hevy, cronometer, manual = {}, {}, {}, _manual_default()
 
     try:
+        logger.info("capturing Garmin source")
         garmin = _load_payload(args.garmin_command, "garmin")
+        logger.info("captured Garmin source")
     except Exception as exc:
-        print(f"[sources] garmin unavailable: {exc}", file=sys.stderr)
+        logger.warning("[sources] garmin unavailable: %s", exc)
 
     try:
+        logger.info("capturing Hevy source")
         hevy = _load_payload(args.hevy_command, "hevy")
+        logger.info("captured Hevy source")
     except Exception as exc:
-        print(f"[sources] hevy unavailable: {exc}", file=sys.stderr)
+        logger.warning("[sources] hevy unavailable: %s", exc)
 
     try:
+        logger.info("capturing Cronometer source")
         cronometer = _load_payload(args.cronometer_command, "cronometer")
+        logger.info("captured Cronometer source")
     except Exception as exc:
-        print(f"[sources] cronometer unavailable: {exc}", file=sys.stderr)
+        logger.warning("[sources] cronometer unavailable: %s", exc)
 
     if args.manual_command:
         try:
+            logger.info("capturing manual check-in source")
             manual = _load_payload(args.manual_command, "manual_context")
+            logger.info("captured manual check-in source")
         except Exception as exc:
-            print(f"[sources] manual check-in unavailable: {exc}", file=sys.stderr)
+            logger.warning("[sources] manual check-in unavailable: %s", exc)
 
     payload = {
         "snapshot_date": args.date,

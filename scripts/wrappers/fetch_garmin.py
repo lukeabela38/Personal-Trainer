@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import logging
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -16,6 +17,13 @@ try:
 except ImportError:
     Garmin = None
 
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+
 
 def fetch() -> dict:
     today = datetime.now(UTC).strftime("%Y-%m-%d")
@@ -27,22 +35,22 @@ def fetch() -> dict:
 
     if Garmin is not None and _tokenstore_is_populated(tokenstore):
         try:
+            logger.info("[garmin] using cached token store at %s", tokenstore)
             cached_payload = _fetch_cached(tokenstore, today, month_ago)
             if not _payload_needs_refresh(cached_payload) or not (garmin_email and garmin_password):
                 return cached_payload
-            print(
-                "[garmin] cached session returned no usable data, retrying with password",
-                file=sys.stderr,
-            )
+            logger.warning("[garmin] cached session returned no usable data, retrying with password")
         except Exception as e:
-            print(f"[garmin] cached session fetch failed: {e}", file=sys.stderr)
+            logger.warning("[garmin] cached session fetch failed: %s", e)
 
     if garmin_email and garmin_password and Garmin is not None:
         try:
+            logger.info("[garmin] using direct credential login")
             return _fetch_direct(garmin_email, garmin_password, tokenstore, today, month_ago)
         except Exception as e:
-            print(f"[garmin] direct fetch failed: {e}", file=sys.stderr)
+            logger.warning("[garmin] direct fetch failed: %s", e)
 
+    logger.warning("[garmin] credentials unavailable or unusable; returning empty payload")
     return _empty_payload()
 
 
@@ -238,6 +246,7 @@ def _safe_float(v) -> float | None:
 
 def main() -> int:
     try:
+        _configure_logging()
         payload = fetch()
         json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")

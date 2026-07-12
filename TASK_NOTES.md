@@ -187,3 +187,10 @@ Garmin auth/session caching card from the project board.
 - CI lint failure reproduced only when running Ruff from `personal_trainer/`, matching the workflow.
 - `scripts/build_site_artifacts.py` and `scripts/wrappers/fetch_cronometer.py` were reformatted to satisfy that context.
 - Root-level Ruff still differs on those files, but the CI job uses the package directory config and now passes there.
+
+## 2026-07-12 Live coverage gate
+
+- Added pipeline logging in live source capture and Garmin fetch so missing data surfaces in deploy logs.
+- Added a strict Pages preflight that fails when Garmin/Hevy/Cronometer coverage is effectively empty after live capture.
+- Pages workflow now enables the strict live coverage gate.
+- Added daily runner coverage tests for both the success path and the fail-loud path.
