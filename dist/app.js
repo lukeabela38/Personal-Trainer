@@ -61,13 +61,13 @@ document
 document.getElementById("load-history").addEventListener("click", loadHistory);
 document
   .getElementById("add-food-entry")
-  .addEventListener("click", addFoodEntry);
+  ?.addEventListener("click", addFoodEntry);
 document
   .getElementById("reset-food-form")
-  .addEventListener("click", resetFoodForm);
+  ?.addEventListener("click", resetFoodForm);
 document
   .getElementById("scan-barcode")
-  .addEventListener("click", focusBarcodeInput);
+  ?.addEventListener("click", focusBarcodeInput);
 if (sessionTime)
   sessionTime.addEventListener("change", handleSessionTimeChange);
 window.addEventListener("error", (event) => {

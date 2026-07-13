@@ -348,6 +348,7 @@ input[type="file"] {
 }
 
 /* Food shell */
+.food-cta,
 .food-shell {
   margin-bottom: 16px;
   padding: 18px 20px;
@@ -362,6 +363,42 @@ input[type="file"] {
   border: 1px solid rgba(240, 179, 75, 0.18);
   display: grid;
   gap: 16px;
+}
+
+.food-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.food-cta-copy {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.food-cta-title {
+  margin-top: 2px;
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.food-cta-text {
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+.food-cta-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 /* Session shell */
@@ -518,6 +555,69 @@ input[type="file"] {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.food-live-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.food-live-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.food-live-stat,
+.food-live-empty {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: grid;
+  gap: 6px;
+}
+
+.food-live-meta {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.food-live-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.food-live-stat-target {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.food-live-stat-current {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.food-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.food-day-title {
+  margin-top: 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .food-log {

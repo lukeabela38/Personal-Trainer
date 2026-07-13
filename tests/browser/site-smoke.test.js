@@ -4,13 +4,26 @@ const pages = [
   {
     path: "/index.html",
     title: "Dashboard",
-    ready: "#food-shell",
+    ready: "#food-cta",
     checks: [
-      "#food-shell",
+      "#food-cta",
       "#session-shell",
       "#status-banner",
       "#import-status",
       "#open-deploy-log",
+    ],
+  },
+  {
+    path: "/food.html",
+    title: "Food",
+    ready: "#food-shell",
+    checks: [
+      "#food-shell",
+      "#food-live-shell",
+      "#food-live-meta",
+      "#food-status",
+      "#food-day-count",
+      "#food-list",
     ],
   },
   {
@@ -23,13 +36,18 @@ const pages = [
     path: "/speed.html",
     title: "Speed",
     ready: "#speed-table",
-    checks: ["#speed-summary", "#speed-table"],
+    checks: ["#speed-summary", "#speed-table", 'a[href="./food.html"]'],
   },
   {
     path: "/progress.html",
     title: "Progress",
     ready: "#progress-grid",
-    checks: ["#progress-summary", "#progress-trend", "#progress-grid"],
+    checks: [
+      "#progress-summary",
+      "#progress-trend",
+      "#progress-grid",
+      'a[href="./food.html"]',
+    ],
   },
 ];
 
@@ -86,6 +104,12 @@ test("redirect shells forward to their canonical pages", async ({ page }) => {
   await expect(page).toHaveURL(/\/speed\.html$/);
   await expect(
     page.getByRole("heading", { level: 1, name: "Speed" }),
+  ).toBeVisible();
+
+  await page.goto("/food/");
+  await expect(page).toHaveURL(/\/food\.html$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Food" }),
   ).toBeVisible();
 });
 

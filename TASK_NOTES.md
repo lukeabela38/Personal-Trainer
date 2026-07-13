@@ -4,9 +4,14 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Make the site render only from live snapshot pulls, remove snapshot-baseline persistence, and fix live Hevy paging so the pipeline keeps real source coverage.
+Split food logging into its own dedicated page shell, keep the dashboard as a pointer to it, and wire the new page into the build and browser smoke coverage.
 
-- Strength history now comes from the full 30-day workout window via Hevy `get-workouts`, and the report groups exercise rows dynamically instead of limiting itself to eight tracked lifts.
+- The food form now lives on `site/food.html` with its own standalone script.
+- The dashboard keeps a lightweight food CTA instead of the full input shell.
+- The static build and browser smoke suite now know about the new page.
+- The Food page now also pulls `dist/data/snapshot.json` to show a live nutrition summary, and it falls back to an explicit unavailable state instead of synthetic data.
+- The live panel now leads with today's consumed macros, with targets shown underneath for context.
+- `food.js` cache-bust version was bumped so the browser doesn’t reuse the previous module after the panel change.
 
 ## GitHub Agent Note
 
@@ -235,3 +240,16 @@ Garmin auth/session caching card from the project board.
 - The live source wrappers now emit plain-text logging for their own capture steps and fallback paths.
 - `scripts/live_sources.py` forwards wrapper stderr so the runner log can include upstream capture messages instead of dropping them.
 - `personal_trainer.recommendation` now logs the selected recommendation priority, confidence, and check-in state.
+
+## 2026-07-13 Food Page Source Date
+
+- The Food page now shows a live nutrition summary above the logging shell.
+- The displayed Cronometer calories come from `cronometer.today.calories_consumed` in the live snapshot, not from a browser-side recalculation.
+- Added a visible Cronometer day / snapshot date line so source-date mismatches are obvious during review.
+- `site/` changes require rebuilding the app image before regenerating `dist/` because the Docker build bakes the site files into the image layer.
+
+## 2026-07-13 Cronometer Consumed Macros
+
+- Cronometer intake grams were being populated from `summary.macros`, which matched the target macro set instead of the consumed totals.
+- The wrapper now reads `summary.consumed.protein_g`, `summary.consumed.carbs_g`, and `summary.consumed.fat_g` for the Food page live summary.
+- Rebuilt the live snapshot after the fix so the Food page now reflects consumed macro grams instead of target grams.

@@ -1,5 +1,5 @@
 status: succeeded
-started_at: 2026-07-13T08:19:59.969145+00:00
+started_at: 2026-07-13T11:15:11.977004+00:00
 timezone: Europe/Malta
 sources_mode: live
 capture_command: /usr/local/bin/python3 /app/scripts/live_sources.py --timezone Europe/Malta
