@@ -71,9 +71,7 @@ class DockerSmokeTest(TestCase):
             shutil.rmtree(tmp_path, ignore_errors=True)
 
     def _write_history_source_payloads(self, tmp_path: Path) -> None:
-        snapshot_path = (
-            REPO_ROOT / "personal_trainer" / "examples" / "snapshot-ready.json"
-        )
+        snapshot_path = REPO_ROOT / "personal_trainer" / "examples" / "snapshot-ready.json"
         snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
 
         hevy_rows = []
@@ -86,9 +84,7 @@ class DockerSmokeTest(TestCase):
                     "workoutStartTime": f"{row['workout_start_date']}T07:00:00Z",
                 }
             )
-        (tmp_path / "hevy_strength_source.json").write_text(
-            json.dumps(hevy_rows, indent=2), encoding="utf-8"
-        )
+        (tmp_path / "hevy_strength_source.json").write_text(json.dumps(hevy_rows, indent=2), encoding="utf-8")
 
         garmin_rows = [
             {

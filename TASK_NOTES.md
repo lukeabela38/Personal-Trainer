@@ -8,6 +8,12 @@ Make the site render only from live snapshot pulls, remove snapshot-baseline per
 
 - Strength history now comes from the full 30-day workout window via Hevy `get-workouts`, and the report groups exercise rows dynamically instead of limiting itself to eight tracked lifts.
 
+## GitHub Agent Note
+
+- `gh` can be authenticated locally but still fail against `api.github.com` in this environment.
+- When that happens, use the GitHub app/MCP tools for PR metadata, check runs, and workflow logs instead of blocking on `gh`.
+- Keep `gh auth status` as the quick local auth sanity check, but treat MCP as the reliable fallback for GitHub Actions inspection here.
+
 ## 2026-07-13 Browser Smoke Sync
 
 - `scripts/build_site_artifacts.py` now copies the `history/` subtree into `dist/`, which fixes the strength-page 404s in the built bundle.

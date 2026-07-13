@@ -34,9 +34,7 @@ ALIASES = {
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Build site/strength.json from Hevy history."
-    )
+    parser = argparse.ArgumentParser(description="Build site/strength.json from Hevy history.")
     parser.add_argument("--output", type=Path, default=Path("site/strength.json"))
     parser.add_argument("--source", type=Path, default=None)
     args = parser.parse_args(argv)
@@ -58,9 +56,7 @@ def _load_from_command() -> Any:
     command = os.environ.get("PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND")
     if not command:
         raise ValueError("set PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND or pass --source")
-    completed = subprocess.run(
-        command.split(), check=True, capture_output=True, text=True
-    )
+    completed = subprocess.run(command.split(), check=True, capture_output=True, text=True)
     return json.loads(completed.stdout)
 
 
@@ -68,10 +64,7 @@ def build_report(raw: Any) -> dict[str, Any]:
     grouped: dict[str, dict[str, Any]] = {}
     for row in _extract_records(raw):
         template_id = str(
-            row.get("exerciseTemplateId")
-            or row.get("exercise_template_id")
-            or row.get("template_id")
-            or ""
+            row.get("exerciseTemplateId") or row.get("exercise_template_id") or row.get("template_id") or ""
         )
         name = str(
             row.get("exerciseName")
@@ -95,10 +88,7 @@ def build_report(raw: Any) -> dict[str, Any]:
                 weight_kg=_to_float(row.get("weight") or row.get("weight_kg")),
                 reps=int(row.get("reps") or 0),
                 workout_start_time=str(
-                    row.get("workoutStartTime")
-                    or row.get("workout_start_time")
-                    or row.get("start_time")
-                    or ""
+                    row.get("workoutStartTime") or row.get("workout_start_time") or row.get("start_time") or ""
                 ),
             )
         )
@@ -121,9 +111,7 @@ def build_report(raw: Any) -> dict[str, Any]:
                 "estimated_one_rm_kg": _estimate_one_rm(best.weight_kg, best.reps),
             }
         )
-    entries.sort(
-        key=lambda entry: entry["best_set"]["workout_start_date"], reverse=True
-    )
+    entries.sort(key=lambda entry: entry["best_set"]["workout_start_date"], reverse=True)
     return {
         "source": "Hevy exercise history",
         "snapshot_date": datetime.now(UTC).date().isoformat(),
