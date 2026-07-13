@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Personal Trainer">
-  <rect width="64" height="64" rx="16" fill="#111827"/>
-  <path d="M18 16h16c7 0 12 4.7 12 11s-5 11-12 11H27v10h-9V16zm9 15h6c3.3 0 5.5-1.8 5.5-4.5S36.3 22 33 22h-6v9z" fill="#f59e0b"/>
-  <path d="M40 37h6v11h-6z" fill="#38bdf8"/>
-</svg>
