@@ -331,7 +331,10 @@ test("hevy snapshot merges the live overlay into dashboard freshness", () => {
     ]),
   );
   assert.equal(live.recent_workouts[0].exercise_count, 1);
-  assert.equal(live.recent_workouts[0].exercises[0].name, "Bench Press (Barbell)");
+  assert.equal(
+    live.recent_workouts[0].exercises[0].name,
+    "Bench Press (Barbell)",
+  );
   assert.equal(live.recent_workouts[0].exercises[0].sets[0].weight_kg, 70);
   const merged = mergeHevySnapshot(
     {

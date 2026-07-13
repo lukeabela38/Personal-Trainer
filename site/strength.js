@@ -34,7 +34,10 @@ const sortButtons = document.querySelectorAll(".sort-btn");
 const searchInput = document.getElementById("strength-search");
 const tabButtons = document.querySelectorAll(".strength-tab");
 const tabPanels = document.querySelectorAll("[data-strength-tab-panel]");
-const exerciseCatalogUrl = new URL("./history/exercises/index.json", import.meta.url);
+const exerciseCatalogUrl = new URL(
+  "./history/exercises/index.json",
+  import.meta.url,
+);
 
 let entries = [];
 let recentWorkouts = [];
@@ -62,13 +65,19 @@ historySearchInput?.addEventListener("input", () => {
 grid?.addEventListener("click", async (event) => {
   const card = event.target.closest(".exercise-card");
   if (!card) return;
-  if (event.target.closest(".pill, .sort-btn, .search-input, .filter-pills, .strength-tab")) {
+  if (
+    event.target.closest(
+      ".pill, .sort-btn, .search-input, .filter-pills, .strength-tab",
+    )
+  ) {
     return;
   }
   const templateId = card.dataset.templateId;
   if (!templateId) return;
   try {
-    const response = await fetch(`./history/exercises/${templateId}.json?v=${Date.now()}`);
+    const response = await fetch(
+      `./history/exercises/${templateId}.json?v=${Date.now()}`,
+    );
     const history = await response.json();
     renderTrendModal(card.dataset.exerciseName ?? templateId, history);
   } catch {
@@ -211,13 +220,16 @@ function renderControls() {
   });
   const categories = [
     "All",
-    ...new Set(entries.map((entry) => normalizeCategory(entry.category)).filter(Boolean)),
+    ...new Set(
+      entries.map((entry) => normalizeCategory(entry.category)).filter(Boolean),
+    ),
   ];
 
   if (filterPills) {
     filterPills.innerHTML = categories
       .map((category) => {
-        const count = category === "All" ? entries.length : (counts[category] ?? 0);
+        const count =
+          category === "All" ? entries.length : (counts[category] ?? 0);
         return `<button class="pill${category === activeCategory ? " is-active" : ""}" data-category="${escapeHtml(category)}" type="button">${escapeHtml(category)} (${count})</button>`;
       })
       .join("");
@@ -266,7 +278,9 @@ function renderSummary() {
     return;
   }
 
-  const categories = new Set(entries.map((entry) => normalizeCategory(entry.category)).filter(Boolean));
+  const categories = new Set(
+    entries.map((entry) => normalizeCategory(entry.category)).filter(Boolean),
+  );
   const latestWorkout = recentWorkouts[0] ?? null;
   const topEntry = [...entries].reduce((best, entry) => {
     const current = entry.estimated_one_rm_kg ?? entry.best_set?.weight_kg ?? 0;
@@ -287,7 +301,10 @@ function renderSummary() {
   summaryEl.innerHTML = [
     {
       label: "Momentum",
-      value: topMover?.gain?.gain_pct != null ? `+${fmtNum(topMover.gain.gain_pct)}%` : "—",
+      value:
+        topMover?.gain?.gain_pct != null
+          ? `+${fmtNum(topMover.gain.gain_pct)}%`
+          : "—",
       subvalue: topMover?.entry?.name ?? "No gain history yet",
       className: "summary-tile--lead",
     },
@@ -335,7 +352,10 @@ function renderHighlights() {
   if (topMover) {
     tiles.push({
       label: "Top mover",
-      value: topMover.gain.gain_pct != null ? `+${fmtNum(topMover.gain.gain_pct)}%` : "Rising",
+      value:
+        topMover.gain.gain_pct != null
+          ? `+${fmtNum(topMover.gain.gain_pct)}%`
+          : "Rising",
       subvalue: `${topMover.entry.name} · ${fmtNum(topMover.gain.current ?? 0)} kg now`,
     });
   }
@@ -400,7 +420,9 @@ function renderCoachNote() {
   }
 
   if (latestWorkout) {
-    fragments.push(`latest session: ${workoutTitle(latestWorkout)} on ${workoutDate(latestWorkout)}`);
+    fragments.push(
+      `latest session: ${workoutTitle(latestWorkout)} on ${workoutDate(latestWorkout)}`,
+    );
   }
 
   heroNote.textContent =
@@ -477,7 +499,9 @@ function renderHistory() {
     (sum, workout) => sum + workoutSummaryExerciseCount(workout),
     0,
   );
-  const activeWindow = formatHevyWorkoutWindowLabel(readStoredHevyWorkoutWindow());
+  const activeWindow = formatHevyWorkoutWindowLabel(
+    readStoredHevyWorkoutWindow(),
+  );
   const resultsSummary = `${visibleWorkouts.length} of ${totalWorkouts} workouts · ${totalExercises} exercises`;
 
   if (historyWindowChip) {
@@ -535,7 +559,9 @@ function renderWorkoutExercise(exercise, workoutDate) {
   if (!exercise || typeof exercise !== "object") return "";
   const name = String(exercise.name ?? exercise.title ?? "Exercise");
   const templateId = normalizeTemplateId(exercise.exercise_template_id);
-  const sets = Array.isArray(exercise.sets) ? exercise.sets.filter(isObject) : [];
+  const sets = Array.isArray(exercise.sets)
+    ? exercise.sets.filter(isObject)
+    : [];
   return `
     <div class="workout-exercise" data-template-id="${escapeHtml(templateId)}">
       <div class="workout-exercise-head">
@@ -543,9 +569,11 @@ function renderWorkoutExercise(exercise, workoutDate) {
         <span class="workout-exercise-count">${sets.length ? `${sets.length} sets` : "No sets"}</span>
       </div>
       <div class="workout-set-list">
-        ${sets.length
-          ? sets.map((set) => renderWorkoutSet(set)).join("")
-          : `<span class="workout-set workout-set-empty">No sets recorded</span>`}
+        ${
+          sets.length
+            ? sets.map((set) => renderWorkoutSet(set)).join("")
+            : `<span class="workout-set workout-set-empty">No sets recorded</span>`
+        }
       </div>
       <div class="workout-exercise-meta">
         <span>${escapeHtml(workoutDate)}</span>
@@ -589,7 +617,10 @@ function workoutDuration(workout) {
   if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
     return "";
   }
-  const minutes = Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000));
+  const minutes = Math.max(
+    0,
+    Math.round((endTime.getTime() - startTime.getTime()) / 60000),
+  );
   if (minutes < 1) return "under a minute";
   if (minutes === 1) return "1 minute";
   return `${minutes} minutes`;
@@ -606,12 +637,12 @@ function historyMatchesQuery(workout, query) {
   const haystack = [
     workoutTitle(workout),
     workoutDate(workout),
-    ...((Array.isArray(workout?.exercises) ? workout.exercises : [])
+    ...(Array.isArray(workout?.exercises) ? workout.exercises : [])
       .filter(isObject)
       .flatMap((exercise) => [
         String(exercise.name ?? exercise.title ?? ""),
         String(exercise.exercise_template_id ?? ""),
-      ])),
+      ]),
   ]
     .join(" ")
     .toLowerCase();
@@ -649,8 +680,10 @@ function renderExercises() {
 
   visible = [...visible].sort((a, b) => {
     if (activeSort === "weight") {
-      const wa = a.entry.estimated_one_rm_kg ?? a.entry.best_set?.weight_kg ?? 0;
-      const wb = b.entry.estimated_one_rm_kg ?? b.entry.best_set?.weight_kg ?? 0;
+      const wa =
+        a.entry.estimated_one_rm_kg ?? a.entry.best_set?.weight_kg ?? 0;
+      const wb =
+        b.entry.estimated_one_rm_kg ?? b.entry.best_set?.weight_kg ?? 0;
       return wb - wa;
     }
     if (activeSort === "gain") {
@@ -687,7 +720,9 @@ function renderExerciseCard(entry, session) {
   const templateId = exerciseTemplateKey(entry);
   const category = normalizeCategory(entry.category);
   const categoryClass = categoryClassFor(category);
-  const lastSet = session?.sets?.length ? session.sets[session.sets.length - 1] : null;
+  const lastSet = session?.sets?.length
+    ? session.sets[session.sets.length - 1]
+    : null;
   const bestLine = buildSetLine(best, {
     allowNoWeight: true,
     fallback: "No best set",
@@ -699,9 +734,10 @@ function renderExerciseCard(entry, session) {
   const lastSessionMeta = session
     ? `${workoutDate(session.workout)} · ${workoutTitle(session.workout)}`
     : "No recent session";
-  const bestMeta = entry.estimated_one_rm_kg != null
-    ? `Est. 1RM ${fmtNum(entry.estimated_one_rm_kg)} kg`
-    : "No 1RM estimate";
+  const bestMeta =
+    entry.estimated_one_rm_kg != null
+      ? `Est. 1RM ${fmtNum(entry.estimated_one_rm_kg)} kg`
+      : "No 1RM estimate";
   const gain = gainsCache?.[templateId];
   const recommendation = buildProgressionRecommendation(entry, session, gain);
   const progressText = buildProgressionText(entry, gain);
@@ -733,13 +769,16 @@ function renderExerciseCard(entry, session) {
 }
 
 function buildProgressionRecommendation(entry, session, gain) {
-  const lastSet = session?.sets?.length ? session.sets[session.sets.length - 1] : null;
+  const lastSet = session?.sets?.length
+    ? session.sets[session.sets.length - 1]
+    : null;
   const currentWeight =
     parseFloatNumber(lastSet?.weight_kg) ??
     parseFloatNumber(entry.best_set?.weight_kg) ??
     parseFloatNumber(gain?.current) ??
     null;
-  const reps = parseInteger(lastSet?.reps) ?? parseInteger(entry.best_set?.reps);
+  const reps =
+    parseInteger(lastSet?.reps) ?? parseInteger(entry.best_set?.reps);
 
   if (currentWeight != null) {
     const nextWeight = roundToIncrement(currentWeight + 2.5, 2.5);
@@ -899,14 +938,18 @@ function renderInsights() {
 function buildLastSessionLookup() {
   const lookup = new Map();
   for (const workout of recentWorkouts) {
-    const exercises = Array.isArray(workout?.exercises) ? workout.exercises : [];
+    const exercises = Array.isArray(workout?.exercises)
+      ? workout.exercises
+      : [];
     for (const exercise of exercises) {
       if (!exercise || typeof exercise !== "object") continue;
       const templateId = normalizeTemplateId(exercise.exercise_template_id);
       const nameKey = normalizeNameKey(exercise.name ?? exercise.title ?? "");
       const key = templateId || nameKey;
       if (!key || lookup.has(key)) continue;
-      const sets = Array.isArray(exercise.sets) ? exercise.sets.filter(isObject) : [];
+      const sets = Array.isArray(exercise.sets)
+        ? exercise.sets.filter(isObject)
+        : [];
       lookup.set(key, {
         workout,
         exercise,
@@ -922,18 +965,20 @@ function buildLastSessionLookup() {
 function getLatestSessionForEntry(entry, lookup) {
   const templateId = exerciseTemplateKey(entry);
   return (
-    lookup.get(templateId) ??
-    lookup.get(normalizeNameKey(entry.name)) ??
-    null
+    lookup.get(templateId) ?? lookup.get(normalizeNameKey(entry.name)) ?? null
   );
 }
 
 function exerciseTemplateKey(entry) {
-  return normalizeTemplateId(entry.templateId ?? exerciseIdByName.get(entry.name) ?? "");
+  return normalizeTemplateId(
+    entry.templateId ?? exerciseIdByName.get(entry.name) ?? "",
+  );
 }
 
 function normalizeNameKey(value) {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 export function findTemplateId(name) {
@@ -1198,12 +1243,16 @@ function renderTrendModal(name, history) {
   const oneRms = history
     .map((item) => item.estimated_one_rm_kg)
     .filter((value) => value != null);
-  const weights = history.map((item) => item.weight_kg).filter((value) => value != null);
+  const weights = history
+    .map((item) => item.weight_kg)
+    .filter((value) => value != null);
   const latest = history[history.length - 1];
   const firstOneRm = oneRms[0];
   const lastOneRm = oneRms[oneRms.length - 1];
   const oneRmChange = lastOneRm - firstOneRm;
-  const oneRmPct = firstOneRm ? Math.round((oneRmChange / firstOneRm) * 100) : 0;
+  const oneRmPct = firstOneRm
+    ? Math.round((oneRmChange / firstOneRm) * 100)
+    : 0;
   const peak = Math.max(...oneRms);
   const trendUp = oneRmChange >= 0;
   const recent = history.slice(-10).reverse();

@@ -27,7 +27,11 @@
   padding: 8px 12px;
   border-radius: 999px;
   background:
-    linear-gradient(135deg, rgba(127, 209, 185, 0.14), rgba(157, 140, 255, 0.12)),
+    linear-gradient(
+      135deg,
+      rgba(127, 209, 185, 0.14),
+      rgba(157, 140, 255, 0.12)
+    ),
     rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(127, 209, 185, 0.16);
   color: var(--text);
@@ -44,7 +48,11 @@
   border: 1px solid rgba(127, 209, 185, 0.14);
   border-radius: 999px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.025)
+    ),
     rgba(255, 255, 255, 0.02);
   flex-wrap: wrap;
   box-shadow:
@@ -67,8 +75,7 @@
   padding: 10px 0 2px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow:
-    0 12px 28px rgba(4, 10, 20, 0.16);
+  box-shadow: 0 12px 28px rgba(4, 10, 20, 0.16);
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
@@ -79,7 +86,13 @@
   position: absolute;
   inset: auto 0 -1px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(127, 209, 185, 0.28), rgba(157, 140, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(127, 209, 185, 0.28),
+    rgba(157, 140, 255, 0.2),
+    transparent
+  );
   pointer-events: none;
 }
 
@@ -90,7 +103,11 @@
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(127, 209, 185, 0.07), rgba(127, 209, 185, 0));
+  background: radial-gradient(
+    circle,
+    rgba(127, 209, 185, 0.07),
+    rgba(127, 209, 185, 0)
+  );
   pointer-events: none;
 }
 
@@ -108,7 +125,11 @@
   border-radius: 18px;
   border: 1px solid rgba(127, 209, 185, 0.12);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.018)
+    ),
     rgba(255, 255, 255, 0.015);
   box-shadow:
     0 10px 22px rgba(4, 10, 20, 0.12),
@@ -162,7 +183,11 @@
 
 .strength-tab.is-active {
   background:
-    linear-gradient(135deg, rgba(127, 209, 185, 0.28), rgba(157, 140, 255, 0.24)),
+    linear-gradient(
+      135deg,
+      rgba(127, 209, 185, 0.28),
+      rgba(157, 140, 255, 0.24)
+    ),
     linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #08101c;
   box-shadow:
@@ -182,7 +207,11 @@
 
 .summary-tile--lead {
   background:
-    linear-gradient(135deg, rgba(127, 209, 185, 0.14), rgba(157, 140, 255, 0.1)),
+    linear-gradient(
+      135deg,
+      rgba(127, 209, 185, 0.14),
+      rgba(157, 140, 255, 0.1)
+    ),
     rgba(255, 255, 255, 0.035);
   border-color: rgba(127, 209, 185, 0.18);
 }
@@ -247,7 +276,11 @@
   padding: 8px 12px;
   border-radius: 999px;
   background:
-    linear-gradient(135deg, rgba(127, 209, 185, 0.18), rgba(157, 140, 255, 0.16)),
+    linear-gradient(
+      135deg,
+      rgba(127, 209, 185, 0.18),
+      rgba(157, 140, 255, 0.16)
+    ),
     rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(127, 209, 185, 0.2);
   color: var(--text);
@@ -305,7 +338,11 @@
 }
 
 .strength-controls .sort-btn.is-active {
-  background: linear-gradient(135deg, rgba(127, 209, 185, 0.24), rgba(157, 140, 255, 0.18));
+  background: linear-gradient(
+    135deg,
+    rgba(127, 209, 185, 0.24),
+    rgba(157, 140, 255, 0.18)
+  );
   border-color: rgba(127, 209, 185, 0.24);
   box-shadow: 0 10px 20px rgba(127, 209, 185, 0.12);
 }
@@ -416,7 +453,11 @@
   border-radius: 18px;
   border: 1px solid rgba(127, 209, 185, 0.1);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.018)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.018)
+    ),
     rgba(255, 255, 255, 0.016);
   box-shadow:
     0 12px 24px rgba(4, 10, 20, 0.14),
@@ -489,7 +530,11 @@
   border-radius: 18px;
   padding: 16px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.018)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(255, 255, 255, 0.018)
+    ),
     rgba(255, 255, 255, 0.01);
   border: 1px solid var(--border);
   transition:
@@ -568,7 +613,11 @@
 
 .exercise-metric--lead {
   background:
-    linear-gradient(135deg, rgba(127, 209, 185, 0.09), rgba(157, 140, 255, 0.06)),
+    linear-gradient(
+      135deg,
+      rgba(127, 209, 185, 0.09),
+      rgba(157, 140, 255, 0.06)
+    ),
     rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(127, 209, 185, 0.1);
 }

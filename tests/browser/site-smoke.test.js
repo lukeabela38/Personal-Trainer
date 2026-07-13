@@ -28,19 +28,19 @@ const pages = [
       "#food-list",
     ],
   },
-    {
-      path: "/strength.html",
-      title: "Strength",
-      ready: "#history-panel",
-      checks: [
-        "#strength-summary",
-        "#strength-tabs",
-        "#strength-controls",
-        'button[data-tab="history"]',
-        'button[data-tab="exercises"]',
-        "#history-panel",
-      ],
-    },
+  {
+    path: "/strength.html",
+    title: "Strength",
+    ready: "#history-panel",
+    checks: [
+      "#strength-summary",
+      "#strength-tabs",
+      "#strength-controls",
+      'button[data-tab="history"]',
+      'button[data-tab="exercises"]',
+      "#history-panel",
+    ],
+  },
   {
     path: "/speed.html",
     title: "Speed",
