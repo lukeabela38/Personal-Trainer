@@ -41,7 +41,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install ruff
-        run: python3 -m pip install ruff>=0.11.0
+        run: python3 -m pip install ruff==0.15.21
       - name: Ruff format check
         working-directory: personal_trainer
         run: |
