@@ -18,7 +18,6 @@ const historyWindowChip = document.getElementById("history-window-chip");
 const historyResultsCount = document.getElementById("history-results-count");
 const historySearchInput = document.getElementById("history-search");
 const heroNote = document.getElementById("strength-hero-note");
-const exercisesPanel = document.getElementById("exercises-panel");
 const highlightsPanel = document.getElementById("strength-highlights");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
@@ -804,15 +803,6 @@ function buildProgressionText(entry, gain) {
   return parts.length ? parts.join(" · ") : "No progression history yet";
 }
 
-function buildProgressionSummary(entry, gain) {
-  if (!gain) return "No history file";
-  if (gain.stalled) return "Stalled";
-  if (gain.current == null || gain.peak == null) return "Building history";
-  const gap = Math.max(0, gain.peak - gain.current);
-  if (!gap) return "At peak";
-  return `Gap ${fmtNum(gap)} kg`;
-}
-
 function renderInsights() {
   const el = document.getElementById("insights");
   if (!el || !gainsCache || activeTab !== "exercises") {
@@ -985,46 +975,6 @@ export function findTemplateId(name) {
   return exerciseIdByName.get(String(name)) ?? null;
 }
 
-function renderCard(entry) {
-  const best = entry.best_set ?? {};
-  const category = normalizeCategory(entry.category);
-  const categoryClass = categoryClassFor(category);
-  const hasWeight = best.weight_kg != null;
-  const bestLine = hasWeight
-    ? `${fmtNum(best.weight_kg)} kg × ${best.reps}`
-    : `${best.reps ?? "—"} reps`;
-  const oneRm = entry.estimated_one_rm_kg ?? best.weight_kg ?? null;
-  const oneRmStr = oneRm != null ? `${fmtNum(oneRm)} kg` : "—";
-  const date = best.workout_start_date ?? "";
-  const tid = exerciseTemplateKey(entry);
-  const gain = gainsCache?.[tid];
-
-  return `
-    <article class="exercise-card card" data-template-id="${escapeHtml(tid)}" data-exercise-name="${escapeHtml(entry.name)}">
-      <div class="exercise-head">
-        <div class="exercise-name">${escapeHtml(entry.name)}</div>
-        <span class="exercise-category ${categoryClass}">${escapeHtml(category)}</span>
-      </div>
-      <div class="exercise-metrics">
-        <div class="exercise-metric">
-          <span class="exercise-metric-label">Best set</span>
-          <span class="exercise-metric-value">${escapeHtml(bestLine)}</span>
-          <span class="exercise-metric-subvalue">${escapeHtml(date || "No best-set date")}</span>
-        </div>
-        <div class="exercise-metric">
-          <span class="exercise-metric-label">Est. 1RM</span>
-          <span class="exercise-metric-value">${escapeHtml(oneRmStr)}</span>
-          <span class="exercise-metric-subvalue">${escapeHtml(buildProgressionSummary(entry, gain))}</span>
-        </div>
-      </div>
-      <div class="exercise-footer">
-        <span class="exercise-recommendation">${escapeHtml(buildProgressionRecommendation(entry, getLatestSessionForEntry(entry, buildLastSessionLookup()), gain))}</span>
-        <span class="exercise-progress">${escapeHtml(buildProgressionText(entry, gain))}</span>
-      </div>
-    </article>
-  `;
-}
-
 function buildSetLine(set, options = {}) {
   if (!set || typeof set !== "object") return options.fallback ?? "—";
   const parts = [];
@@ -1036,10 +986,6 @@ function buildSetLine(set, options = {}) {
   if (weight == null && reps == null) parts.push("Set");
   if (rpe != null) parts.push(`RPE ${fmtNum(rpe)}`);
   return parts.join(" · ");
-}
-
-function buildWorkoutSetLine(set) {
-  return buildSetLine(set, { fallback: "Set" });
 }
 
 function normalizeCategory(value) {
@@ -1183,15 +1129,6 @@ function renderHistoryOrExercises() {
   }
 }
 
-function buildProgressionSummaryText(gain) {
-  if (!gain) return "No history file";
-  if (gain.stalled) return "Stalled";
-  if (gain.current == null || gain.peak == null) return "Building history";
-  const gap = Math.max(0, gain.peak - gain.current);
-  if (!gap) return "At peak";
-  return `Gap ${fmtNum(gap)} kg`;
-}
-
 function roundToIncrement(value, increment) {
   return Math.round(value / increment) * increment;
 }
@@ -1225,18 +1162,6 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
-}
-
-function buildWorkoutSetValue(set) {
-  return buildWorkoutSetLine(set);
-}
-
-function renderWorkoutSetSummary(set) {
-  return `<span class="workout-set">${escapeHtml(buildWorkoutSetValue(set))}</span>`;
-}
-
-function buildProgressionRecommendationForSession(entry, session, gain) {
-  return buildProgressionRecommendation(entry, session, gain);
 }
 
 function renderTrendModal(name, history) {
