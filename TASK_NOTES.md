@@ -36,6 +36,12 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The root cause was macOS sandboxing: Chromium failed with `bootstrap_check_in ... Permission denied (1100)` until the browser run was retried with elevated permissions.
 - After rerunning with elevated permissions, `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js` passed all 9 tests against the Docker-served `dist/` output.
 
+## 2026-07-13 CI Fix Follow-up
+
+- The GitHub Actions JavaScript failure was just Prettier drift in `site/speed.js`, `site/strength.js`, `tests/browser/site-smoke.test.js`, and `tests/frontend/frontend_helpers.test.js`.
+- The browser smoke failure came from stale committed `site/` fixtures: `site/data/snapshot.json`, `site/strength.json`, and `site/speed.json` were missing the new derived page-state fields that already existed in `dist/`.
+- Local verification now passes with `npm run format:js:check` and `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js`.
+
 ## 2026-07-13 Dashboard Freshness Alignment
 
 - `site/app.js` now classifies the dashboard import badge from the same source freshness data used by the per-source rows, instead of downgrading example snapshots just because `snapshot.source` is not `live`.

@@ -137,9 +137,15 @@ test("derived page states are published with the built artifacts", async ({
   const speed = await (await request.get("/speed.json")).json();
 
   expect(snapshot.derived.page_states.food.kind).toMatch(/fresh|stale|missing/);
-  expect(snapshot.derived.page_states.strength.kind).toMatch(/fresh|stale|missing/);
-  expect(snapshot.derived.page_states.speed.kind).toMatch(/fresh|stale|missing/);
-  expect(strength.page_state.kind).toBe(snapshot.derived.page_states.strength.kind);
+  expect(snapshot.derived.page_states.strength.kind).toMatch(
+    /fresh|stale|missing/,
+  );
+  expect(snapshot.derived.page_states.speed.kind).toMatch(
+    /fresh|stale|missing/,
+  );
+  expect(strength.page_state.kind).toBe(
+    snapshot.derived.page_states.strength.kind,
+  );
   expect(speed.page_state.kind).toBe(snapshot.derived.page_states.speed.kind);
 });
 
@@ -201,23 +207,43 @@ test("missing page states render explicit unavailable shells", async ({
   });
 
   await page.goto("/food.html");
-  await expect(page.getByRole("heading", { level: 1, name: "Food" })).toBeVisible();
-  await expect(page.locator("#food-live-title")).toHaveText("Live data unavailable");
-  await expect(page.locator("#food-live-help")).toContainText("No Cronometer data is available yet.");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Food" }),
+  ).toBeVisible();
+  await expect(page.locator("#food-live-title")).toHaveText(
+    "Live data unavailable",
+  );
+  await expect(page.locator("#food-live-help")).toContainText(
+    "No Cronometer data is available yet.",
+  );
   await expect(page.locator("#food-live-status")).toHaveText("Unavailable");
-  await expect(page.locator("#food-live-meta")).toHaveText("No imported Cronometer day is available.");
+  await expect(page.locator("#food-live-meta")).toHaveText(
+    "No imported Cronometer day is available.",
+  );
 
   await page.goto("/strength.html");
-  await expect(page.getByRole("heading", { level: 1, name: "Strength" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Strength" }),
+  ).toBeVisible();
   await expect(page.locator("#source-label")).toHaveText("Unavailable");
-  await expect(page.locator("#status-banner")).toContainText("No strength data is available yet.");
-  await expect(page.locator("#strength-grid")).toContainText("Failed to load data");
+  await expect(page.locator("#status-banner")).toContainText(
+    "No strength data is available yet.",
+  );
+  await expect(page.locator("#strength-grid")).toContainText(
+    "Failed to load data",
+  );
 
   await page.goto("/speed.html");
-  await expect(page.getByRole("heading", { level: 1, name: "Speed" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Speed" }),
+  ).toBeVisible();
   await expect(page.locator("#source-label")).toHaveText("Unavailable");
-  await expect(page.locator("#status-banner")).toContainText("No speed data is available yet.");
-  await expect(page.locator("#speed-table")).toContainText("Failed to load speed data.");
+  await expect(page.locator("#status-banner")).toContainText(
+    "No speed data is available yet.",
+  );
+  await expect(page.locator("#speed-table")).toContainText(
+    "Failed to load speed data.",
+  );
 });
 
 test("manifest is served", async ({ request }) => {

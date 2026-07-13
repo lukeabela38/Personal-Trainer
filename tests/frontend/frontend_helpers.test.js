@@ -226,7 +226,10 @@ test("import status distinguishes successful and missing live data", () => {
   const liveStatus = describeImportStatus({
     source: "live",
     garmin: { freshness: "fresh", recent_runs: [{ distance_m: 1000 }] },
-    hevy: { freshness: "fresh", recent_workouts: [{ workout_start_date: "2026-07-13" }] },
+    hevy: {
+      freshness: "fresh",
+      recent_workouts: [{ workout_start_date: "2026-07-13" }],
+    },
     cronometer: { freshness: "fresh", recent_days: [{ date: "2026-07-13" }] },
     manual_context: { freshness: "fresh", notes: [{ text: "ready" }] },
     derived: {
@@ -243,7 +246,10 @@ test("import status distinguishes successful and missing live data", () => {
     renderImportStatusBar({
       source: "live",
       garmin: { freshness: "fresh", recent_runs: [{ distance_m: 1000 }] },
-      hevy: { freshness: "fresh", recent_workouts: [{ workout_start_date: "2026-07-13" }] },
+      hevy: {
+        freshness: "fresh",
+        recent_workouts: [{ workout_start_date: "2026-07-13" }],
+      },
       cronometer: { freshness: "fresh", recent_days: [{ date: "2026-07-13" }] },
       manual_context: { freshness: "fresh", notes: [{ text: "ready" }] },
       derived: {
@@ -260,7 +266,10 @@ test("import status distinguishes successful and missing live data", () => {
   const staleStatus = describeImportStatus({
     source: "example",
     garmin: { freshness: "fresh", recent_runs: [{ distance_m: 1000 }] },
-    hevy: { freshness: "fresh", recent_workouts: [{ workout_start_date: "2026-07-10" }] },
+    hevy: {
+      freshness: "fresh",
+      recent_workouts: [{ workout_start_date: "2026-07-10" }],
+    },
     cronometer: { freshness: "fresh", recent_days: [{ date: "2026-07-13" }] },
     manual_context: { freshness: "fresh" },
     derived: {

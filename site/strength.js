@@ -29,7 +29,9 @@ async function loadStrength() {
       detail: "",
     };
     if (pageState.kind === "missing") {
-      renderUnavailableStrength(pageState.detail ?? "No strength data available");
+      renderUnavailableStrength(
+        pageState.detail ?? "No strength data available",
+      );
       return;
     }
     sourceLabel.textContent = `${payload.source ?? "Hevy"} · ${payload.snapshot_date ?? "unknown date"}`;
@@ -53,10 +55,10 @@ async function loadStrength() {
 }
 
 function renderUnavailableStrength(message) {
-    sourceLabel.textContent = "Unavailable";
-    statusBanner.textContent = message;
-    if (summaryEl) summaryEl.innerHTML = "";
-    grid.innerHTML = `<div class="item"><span>Strength</span><strong>Failed to load data</strong></div>`;
+  sourceLabel.textContent = "Unavailable";
+  statusBanner.textContent = message;
+  if (summaryEl) summaryEl.innerHTML = "";
+  grid.innerHTML = `<div class="item"><span>Strength</span><strong>Failed to load data</strong></div>`;
 }
 
 async function loadGains() {

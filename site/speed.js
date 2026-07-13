@@ -38,10 +38,10 @@ async function loadSpeed() {
 }
 
 function renderUnavailableSpeed(message) {
-    sourceLabel.textContent = "Unavailable";
-    statusBanner.textContent = message;
-    if (summaryEl) summaryEl.innerHTML = "";
-    table.innerHTML = `<div class="speed-empty">Failed to load speed data.</div>`;
+  sourceLabel.textContent = "Unavailable";
+  statusBanner.textContent = message;
+  if (summaryEl) summaryEl.innerHTML = "";
+  table.innerHTML = `<div class="speed-empty">Failed to load speed data.</div>`;
 }
 
 function renderTable(entries) {

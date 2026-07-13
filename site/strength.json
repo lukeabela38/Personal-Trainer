@@ -1,6 +1,11 @@
 {
   "source": "Hevy exercise history",
   "snapshot_date": "2026-07-02",
+  "page_state": {
+    "kind": "fresh",
+    "label": "Strength history ready",
+    "detail": "Hevy data is available and current."
+  },
   "entries": [
     {
       "name": "Squat (Barbell)",
