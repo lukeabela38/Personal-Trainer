@@ -1,0 +1,174 @@
+{
+  "exercises": [
+    {
+      "exercise_template_id": "D04AC939",
+      "name": "Squat (Barbell)",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "79D0BB3A",
+      "name": "Bench Press (Barbell)",
+      "category": "Push"
+    },
+    {
+      "exercise_template_id": "29083183",
+      "name": "Chin Up",
+      "category": "Pull"
+    },
+    {
+      "exercise_template_id": "28BB4A95",
+      "name": "Triceps Dip",
+      "category": "Push"
+    },
+    {
+      "exercise_template_id": "392887AA",
+      "name": "Push Up",
+      "category": "Push"
+    },
+    {
+      "exercise_template_id": "F1E57334",
+      "name": "Dumbbell Row",
+      "category": "Pull"
+    },
+    {
+      "exercise_template_id": "5E10D0E6",
+      "name": "Sumo Squat (Kettlebell)",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "8347DFD1",
+      "name": "Single Arm Tricep Extension (Dumbbell)",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "A1B2C3D4",
+      "name": "Deadlift (Barbell)",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "B2C3D4E5",
+      "name": "Overhead Press (Barbell)",
+      "category": "Push"
+    },
+    {
+      "exercise_template_id": "C3D4E5F6",
+      "name": "Pull Up",
+      "category": "Pull"
+    },
+    {
+      "exercise_template_id": "D4E5F6A7",
+      "name": "Romanian Deadlift",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "E5F6A7B8",
+      "name": "Bulgarian Split Squat",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "F6A7B8C9",
+      "name": "Dumbbell Bench Press",
+      "category": "Push"
+    },
+    {
+      "exercise_template_id": "A7B8C9D0",
+      "name": "Seated Cable Row",
+      "category": "Pull"
+    },
+    {
+      "exercise_template_id": "B8C9D0A1",
+      "name": "Bicep Curl (Dumbbell)",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "C9D0A1B2",
+      "name": "Tricep Pushdown",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "D0A1B2C3",
+      "name": "Lateral Raise",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "E1F2A3B4",
+      "name": "Leg Press",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "F2A3B4C5",
+      "name": "Hamstring Curl",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "A3B4C5D6",
+      "name": "Calf Raise",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "B4C5D6E7",
+      "name": "Face Pull",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "C5D6E7F8",
+      "name": "Pendlay Row",
+      "category": "Pull"
+    },
+    {
+      "exercise_template_id": "D6E7F8A9",
+      "name": "Front Squat",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "E7F8A9B0",
+      "name": "Incline Bench Press",
+      "category": "Push"
+    },
+    {
+      "exercise_template_id": "F8A9B0C1",
+      "name": "Skull Crusher",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "A9B0C1D2",
+      "name": "Dumbbell Shoulder Press",
+      "category": "Push"
+    },
+    {
+      "exercise_template_id": "B0C1D2E3",
+      "name": "Barbell Hip Thrust",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "C1D2E3F4",
+      "name": "Farmer Walk",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "D2E3F4A5",
+      "name": "Pistol Squat",
+      "category": "Lower body"
+    },
+    {
+      "exercise_template_id": "E3F4A5B6",
+      "name": "Weighted Plank",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "F4A5B6C7",
+      "name": "Kettlebell Swing",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "A5B6C7D8",
+      "name": "Box Jump",
+      "category": "Accessory"
+    },
+    {
+      "exercise_template_id": "B6C7D8E9",
+      "name": "Dips (Weighted)",
+      "category": "Push"
+    }
+  ]
+}

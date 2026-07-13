@@ -75,7 +75,7 @@ Purpose: Operational scripts for live data capture, site building, and reporting
 - `live_sources.py` — merge per-source commands into one payload JSON
 - `build_site_artifacts.py` — copy site shell + emit data JSONs into generated `dist/`
 - `mcp_client.py` — reusable async MCP stdio client
-- `strength_report.py` — standalone strength PB report from Hevy history
+- `strength_report.py` — standalone strength PB report from Hevy history; can also merge discovered Hevy exercises into `history/exercises/index.json`
 - `speed_report.py` — standalone speed PB report from Garmin records
 - `test_strength_report.py` — tests for `strength_report.py`
 - `serve_site.sh` — build-and-serve local deploy preview
@@ -90,7 +90,7 @@ Purpose: Per-source MCP wrapper scripts — emit source payload JSON to stdout.
 - `fetch_cronometer.py` — Cronometer nutrition data (food log, macro targets, fueling status)
 - `fetch_manual.py` — manual check-in (reads from command or file, falls back to defaults)
 - `fetch_garmin_speed.py` — Garmin personal records for running
-- `fetch_hevy_strength.py` — Hevy exercise history for tracked template IDs
+- `fetch_hevy_strength.py` — Hevy exercise history for tracked template IDs; honors `PERSONAL_TRAINER_HEVY_STRENGTH_RECENT_DAYS`
 
 ### `site/`
 
@@ -106,6 +106,7 @@ Purpose: Static browser UI.
 - `strength.js` — strength carousel with infinite scroll
 - `speed.js` — speed carousel with infinite scroll
 - `progress.js` — progress comparison rendering
+- `history/exercises/index.json` — shared Hevy exercise catalog used by the strength page and site build
 - `strength/`, `speed/` — redirect index.html files for clean URLs
 
 ### `docs/`

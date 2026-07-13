@@ -7,6 +7,8 @@ from unittest import TestCase
 
 from scripts import build_site_artifacts
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 class BuildSiteArtifactsTest(TestCase):
     def _write_site_shell(self, site_dir: Path) -> None:
@@ -37,6 +39,10 @@ class BuildSiteArtifactsTest(TestCase):
             path = site_dir / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(name, encoding="utf-8")
+        catalog_src = REPO_ROOT / "site" / "history" / "exercises" / "index.json"
+        catalog_dst = site_dir / "history" / "exercises" / "index.json"
+        catalog_dst.parent.mkdir(parents=True, exist_ok=True)
+        catalog_dst.write_text(catalog_src.read_text(encoding="utf-8"), encoding="utf-8")
         for name in (
             "history/index.json",
             "history/2026-07-02.json",
@@ -74,7 +80,7 @@ class BuildSiteArtifactsTest(TestCase):
                         "recent_workouts": [],
                         "recent_bests": [
                             {
-                                "name": "Squat",
+                                "exercise_template_id": "D04AC939",
                                 "best_set": {"weight_kg": 100, "reps": 5},
                             }
                         ],
@@ -166,6 +172,7 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertTrue((output_dir / "food/index.html").exists())
             self.assertTrue((output_dir / "strength.json").exists())
             self.assertTrue((output_dir / "history/index.json").exists())
+            self.assertTrue((output_dir / "history/exercises/index.json").exists())
             self.assertTrue((output_dir / "history/exercises/_gains.json").exists())
             self.assertFalse((output_dir / "sw.js").exists())
             self.assertEqual(built_snapshot["derived"]["page_states"]["food"]["kind"], "fresh")
@@ -173,6 +180,8 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertEqual(built_snapshot["derived"]["page_states"]["speed"]["kind"], "fresh")
             built_strength = json.loads((output_dir / "strength.json").read_text(encoding="utf-8"))
             self.assertEqual(built_strength["page_state"]["kind"], "fresh")
+            self.assertEqual(built_strength["entries"][0]["name"], "Squat (Barbell)")
+            self.assertEqual(built_strength["entries"][0]["category"], "Lower body")
             built_speed = json.loads((output_dir / "speed.json").read_text(encoding="utf-8"))
             self.assertEqual(built_speed["page_state"]["kind"], "fresh")
             self.assertEqual(

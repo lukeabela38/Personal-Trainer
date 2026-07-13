@@ -7,6 +7,7 @@ import sys
 import tempfile
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
@@ -217,6 +218,46 @@ class HevyStrengthWrapperTests(TestCase):
         self.assertEqual(rows[0]["weight"], 110.0)
         self.assertEqual(rows[1]["exerciseName"], "Push Up")
         self.assertEqual(rows[1]["reps"], 20)
+
+    def test_fetch_uses_configurable_recent_window(self) -> None:
+        workout_time = (datetime.now(UTC) - timedelta(days=45)).isoformat().replace("+00:00", "Z")
+
+        async def fake_call_tool(
+            _command: str, method: str, params: dict[str, object]
+        ) -> list[dict[str, object]] | dict[str, object]:
+            if method != "get-workouts":
+                return []
+            self.assertEqual(params.get("page"), 1)
+            self.assertEqual(params.get("pageSize"), 10)
+            return {
+                "workouts": [
+                    {
+                        "title": "Upper",
+                        "start_time": workout_time,
+                        "exercises": [
+                            {
+                                "exercise_template_id": "ABCD1234",
+                                "name": "Incline Dumbbell Curl",
+                                "sets": [{"weight_kg": 20, "reps": 10}],
+                            }
+                        ],
+                    }
+                ]
+            }
+
+        with patch.object(fetch_hevy_strength, "call_tool", side_effect=fake_call_tool):
+            with patch.dict(fetch_hevy_strength.os.environ, {}, clear=True):
+                default_rows = asyncio.run(fetch_hevy_strength.fetch())
+            with patch.dict(
+                fetch_hevy_strength.os.environ,
+                {"PERSONAL_TRAINER_HEVY_STRENGTH_RECENT_DAYS": "90"},
+                clear=True,
+            ):
+                long_window_rows = asyncio.run(fetch_hevy_strength.fetch())
+
+        self.assertEqual(default_rows, [])
+        self.assertEqual(len(long_window_rows), 1)
+        self.assertEqual(long_window_rows[0]["exerciseName"], "Incline Dumbbell Curl")
 
 
 class HevyWrapperTests(TestCase):

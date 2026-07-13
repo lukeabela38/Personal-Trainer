@@ -36,6 +36,12 @@ ALIASES = {
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build site/strength.json from Hevy history.")
     parser.add_argument("--output", type=Path, default=Path("site/strength.json"))
+    parser.add_argument(
+        "--catalog-output",
+        type=Path,
+        default=None,
+        help="Optional path to write a merged Hevy exercise catalog.",
+    )
     parser.add_argument("--source", type=Path, default=None)
     args = parser.parse_args(argv)
     try:
@@ -45,6 +51,12 @@ def main(argv: list[str] | None = None) -> int:
             raw = _load_from_command()
         report = build_report(raw)
         args.output.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        if args.catalog_output is not None:
+            args.catalog_output.parent.mkdir(parents=True, exist_ok=True)
+            args.catalog_output.write_text(
+                json.dumps(build_catalog(raw), indent=2),
+                encoding="utf-8",
+            )
     except Exception as exc:  # noqa: BLE001
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -116,6 +128,30 @@ def build_report(raw: Any) -> dict[str, Any]:
         "source": "Hevy exercise history",
         "snapshot_date": datetime.now(UTC).date().isoformat(),
         "entries": entries,
+    }
+
+
+def build_catalog(raw: Any) -> dict[str, Any]:
+    exercises: dict[str, dict[str, str]] = {}
+    for row in _extract_records(raw):
+        template_id = str(
+            row.get("exerciseTemplateId") or row.get("exercise_template_id") or row.get("template_id") or ""
+        ).strip()
+        name = str(
+            row.get("exerciseName")
+            or row.get("exercise_name")
+            or row.get("_exercise_name")
+            or ""
+        ).strip()
+        if not template_id or not name:
+            continue
+        exercises[template_id] = {
+            "exercise_template_id": template_id,
+            "name": name,
+            "category": _category_for(name),
+        }
+    return {
+        "exercises": sorted(exercises.values(), key=lambda entry: entry["name"].lower()),
     }
 
 

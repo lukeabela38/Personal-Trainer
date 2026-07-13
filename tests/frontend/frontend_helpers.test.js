@@ -101,8 +101,21 @@ globalThis.window = {
     href: "http://127.0.0.1:4173/index.html",
   },
 };
-globalThis.fetch = async () => ({
-  json: async () => ({ entries: [], recommendation: {}, snapshot: {} }),
+globalThis.fetch = async (url) => ({
+  json: async () => {
+    if (String(url).includes("/history/exercises/index.json")) {
+      return {
+        exercises: [
+          {
+            exercise_template_id: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            category: "Push",
+          },
+        ],
+      };
+    }
+    return { entries: [], recommendation: {}, snapshot: {} };
+  },
 });
 
 const speed = await import("../../site/speed.js");

@@ -19,7 +19,6 @@ HEVY_COMMAND = os.environ.get(
     "PERSONAL_TRAINER_HEVY_MCP_COMMAND",
     "npx -y -p node@26 -p hevy-mcp hevy-mcp",
 )
-RECENT_WINDOW_DAYS = 30
 RECENT_PAGE_SIZE = 10
 
 logger = logging.getLogger(__name__)
@@ -32,7 +31,7 @@ def _configure_logging() -> None:
 
 async def fetch() -> list[dict]:
     all_rows: list[dict] = []
-    cutoff = datetime.now(UTC) - timedelta(days=RECENT_WINDOW_DAYS)
+    cutoff = datetime.now(UTC) - timedelta(days=_recent_window_days())
     logger.info("[hevy-strength] fetching recent strength history")
 
     page = 1
@@ -133,6 +132,15 @@ def _safe_int(value: object) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _recent_window_days() -> int:
+    raw = os.environ.get("PERSONAL_TRAINER_HEVY_STRENGTH_RECENT_DAYS", "30").strip()
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        logger.warning("[hevy-strength] invalid recent-days value %r; using 30", raw)
+        return 30
 
 
 def main() -> int:
