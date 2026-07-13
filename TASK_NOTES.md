@@ -13,11 +13,79 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The live panel now leads with today's consumed macros, with targets shown underneath for context.
 - `food.js` cache-bust version was bumped so the browser doesn’t reuse the previous module after the panel change.
 
+## 2026-07-13 Source Independence Clarification
+
+- The freshness panel now says `Per-source freshness` and adds explicit copy that each source is tracked independently.
+- The aggregate badge now uses `All data fresh`, `Some sources stale or unavailable`, or `No data available` so Garmin, Hevy, Cronometer, and manual context stay separated.
+- Added a dashboard smoke assertion for the new explanatory copy and refreshed the browser bundle with `docker compose run --rm app python3 scripts/build_site_artifacts.py`.
+- Validation passed with `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npm run test:browser`.
+
+## 2026-07-13 Page State Consolidation
+
+- `scripts/build_site_artifacts.py` now emits `derived.page_states` for `food`, `strength`, and `speed`, and the derived page JSON includes a `page_state` field.
+- `site/food.js`, `site/strength.js`, and `site/speed.js` now honor those page states so missing source data renders explicit unavailable states instead of prepopulated content.
+- Added regression coverage in `tests/test_build_site_artifacts.py` for both fresh and missing page states.
+- Added a browser smoke assertion that the published artifacts expose the same page-state kinds as the built snapshot.
+- Validation passed with `docker compose run --rm -v "$PWD":/app -w /app app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest tests.test_build_site_artifacts -v"` and `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npm run test:browser`.
+
+## 2026-07-13 Browser Runner Note
+
+- `tests/browser/site-smoke.test.js` now includes a synthetic missing-state route test for food, strength, and speed.
+- The Playwright Chromium launch in this environment aborted with `SIGABRT` before any assertions ran, so the new browser test could not be reverified here after the edit.
+- `node --check tests/browser/site-smoke.test.js` passed, so the test file itself parses cleanly.
+- The root cause was macOS sandboxing: Chromium failed with `bootstrap_check_in ... Permission denied (1100)` until the browser run was retried with elevated permissions.
+- After rerunning with elevated permissions, `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js` passed all 9 tests against the Docker-served `dist/` output.
+
+## 2026-07-13 CI Fix Follow-up
+
+- The GitHub Actions JavaScript failure was just Prettier drift in `site/speed.js`, `site/strength.js`, `tests/browser/site-smoke.test.js`, and `tests/frontend/frontend_helpers.test.js`.
+- The browser smoke failure came from stale committed `site/` fixtures: `site/data/snapshot.json`, `site/strength.json`, and `site/speed.json` were missing the new derived page-state fields that already existed in `dist/`.
+- Local verification now passes with `npm run format:js:check` and `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js`.
+
+## 2026-07-13 Dashboard Freshness Alignment
+
+- `site/app.js` now classifies the dashboard import badge from the same source freshness data used by the per-source rows, instead of downgrading example snapshots just because `snapshot.source` is not `live`.
+- Example snapshots with all tracked sources fresh now render the import badge as fresh, which keeps the banner and the row indicators aligned.
+- Validation passed with `node --test tests/frontend/frontend_helpers.test.js`, `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js`, and `git diff --check`.
+
+## 2026-07-13 Freshness Page-State Alignment
+
+- The dashboard freshness panel now prefers `derived.page_states` for Garmin, Hevy, and Cronometer, with raw source objects only as a fallback for older snapshots.
+- That change keeps the freshness rows green when the corresponding pages already have data, even if the legacy source arrays are sparse.
+- Validation passed with `node --test tests/frontend/frontend_helpers.test.js`, a rebuilt `dist/`, and `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js`.
+
+## 2026-07-13 Dashboard Renderability Fix
+
+- `site/app.js` no longer drops example snapshots at load time just because `source !== "live"`.
+- `loadFromUrl()` now renders any snapshot that has either live raw data or derived page states, which keeps the home page from falling back to the red `No data available` state when the pages are populated.
+- Validation passed with a direct DOM probe of `#freshness-bar` plus `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js`.
+
+## 2026-07-13 Cronometer Missing Fixture
+
+- `personal_trainer/examples/snapshot-ready.json` now marks Cronometer as missing so the preview site can exercise the unavailable-food path.
+- Manual context remains fresh in that fixture because it is a separate source from Cronometer and still contributes recovery context to the dashboard.
+- Validation passed with a direct DOM probe of `#freshness-bar` plus `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/browser/site-smoke.test.js`.
+
 ## GitHub Agent Note
 
 - `gh` can be authenticated locally but still fail against `api.github.com` in this environment.
 - When that happens, use the GitHub app/MCP tools for PR metadata, check runs, and workflow logs instead of blocking on `gh`.
 - Keep `gh auth status` as the quick local auth sanity check, but treat MCP as the reliable fallback for GitHub Actions inspection here.
+
+## 2026-07-13 Freshness UI Consolidation
+
+- The home page now renders a single consolidated freshness panel in the `#freshness-bar` area instead of a separate bar plus a duplicate freshness card in the expandable section stack.
+- Each source row now maps freshness to a simple traffic-light state: fresh = green, stale/partial = orange, missing or empty = red.
+- The empty dashboard state now shows the same consolidated freshness panel so the home page stays informative before a snapshot is loaded.
+- `docker-compose.yml` now mounts `./personal_trainer`, `./scripts`, and `./site` into the `app` container so `docker compose run` regenerates `dist/` from the live working tree instead of baked image files.
+- Validation passed with `npm run format:js:check` and `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npm run test:browser`.
+
+## 2026-07-13 Deploy Failure Debug
+
+- The Pages deploy workflow was failing in `Prepare site output` because it always passed `--require-garmin-vo2max` to `scripts/daily_snapshot_runner.py`.
+- That gate made the whole publish job abort when Garmin returned empty or unauthorized data, even though the site could still be built from the remaining sources.
+- Removed the hard Garmin flag from `.github/workflows/pages.yml` so deploys can publish best-effort site artifacts instead of failing the entire Pages run.
+- Validation passed with `docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s personal_trainer/tests -v"`.
 
 ## 2026-07-13 Browser Smoke Sync
 

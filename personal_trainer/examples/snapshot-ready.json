@@ -309,21 +309,12 @@
     "flags": []
   },
   "cronometer": {
-    "freshness": "fresh",
-    "today": {
-      "calories_consumed": 1600,
-      "calories_target": 2600,
-      "protein_g": 130,
-      "carbs_g": 180,
-      "fat_g": 50,
-      "fiber_g": 25,
-      "remaining_kcal": 1000,
-      "log_completeness": "complete"
-    },
+    "freshness": "missing",
+    "today": {},
     "recent_days": [],
-    "fueling_status": "adequate",
-    "protein_status": "adequate",
-    "carb_availability": "adequate",
+    "fueling_status": "unknown",
+    "protein_status": "unknown",
+    "carb_availability": "unknown",
     "flags": []
   },
   "manual_context": {

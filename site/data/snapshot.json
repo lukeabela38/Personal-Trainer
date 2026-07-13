@@ -377,7 +377,24 @@
           "no"
         ]
       }
-    ]
+    ],
+    "page_states": {
+      "food": {
+        "kind": "missing",
+        "label": "No macro data available",
+        "detail": "Cronometer data is not available for this snapshot."
+      },
+      "strength": {
+        "kind": "fresh",
+        "label": "Strength history ready",
+        "detail": "Hevy data is available and current."
+      },
+      "speed": {
+        "kind": "fresh",
+        "label": "Speed history ready",
+        "detail": "Garmin data is available and current."
+      }
+    }
   },
   "recommendation": {
     "Priority": "recovery",
@@ -393,5 +410,6 @@
     "Guardrail": "do not turn a low-readiness day into intensity or heavy lifting",
     "Confidence": "medium",
     "Needs check-in": "yes"
-  }
+  },
+  "source": "example"
 }

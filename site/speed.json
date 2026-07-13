@@ -1,6 +1,11 @@
 {
   "source": "Garmin personal records",
   "snapshot_date": "2026-07-02",
+  "page_state": {
+    "kind": "fresh",
+    "label": "Speed history ready",
+    "detail": "Garmin data is available and current."
+  },
   "entries": [
     {
       "name": "Fastest 1K",

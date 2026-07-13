@@ -809,6 +809,15 @@ input[type="file"] {
   font-weight: 500;
   color: inherit;
 }
+.freshness-summary.fresh {
+  color: var(--green);
+}
+.freshness-summary.stale {
+  color: var(--amber);
+}
+.freshness-summary.missing {
+  color: var(--red);
+}
 
 /* Stat groups */
 .stat-groups {
@@ -1129,6 +1138,12 @@ input[type="file"] {
 .section-summary h2 {
   font-size: 0.9rem;
   font-weight: 600;
+}
+.section-subtitle {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 .section-list {
   padding: 0 18px 18px;

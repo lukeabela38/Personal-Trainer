@@ -13,19 +13,35 @@ async function loadSpeed() {
   try {
     const response = await fetch(`${speedUrl.pathname}?v=${Date.now()}`);
     const payload = await response.json();
+    const pageState = payload.page_state ?? {
+      kind: "fresh",
+      label: "Ready",
+      detail: "",
+    };
+    if (pageState.kind === "missing") {
+      renderUnavailableSpeed(pageState.detail ?? "No speed data available");
+      return;
+    }
     sourceLabel.textContent = `${payload.source ?? "Garmin"} · ${payload.snapshot_date ?? "unknown date"}`;
     sourceLabel.classList.remove("skeleton");
-    statusBanner.textContent = `${payload.entries.length} bests`;
+    statusBanner.textContent =
+      pageState.kind === "fresh"
+        ? `${payload.entries.length} bests`
+        : `${payload.entries.length} bests · ${pageState.label}`;
     statusBanner.classList.remove("skeleton");
     renderSummary(payload.entries);
     renderTable(payload.entries);
     renderSpeedGoals(payload);
   } catch {
-    sourceLabel.textContent = "Unavailable";
-    statusBanner.textContent = "Could not load speed data";
-    if (summaryEl) summaryEl.innerHTML = "";
-    table.innerHTML = `<div class="speed-empty">Failed to load speed data.</div>`;
+    renderUnavailableSpeed("Could not load speed data");
   }
+}
+
+function renderUnavailableSpeed(message) {
+  sourceLabel.textContent = "Unavailable";
+  statusBanner.textContent = message;
+  if (summaryEl) summaryEl.innerHTML = "";
+  table.innerHTML = `<div class="speed-empty">Failed to load speed data.</div>`;
 }
 
 function renderTable(entries) {
