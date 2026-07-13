@@ -264,6 +264,74 @@ test("default food entry time formats a datetime-local value", () => {
   );
 });
 
+test("food page renders the live nutrition snapshot summary", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalLocalStorage = globalThis.localStorage;
+  const snapshot = {
+    snapshot_date: "2026-07-13",
+    source: "live",
+    cronometer: {
+      today: {
+        calories_consumed: 1640.92,
+        calories_target: 1699,
+        protein_g: 74.333712342918,
+        carbs_g: 107.83969071214,
+        fat_g: 54.351795898725996,
+        remaining_kcal: 58.07999999999993,
+        log_completeness: "complete",
+      },
+      recent_days: [{ date: "2026-07-13" }],
+    },
+    recommendation: {
+      Macros: {
+        calories: 2000,
+        protein_g: 150,
+        carbs_g: 250,
+        fat_g: 60,
+      },
+    },
+  };
+
+  globalThis.localStorage = {
+    getItem: () => null,
+    setItem() {},
+    removeItem() {},
+  };
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ snapshot }),
+  });
+
+  try {
+    await import(`../../site/food.js?test=${Date.now()}`);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(
+      elementCache.get("food-live-title").textContent,
+      "Today's macros for 2026-07-13",
+    );
+    assert.equal(
+      elementCache.get("food-live-meta").textContent,
+      "Cronometer day 2026-07-13",
+    );
+    assert.match(
+      elementCache.get("food-live-targets").innerHTML,
+      /74 g logged/,
+    );
+    assert.match(
+      elementCache.get("food-live-targets").innerHTML,
+      /108 g logged/,
+    );
+    assert.match(
+      elementCache.get("food-live-targets").innerHTML,
+      /54 g logged/,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.localStorage = originalLocalStorage;
+  }
+});
+
 test("history helpers summarize snapshots", () => {
   const snapshots = [
     {
