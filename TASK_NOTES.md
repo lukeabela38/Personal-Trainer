@@ -59,7 +59,7 @@ Remove the static site service worker.
 ## Pages Smoke Coverage
 
 - Added a post-deploy HTTP smoke step to `.github/workflows/pages.yml`.
-- The smoke step polls the live Pages URL after deployment until the dashboard content appears, then verifies `favicon.svg` is served.
+- The smoke step polls the live Pages URL after deployment until the dashboard content appears, then verifies `favicon.png` is served.
 - The workflow change is YAML-valid and keeps the scope limited to deployment verification.
 - Hardened `scripts/daily_snapshot_runner.py` so Pages can skip optional Hevy/Garmin history overlays when the command env vars are not set, while keeping direct history scripts strict.
 - Added regression coverage in `tests/test_daily_snapshot_runner.py` for the optional history-report skip path.
@@ -85,7 +85,7 @@ Remove the static site service worker.
 - Added `@playwright/test`, `playwright.config.js`, and `tests/browser/site-smoke.test.js`.
 - Smoke checks cover the dashboard, strength, speed, and progress pages.
 - Console capture now fails the suite on uncaught page errors or console errors.
-- Added small static fixtures for `site/history/index.json`, `site/history/2026-07-02.json`, `site/history/exercises/_gains.json`, and `site/favicon.svg` so the pages load without noisy 404s.
+- Added small static fixtures for `site/history/index.json`, `site/history/2026-07-02.json`, `site/history/exercises/_gains.json`, and `site/favicon.png` so the pages load without noisy 404s.
 - Validation passed with `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4321 npm run test:browser`, `npm run format:js:check`, `npm run lint:js`, and `git diff --check`.
 
 ## Python Script Coverage
@@ -207,7 +207,6 @@ Garmin auth/session caching card from the project board.
 - Rebuilt `dist/` from the live snapshot pipeline; host `python3` is still 3.9 here, so live source wrappers for Garmin/Hevy fell back and produced an empty live snapshot.
 - Progress page was trimmed back down to nutrition averages plus VO2 only; removed workouts/runs, weekly run distance, and Hevy strength trend tiles from the live summary and range summary.
 - Playwright smoke now uses the empty dashboard shell as the readiness target because the no-fallback preview boots without a rendered freshness strip or summary stack.
-- Local `python3 scripts/build_site_artifacts.py` publishes `favicon.svg` plus `strength/index.html` and `speed/index.html`; the Docker build path here still leaves those files out of `dist/`.
 - Browser smoke passed after rebuilding locally and serving `dist/` from `./scripts/serve_site.sh --skip-build` in the same shell context.
 ## 2026-07-12
 
