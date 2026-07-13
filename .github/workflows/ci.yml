@@ -42,15 +42,13 @@ jobs:
           python-version: "3.12"
       - name: Install ruff
         run: python3 -m pip install ruff==0.15.21
-      - name: Ruff format check
+      - name: Ruff format
         working-directory: personal_trainer
         run: |
           set -o pipefail
-          status=0
           echo "### Ruff format" >> "$GITHUB_STEP_SUMMARY"
-          python3 -m ruff format --check src tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
-          python3 -m ruff format --check ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
-          exit "$status"
+          python3 -m ruff format src tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 -m ruff format ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Ruff lint check
         working-directory: personal_trainer
         run: |

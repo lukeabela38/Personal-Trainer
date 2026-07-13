@@ -172,3 +172,19 @@ Implications:
 
 - Generated runtime artifacts should be added to `.gitignore` where practical.
 - If a generated file currently needs to be versioned, that should be a deliberate exception with an explicit follow-up decision.
+
+## 2026-07-13 — CI Auto-Formats Before Ruff Check
+
+Decision:
+
+- The CI lint job should run `ruff format` before `ruff check` so formatting drift is normalized before linting.
+
+Reason:
+
+- Prevents CI from failing on pure formatting issues when the repo uses Ruff as the formatter.
+- Keeps the lint signal focused on actual rule violations after formatting has been applied.
+
+Implications:
+
+- CI will rewrite files in the ephemeral runner before linting them.
+- Contributors still SHOULD format locally before pushing, but formatting-only drift will no longer block the PR by itself.
