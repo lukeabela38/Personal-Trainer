@@ -38,6 +38,7 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The refresh path clears any stored browser Hevy overlay before fetching, so the next render has to repull instead of reusing stale live data.
 - `site/strength.html` and `site/strength.js` expose that window so the user can change the lookback depth and see it reflected in the refresh status.
 - The browser smoke suite now checks that the strength page renders the new window control from the built `dist/` bundle.
+- The Pages workflow now uses the same 30-workout default as local, instead of overriding the window to 90 in CI.
 
 ## 2026-07-13 Source Independence Clarification
 
