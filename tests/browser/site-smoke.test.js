@@ -96,11 +96,15 @@ for (const pageSpec of pages) {
 test("strength page renders at its short route", async ({ page }) => {
   await page.goto("/strength/");
   await expect(page).toHaveURL(/\/strength\/$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Strength" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Strength" }),
+  ).toBeVisible();
 
   await page.goto("/strength.html");
   await expect(page).toHaveURL(/\/strength\.html$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Strength" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Strength" }),
+  ).toBeVisible();
 
   await page.goto("/speed/");
   await expect(page).toHaveURL(/\/speed\.html$/);
