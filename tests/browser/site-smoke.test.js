@@ -90,7 +90,8 @@ test("redirect shells forward to their canonical pages", async ({ page }) => {
 });
 
 test("favicon is served", async ({ request }) => {
-  const response = await request.get("/favicon.svg");
+  const response = await request.get("/favicon.png");
   expect(response.ok()).toBe(true);
-  await expect(response.text()).resolves.toContain("<svg");
+  expect(response.headers()["content-type"]).toContain("image/png");
+  expect((await response.body()).length).toBeGreaterThan(0);
 });
