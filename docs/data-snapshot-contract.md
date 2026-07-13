@@ -110,7 +110,7 @@ The normalized `athlete` object should always include:
 
 ## Freshness Values
 
-Each source should include a `freshness` field:
+Each source should include a `freshness` field and be evaluated independently:
 
 - `fresh`: data pulled today and current enough for decision-making
 - `stale`: data exists but may no longer reflect current state
@@ -118,6 +118,17 @@ Each source should include a `freshness` field:
 - `partial`: some useful data exists, but decision-critical fields are missing
 
 Freshness affects confidence. It should not automatically block recommendation output unless missing data changes the decision.
+The dashboard should not infer Garmin freshness from Cronometer, or Hevy freshness from Garmin, because each source has its own capture path and availability state.
+
+## Derived Page States
+
+The normalized snapshot may include `derived.page_states` for `food`, `strength`, and `speed`.
+
+- `fresh`: the page can render its data normally
+- `stale`: the page can render data, but the source is not current enough to treat as fully fresh
+- `missing`: the page should render an explicit unavailable state instead of prepopulated content
+
+These page states should be derived from the matching source freshness and availability, not inferred from unrelated sources.
 
 ## Garmin Fields
 

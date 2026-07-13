@@ -7,6 +7,7 @@ const pages = [
     ready: "#food-cta",
     checks: [
       "#freshness-bar .section-panel",
+      "text=Each source is tracked independently.",
       "#food-cta",
       "#session-shell",
       "#status-banner",
@@ -120,4 +121,95 @@ test("favicon is served", async ({ request }) => {
   expect(response.ok()).toBe(true);
   expect(response.headers()["content-type"]).toContain("image/png");
   expect((await response.body()).length).toBeGreaterThan(0);
+});
+
+test("derived page states are published with the built artifacts", async ({
+  request,
+}) => {
+  const snapshot = await (await request.get("/data/snapshot.json")).json();
+  const strength = await (await request.get("/strength.json")).json();
+  const speed = await (await request.get("/speed.json")).json();
+
+  expect(snapshot.derived.page_states.food.kind).toMatch(/fresh|stale|missing/);
+  expect(snapshot.derived.page_states.strength.kind).toMatch(/fresh|stale|missing/);
+  expect(snapshot.derived.page_states.speed.kind).toMatch(/fresh|stale|missing/);
+  expect(strength.page_state.kind).toBe(snapshot.derived.page_states.strength.kind);
+  expect(speed.page_state.kind).toBe(snapshot.derived.page_states.speed.kind);
+});
+
+test("missing page states render explicit unavailable shells", async ({
+  page,
+}) => {
+  const snapshotPayload = {
+    snapshot_date: "2026-07-13",
+    cronometer: { today: {} },
+    recommendation: { Macros: {} },
+    derived: {
+      page_states: {
+        food: {
+          kind: "missing",
+          label: "Cronometer unavailable",
+          detail: "No Cronometer data is available yet.",
+        },
+      },
+    },
+  };
+  const strengthPayload = {
+    source: "Hevy",
+    snapshot_date: "2026-07-13",
+    entries: [],
+    page_state: {
+      kind: "missing",
+      label: "Hevy unavailable",
+      detail: "No strength data is available yet.",
+    },
+  };
+  const speedPayload = {
+    source: "Garmin",
+    snapshot_date: "2026-07-13",
+    entries: [],
+    page_state: {
+      kind: "missing",
+      label: "Garmin unavailable",
+      detail: "No speed data is available yet.",
+    },
+  };
+
+  await page.route("**/data/snapshot.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(snapshotPayload),
+    });
+  });
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(strengthPayload),
+    });
+  });
+  await page.route("**/speed.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(speedPayload),
+    });
+  });
+
+  await page.goto("/food.html");
+  await expect(page.getByRole("heading", { level: 1, name: "Food" })).toBeVisible();
+  await expect(page.locator("#food-live-title")).toHaveText("Live data unavailable");
+  await expect(page.locator("#food-live-help")).toContainText("No Cronometer data is available yet.");
+  await expect(page.locator("#food-live-status")).toHaveText("Unavailable");
+  await expect(page.locator("#food-live-meta")).toHaveText("No imported Cronometer day is available.");
+
+  await page.goto("/strength.html");
+  await expect(page.getByRole("heading", { level: 1, name: "Strength" })).toBeVisible();
+  await expect(page.locator("#source-label")).toHaveText("Unavailable");
+  await expect(page.locator("#status-banner")).toContainText("No strength data is available yet.");
+  await expect(page.locator("#strength-grid")).toContainText("Failed to load data");
+
+  await page.goto("/speed.html");
+  await expect(page.getByRole("heading", { level: 1, name: "Speed" })).toBeVisible();
+  await expect(page.locator("#source-label")).toHaveText("Unavailable");
+  await expect(page.locator("#status-banner")).toContainText("No speed data is available yet.");
+  await expect(page.locator("#speed-table")).toContainText("Failed to load speed data.");
 });

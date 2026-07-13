@@ -165,15 +165,15 @@ async function loadFromUrl(url, sourceLabel) {
   const response = await fetch(url);
   const payload = await response.json();
   const snapshot = payload.snapshot ?? payload;
-  if (payload.source && payload.source !== "live") {
-    renderEmptyState(`Live data unavailable from ${sourceLabel}.`);
-    return;
-  }
-  if (!payload.source && !hasLiveSnapshotData(snapshot)) {
+  if (!hasRenderableDashboardSnapshot(snapshot)) {
     renderEmptyState(`Live data unavailable from ${sourceLabel}.`);
     return;
   }
   renderPayload(payload, sourceLabel);
+}
+
+export function hasRenderableDashboardSnapshot(snapshot) {
+  return hasLiveSnapshotData(snapshot) || hasDerivedPageStates(snapshot);
 }
 
 function renderPayload(payload, sourceLabel) {
@@ -784,49 +784,43 @@ export function describeSessionHelp(context) {
 }
 
 export function describeImportStatus(snapshot, detailOverride = "") {
+  const freshness = summarizeFreshnessStatus([
+    getDashboardFreshnessStatus(snapshot, "garmin"),
+    getDashboardFreshnessStatus(snapshot, "hevy"),
+    getDashboardFreshnessStatus(snapshot, "cronometer"),
+    getDashboardFreshnessStatus(snapshot, "manual_context"),
+  ]);
   const source = snapshot?.source ?? "unknown";
-  if (source === "live") {
-    if (hasLiveSnapshotData(snapshot)) {
-      return {
-        kind: "fresh",
-        label: "Live import successful",
-        detail:
-          detailOverride ||
-          "Garmin, Hevy, and Cronometer data loaded into the site.",
-      };
-    }
+  const sourceLabel =
+    source === "live"
+      ? "Live import"
+      : source === "example"
+        ? "Example snapshot"
+        : "Snapshot";
+  if (freshness.kind === "fresh") {
     return {
-      kind: "missing",
-      label: "Live import failed",
+      kind: "fresh",
+      label: "All data fresh",
       detail:
         detailOverride ||
-        "The live snapshot did not contain enough usable data to publish.",
+        `${sourceLabel} loaded and all tracked sources are current.`,
     };
   }
-  if (source === "example") {
+  if (freshness.kind === "stale") {
     return {
       kind: "stale",
-      label: "Example snapshot loaded",
+      label: "Some sources stale or unavailable",
       detail:
         detailOverride ||
-        "This is preview data, not a live import from connected services.",
-    };
-  }
-  if (hasLiveSnapshotData(snapshot)) {
-    return {
-      kind: "stale",
-      label: "Import partial",
-      detail:
-        detailOverride ||
-        "Some live data loaded, but the snapshot is not marked as a live import.",
+        `${sourceLabel} loaded, but at least one tracked source is stale or missing.`,
     };
   }
   return {
     kind: "missing",
-    label: "Import unavailable",
+    label: "No data available",
     detail:
       detailOverride ||
-      "Load a live snapshot to see whether ingestion succeeded.",
+      `${sourceLabel} loaded, but no tracked source data is available.`,
   };
 }
 
@@ -851,7 +845,7 @@ function renderFreshnessSection(snapshot) {
   ];
   const rows = sources
     .map(({ key, label }) => {
-      const status = getFreshnessStatus(snapshot[key]);
+      const status = getDashboardFreshnessStatus(snapshot, key);
       return `
         <div class="item freshness-item">
           <span>${label}</span>
@@ -861,14 +855,15 @@ function renderFreshnessSection(snapshot) {
     })
     .join("");
   const summary = summarizeFreshnessStatus(
-    sources.map(({ key }) => snapshot[key]),
+    sources.map(({ key }) => getDashboardFreshnessStatus(snapshot, key)),
   );
   return `
     <details class="card section-panel freshness-panel" open>
       <summary class="section-summary">
         <div>
           <p class="label">Freshness</p>
-          <h2>Data source freshness</h2>
+          <h2>Per-source freshness</h2>
+          <p class="section-subtitle">Each source is tracked independently.</p>
         </div>
         <span class="section-count freshness-summary ${summary.kind}">${escapeHtml(summary.label)}</span>
       </summary>
@@ -878,14 +873,14 @@ function renderFreshnessSection(snapshot) {
 }
 
 function summarizeFreshnessStatus(sources) {
-  const statuses = sources.map((source) => getFreshnessStatus(source).kind);
+  const statuses = sources.map((source) => source.kind);
   if (statuses.every((kind) => kind === "fresh")) {
-    return { kind: "fresh", label: "All sources fresh" };
+    return { kind: "fresh", label: "All data fresh" };
   }
-  if (statuses.includes("missing")) {
-    return { kind: "missing", label: "Some sources missing" };
+  if (statuses.every((kind) => kind === "missing")) {
+    return { kind: "missing", label: "No data available" };
   }
-  return { kind: "stale", label: "Some sources not fresh" };
+  return { kind: "stale", label: "Some sources stale or unavailable" };
 }
 
 function getFreshnessStatus(source) {
@@ -895,6 +890,31 @@ function getFreshnessStatus(source) {
   return source?.freshness === "fresh"
     ? { kind: "fresh", label: "Fresh" }
     : { kind: "stale", label: "Not fresh" };
+}
+
+function hasDerivedPageStates(snapshot) {
+  const pageStates = snapshot?.derived?.page_states;
+  if (!pageStates || typeof pageStates !== "object") return false;
+  return Object.values(pageStates).some((state) => Boolean(state?.kind));
+}
+
+function getDashboardFreshnessStatus(snapshot, key) {
+  const pageStateMap = {
+    garmin: snapshot?.derived?.page_states?.speed,
+    hevy: snapshot?.derived?.page_states?.strength,
+    cronometer: snapshot?.derived?.page_states?.food,
+  };
+  const pageState = pageStateMap[key];
+  if (pageState?.kind) {
+    return formatFreshnessStatus(pageState.kind);
+  }
+  return getFreshnessStatus(snapshot?.[key]);
+}
+
+function formatFreshnessStatus(kind) {
+  if (kind === "fresh") return { kind, label: "Fresh" };
+  if (kind === "stale") return { kind, label: "Not fresh" };
+  return { kind: "missing", label: "No data" };
 }
 
 function hasUsefulSourceData(source) {

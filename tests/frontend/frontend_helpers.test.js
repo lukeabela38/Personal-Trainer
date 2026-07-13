@@ -112,6 +112,7 @@ const progress = await import("../../site/progress.js");
 const {
   defaultFoodEntryTime,
   describeImportStatus,
+  hasRenderableDashboardSnapshot,
   openDeploymentLogView,
   renderCheckInPanel,
   renderImportStatusBar,
@@ -224,20 +225,75 @@ test("check-in panel renders fixed questions and answer chips", () => {
 test("import status distinguishes successful and missing live data", () => {
   const liveStatus = describeImportStatus({
     source: "live",
-    garmin: { recent_runs: [{}] },
-    hevy: { recent_workouts: [{}] },
-    cronometer: { recent_days: [{}] },
+    garmin: { freshness: "fresh", recent_runs: [{ distance_m: 1000 }] },
+    hevy: { freshness: "fresh", recent_workouts: [{ workout_start_date: "2026-07-13" }] },
+    cronometer: { freshness: "fresh", recent_days: [{ date: "2026-07-13" }] },
+    manual_context: { freshness: "fresh", notes: [{ text: "ready" }] },
+    derived: {
+      page_states: {
+        food: { kind: "fresh" },
+        strength: { kind: "fresh" },
+        speed: { kind: "fresh" },
+      },
+    },
   });
   assert.equal(liveStatus.kind, "fresh");
-  assert.equal(liveStatus.label, "Live import successful");
+  assert.equal(liveStatus.label, "All data fresh");
   assert.match(
-    renderImportStatusBar({ source: "live", garmin: { recent_runs: [{}] } }),
+    renderImportStatusBar({
+      source: "live",
+      garmin: { freshness: "fresh", recent_runs: [{ distance_m: 1000 }] },
+      hevy: { freshness: "fresh", recent_workouts: [{ workout_start_date: "2026-07-13" }] },
+      cronometer: { freshness: "fresh", recent_days: [{ date: "2026-07-13" }] },
+      manual_context: { freshness: "fresh", notes: [{ text: "ready" }] },
+      derived: {
+        page_states: {
+          food: { kind: "fresh" },
+          strength: { kind: "fresh" },
+          speed: { kind: "fresh" },
+        },
+      },
+    }),
     /import-status/,
   );
 
+  const staleStatus = describeImportStatus({
+    source: "example",
+    garmin: { freshness: "fresh", recent_runs: [{ distance_m: 1000 }] },
+    hevy: { freshness: "fresh", recent_workouts: [{ workout_start_date: "2026-07-10" }] },
+    cronometer: { freshness: "fresh", recent_days: [{ date: "2026-07-13" }] },
+    manual_context: { freshness: "fresh" },
+    derived: {
+      page_states: {
+        food: { kind: "fresh" },
+        strength: { kind: "stale" },
+        speed: { kind: "fresh" },
+      },
+    },
+  });
+  assert.equal(staleStatus.kind, "stale");
+  assert.equal(staleStatus.label, "Some sources stale or unavailable");
+
   const missingStatus = describeImportStatus({ source: "live" });
   assert.equal(missingStatus.kind, "missing");
-  assert.equal(missingStatus.label, "Live import failed");
+  assert.equal(missingStatus.label, "No data available");
+});
+
+test("example snapshots with derived page states still render the dashboard", () => {
+  assert.equal(
+    hasRenderableDashboardSnapshot({
+      source: "example",
+      derived: {
+        page_states: {
+          food: { kind: "fresh" },
+          strength: { kind: "fresh" },
+          speed: { kind: "fresh" },
+        },
+      },
+    }),
+    true,
+  );
+  assert.equal(hasRenderableDashboardSnapshot({ source: "example" }), false);
 });
 
 test("deployment log link opens the published log artifact", () => {

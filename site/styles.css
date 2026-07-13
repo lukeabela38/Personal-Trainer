@@ -1139,6 +1139,12 @@ input[type="file"] {
   font-size: 0.9rem;
   font-weight: 600;
 }
+.section-subtitle {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
 .section-list {
   padding: 0 18px 18px;
   display: grid;

@@ -23,9 +23,21 @@ async function loadStrength() {
   try {
     const response = await fetch(`${strengthUrl.pathname}?v=${Date.now()}`);
     const payload = await response.json();
+    const pageState = payload.page_state ?? {
+      kind: "fresh",
+      label: "Ready",
+      detail: "",
+    };
+    if (pageState.kind === "missing") {
+      renderUnavailableStrength(pageState.detail ?? "No strength data available");
+      return;
+    }
     sourceLabel.textContent = `${payload.source ?? "Hevy"} · ${payload.snapshot_date ?? "unknown date"}`;
     sourceLabel.classList.remove("skeleton");
-    statusBanner.textContent = `${payload.entries.length} lifts`;
+    statusBanner.textContent =
+      pageState.kind === "fresh"
+        ? `${payload.entries.length} lifts`
+        : `${payload.entries.length} lifts · ${pageState.label}`;
     statusBanner.classList.remove("skeleton");
     entries = payload.entries;
     renderControls();
@@ -36,11 +48,15 @@ async function loadStrength() {
     });
     controls.removeAttribute("hidden");
   } catch {
+    renderUnavailableStrength("Could not load strength data");
+  }
+}
+
+function renderUnavailableStrength(message) {
     sourceLabel.textContent = "Unavailable";
-    statusBanner.textContent = "Could not load strength data";
+    statusBanner.textContent = message;
     if (summaryEl) summaryEl.innerHTML = "";
     grid.innerHTML = `<div class="item"><span>Strength</span><strong>Failed to load data</strong></div>`;
-  }
 }
 
 async function loadGains() {

@@ -43,6 +43,8 @@ def main(argv: list[str] | None = None) -> int:
         snapshot = _load_json(args.snapshot)
         _validate_snapshot(snapshot)
         snapshot_payload = _with_recommendation(snapshot)
+        page_states = _build_page_states(snapshot_payload)
+        snapshot_payload.setdefault("derived", {})["page_states"] = page_states
         output_dir = args.output_dir
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / "data").mkdir(parents=True, exist_ok=True)
@@ -54,11 +56,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         (output_dir / "raw.json").write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
         (output_dir / "strength.json").write_text(
-            json.dumps(_build_strength_view(snapshot), indent=2),
+            json.dumps(_build_strength_view(snapshot, page_states["strength"]), indent=2),
             encoding="utf-8",
         )
         (output_dir / "speed.json").write_text(
-            json.dumps(_build_speed_view(snapshot), indent=2),
+            json.dumps(_build_speed_view(snapshot, page_states["speed"]), indent=2),
             encoding="utf-8",
         )
     except (OSError, json.JSONDecodeError, ValueError) as exc:
@@ -117,6 +119,68 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
             destination = output_dir / source.relative_to(site_dir)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
+
+
+def _build_page_states(snapshot: dict[str, Any]) -> dict[str, dict[str, str]]:
+    garmin = snapshot.get("garmin", {})
+    hevy = snapshot.get("hevy", {})
+    cronometer = snapshot.get("cronometer", {})
+
+    return {
+        "food": _build_source_page_state(
+            cronometer,
+            has_data=bool(cronometer.get("today")) or bool(cronometer.get("recent_days")),
+            source_label="Cronometer",
+            ready_label="Macro data ready",
+            stale_label="Macro data partial",
+            missing_label="No macro data available",
+        ),
+        "strength": _build_source_page_state(
+            hevy,
+            has_data=bool(hevy.get("recent_bests")) or bool(hevy.get("recent_workouts")),
+            source_label="Hevy",
+            ready_label="Strength history ready",
+            stale_label="Strength history partial",
+            missing_label="No strength data available",
+        ),
+        "speed": _build_source_page_state(
+            garmin,
+            has_data=bool(garmin.get("recent_bests")) or bool(garmin.get("recent_runs")),
+            source_label="Garmin",
+            ready_label="Speed history ready",
+            stale_label="Speed history partial",
+            missing_label="No speed data available",
+        ),
+    }
+
+
+def _build_source_page_state(
+    source: dict[str, Any],
+    *,
+    has_data: bool,
+    source_label: str,
+    ready_label: str,
+    stale_label: str,
+    missing_label: str,
+) -> dict[str, str]:
+    freshness = str(source.get("freshness", "missing"))
+    if freshness == "fresh" and has_data:
+        return {
+            "kind": "fresh",
+            "label": ready_label,
+            "detail": f"{source_label} data is available and current.",
+        }
+    if freshness in {"stale", "partial"} and has_data:
+        return {
+            "kind": "stale",
+            "label": stale_label,
+            "detail": f"{source_label} data exists, but it is not fresh enough to treat as current.",
+        }
+    return {
+        "kind": "missing",
+        "label": missing_label,
+        "detail": f"{source_label} data is not available for this snapshot.",
+    }
 
 
 _EXERCISE_NAMES = {
@@ -194,7 +258,7 @@ _EXERCISE_CATEGORIES = {
 }
 
 
-def _build_strength_view(snapshot: dict[str, Any]) -> dict[str, Any]:
+def _build_strength_view(snapshot: dict[str, Any], page_state: dict[str, str]) -> dict[str, Any]:
     hevy = snapshot.get("hevy", {})
     entries = []
     for b in hevy.get("recent_bests", []):
@@ -215,6 +279,7 @@ def _build_strength_view(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {
         "source": "Hevy exercise history",
         "snapshot_date": snapshot.get("snapshot_date"),
+        "page_state": page_state,
         "entries": entries,
     }
 
@@ -229,7 +294,7 @@ _TRACKED_NAMES = {
 }
 
 
-def _build_speed_view(snapshot: dict[str, Any]) -> dict[str, Any]:
+def _build_speed_view(snapshot: dict[str, Any], page_state: dict[str, str]) -> dict[str, Any]:
     garmin = snapshot.get("garmin", {})
     entries = []
     for b in garmin.get("recent_bests", []):
@@ -251,6 +316,7 @@ def _build_speed_view(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {
         "source": "Garmin personal records",
         "snapshot_date": snapshot.get("snapshot_date"),
+        "page_state": page_state,
         "entries": entries,
     }
 

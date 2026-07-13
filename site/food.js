@@ -105,6 +105,16 @@ function renderLiveSnapshotShell() {
     return;
   }
 
+  const pageState = snapshot.derived?.page_states?.food ?? {
+    kind: "fresh",
+    label: "Ready",
+    detail: "",
+  };
+  if (pageState.kind === "missing") {
+    renderLiveSnapshotEmpty(pageState.detail || state.liveStatus);
+    return;
+  }
+
   const recommendation = snapshot.recommendation ?? {};
   const macros = recommendation.Macros ?? {};
   const today = snapshot.cronometer?.today ?? {};
@@ -123,7 +133,10 @@ function renderLiveSnapshotShell() {
     foodLiveMeta.textContent = describeLiveSnapshotMeta(snapshot);
   }
   if (foodLiveStatus) {
-    foodLiveStatus.textContent = formatDisplayValue(state.liveStatus);
+    foodLiveStatus.textContent =
+      pageState.kind === "fresh"
+        ? formatDisplayValue(state.liveStatus)
+        : pageState.label;
   }
   if (foodLiveTargets) {
     foodLiveTargets.innerHTML = [
