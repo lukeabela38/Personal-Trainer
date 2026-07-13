@@ -39,6 +39,14 @@ class BuildSiteArtifactsTest(TestCase):
                 path = site_dir / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(name, encoding="utf-8")
+            for name in (
+                "history/index.json",
+                "history/2026-07-02.json",
+                "history/exercises/_gains.json",
+            ):
+                path = site_dir / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name, encoding="utf-8")
             snapshot.write_text(
                 json.dumps(
                     {
@@ -145,6 +153,8 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertTrue((output_dir / "progress.html").exists())
             self.assertTrue((output_dir / "progress.js").exists())
             self.assertTrue((output_dir / "strength.json").exists())
+            self.assertTrue((output_dir / "history/index.json").exists())
+            self.assertTrue((output_dir / "history/exercises/_gains.json").exists())
             self.assertFalse((output_dir / "sw.js").exists())
             built_speed = json.loads((output_dir / "speed.json").read_text(encoding="utf-8"))
             self.assertEqual(

@@ -5,7 +5,13 @@ const pages = [
     path: "/index.html",
     title: "Dashboard",
     ready: "#food-shell",
-    checks: ["#food-shell", "#session-shell", "#status-banner"],
+    checks: [
+      "#food-shell",
+      "#session-shell",
+      "#status-banner",
+      "#import-status",
+      "#open-deploy-log",
+    ],
   },
   {
     path: "/strength.html",
@@ -44,6 +50,12 @@ for (const pageSpec of pages) {
       page.getByRole("heading", { level: 1, name: pageSpec.title }),
     ).toBeVisible();
     await expect(page.locator(pageSpec.ready)).toBeVisible();
+
+    if (pageSpec.path === "/index.html") {
+      await page.locator("details.nav-menu").evaluate((menu) => {
+        menu.open = true;
+      });
+    }
 
     for (const selector of pageSpec.checks) {
       await expect(page.locator(selector)).toBeVisible();

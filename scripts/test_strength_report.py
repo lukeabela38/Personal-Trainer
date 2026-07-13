@@ -33,6 +33,33 @@ class StrengthReportTests(unittest.TestCase):
         self.assertEqual(bench["best_set"]["reps"], 4)
         self.assertEqual(bench["estimated_one_rm_kg"], 79.3)
 
+    def test_build_report_includes_dynamic_exercises(self) -> None:
+        raw = [
+            {
+                "exerciseTemplateId": "D04AC939",
+                "exerciseName": "Squat (Barbell)",
+                "workoutTitle": "A",
+                "weight": 100,
+                "reps": 5,
+                "workoutStartTime": "2026-01-01T00:00:00Z",
+            },
+            {
+                "exerciseTemplateId": "ABCD1234",
+                "exerciseName": "Incline Dumbbell Curl",
+                "workoutTitle": "B",
+                "weight": 20,
+                "reps": 10,
+                "workoutStartTime": "2026-01-02T00:00:00Z",
+            },
+        ]
+        report = build_report(raw)
+        names = [entry["name"] for entry in report["entries"]]
+        self.assertIn("Squat (Barbell)", names)
+        self.assertIn("Incline Dumbbell Curl", names)
+        curl = next(entry for entry in report["entries"] if entry["name"] == "Incline Dumbbell Curl")
+        self.assertEqual(curl["category"], "Accessory")
+        self.assertEqual(curl["best_set"]["weight_kg"], 20.0)
+
 
 if __name__ == "__main__":
     unittest.main()

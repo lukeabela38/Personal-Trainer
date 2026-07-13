@@ -97,6 +97,9 @@ globalThis.document = createDocumentStub();
 globalThis.window = {
   addEventListener() {},
   open() {},
+  location: {
+    href: "http://127.0.0.1:4173/index.html",
+  },
 };
 globalThis.fetch = async () => ({
   json: async () => ({ entries: [], recommendation: {}, snapshot: {} }),
@@ -106,7 +109,13 @@ const speed = await import("../../site/speed.js");
 const strength = await import("../../site/strength.js");
 const app = await import("../../site/app.js");
 const progress = await import("../../site/progress.js");
-const { defaultFoodEntryTime, renderCheckInPanel } = app;
+const {
+  defaultFoodEntryTime,
+  describeImportStatus,
+  openDeploymentLogView,
+  renderCheckInPanel,
+  renderImportStatusBar,
+} = app;
 const { buildLiveHistorySummary, buildLiveRangeSummary } = progress;
 
 test("shared data helpers format and read values", () => {
@@ -210,6 +219,42 @@ test("check-in panel renders fixed questions and answer chips", () => {
   assert.match(html, /How recovered do you feel today\?/);
   assert.match(html, /data-checkin-answer="poor"/);
   assert.match(html, /Selected: Okay/);
+});
+
+test("import status distinguishes successful and missing live data", () => {
+  const liveStatus = describeImportStatus({
+    source: "live",
+    garmin: { recent_runs: [{}] },
+    hevy: { recent_workouts: [{}] },
+    cronometer: { recent_days: [{}] },
+  });
+  assert.equal(liveStatus.kind, "fresh");
+  assert.equal(liveStatus.label, "Live import successful");
+  assert.match(
+    renderImportStatusBar({ source: "live", garmin: { recent_runs: [{}] } }),
+    /import-status/,
+  );
+
+  const missingStatus = describeImportStatus({ source: "live" });
+  assert.equal(missingStatus.kind, "missing");
+  assert.equal(missingStatus.label, "Live import failed");
+});
+
+test("deployment log link opens the published log artifact", () => {
+  const calls = [];
+  const originalOpen = globalThis.window.open;
+  globalThis.window.open = (...args) => {
+    calls.push(args);
+  };
+  try {
+    openDeploymentLogView();
+  } finally {
+    globalThis.window.open = originalOpen;
+  }
+
+  assert.equal(calls.length, 1);
+  assert.equal(String(calls[0][0]), "http://127.0.0.1:4173/deploy-log.txt");
+  assert.equal(calls[0][1], "_blank");
 });
 
 test("default food entry time formats a datetime-local value", () => {

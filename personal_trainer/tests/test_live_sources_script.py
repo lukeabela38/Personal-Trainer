@@ -52,6 +52,36 @@ class LiveSourcesScriptTests(unittest.TestCase):
             self.assertEqual(data["cronometer"]["freshness"], "fresh")
             self.assertEqual(data["manual_context"]["freshness"], "fresh")
 
+    def test_script_forwards_wrapper_stderr(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        script_path = repo_root / "scripts" / "live_sources.py"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            noisy = tmp / "noisy.py"
+            noisy.write_text(
+                "import json, sys\nsys.stderr.write('wrapper-logged-message\\n')\nprint(json.dumps({'freshness': 'fresh', 'flags': []}))\n",
+                encoding="utf-8",
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(script_path),
+                    "--garmin-command",
+                    f"python3 {noisy}",
+                    "--hevy-command",
+                    f"python3 {noisy}",
+                    "--cronometer-command",
+                    f"python3 {noisy}",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertIn("wrapper-logged-message", completed.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

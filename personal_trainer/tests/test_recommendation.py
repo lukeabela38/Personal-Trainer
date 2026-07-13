@@ -30,11 +30,13 @@ def base_snapshot():
 
 class RecommendationTests(unittest.TestCase):
     def test_recommends_aerobic_quality_for_ready_hybrid_block(self):
-        recommendation = build_daily_recommendation(base_snapshot())
+        with self.assertLogs("personal_trainer.recommendation", level="INFO") as logs:
+            recommendation = build_daily_recommendation(base_snapshot())
 
         self.assertEqual(recommendation["Priority"], "aerobic_quality")
         self.assertEqual(recommendation["Confidence"], "high")
         self.assertEqual(recommendation["Needs check-in"], "no")
+        self.assertTrue(any("selected recommendation priority=aerobic_quality" in message for message in logs.output))
 
     def test_recommends_recovery_when_recovery_is_poor(self):
         snapshot = base_snapshot()

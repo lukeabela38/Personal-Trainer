@@ -55,11 +55,6 @@ function renderTable(entries) {
 
 function renderSummary(entries) {
   if (!summaryEl) return;
-  if (!entries.length) {
-    summaryEl.innerHTML = "";
-    return;
-  }
-
   const sorted = sortEntries(entries);
   const fastest = sorted[0];
   const longest = sorted.at(-1);
@@ -72,11 +67,14 @@ function renderSummary(entries) {
     {
       label: "Records",
       value: `${entries.length}`,
-      subvalue: "Loaded from Garmin history",
+      subvalue:
+        entries.length > 0
+          ? "Loaded from Garmin history"
+          : "No Garmin records available yet",
     },
     {
       label: "Fastest",
-      value: fastest?.name ?? "Unknown",
+      value: fastest?.name ?? "No records",
       subvalue: fastest
         ? formatSpeedValue(
             fastest.name,
@@ -87,7 +85,7 @@ function renderSummary(entries) {
     },
     {
       label: "Longest",
-      value: longest?.name ?? "Unknown",
+      value: longest?.name ?? "No records",
       subvalue: longest
         ? formatSpeedValue(
             longest.name,
@@ -98,7 +96,7 @@ function renderSummary(entries) {
     },
     {
       label: "Latest PB",
-      value: latest?.date ?? "Unknown date",
+      value: latest?.date ?? "No records",
       subvalue: latest?.name ?? "Most recent best",
     },
   ]

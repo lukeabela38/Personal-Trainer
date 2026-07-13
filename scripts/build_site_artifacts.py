@@ -106,6 +106,15 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(site_dir / relative, destination)
 
+    history_dir = site_dir / "history"
+    if history_dir.exists():
+        for source in history_dir.rglob("*"):
+            if not source.is_file():
+                continue
+            destination = output_dir / source.relative_to(site_dir)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+
 
 _EXERCISE_NAMES = {
     "D04AC939": "Squat (Barbell)",

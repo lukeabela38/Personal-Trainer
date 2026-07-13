@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 import urllib.error
@@ -10,6 +11,7 @@ from collections import defaultdict
 
 _API_BASE = "https://api.hevyapp.com/v1"
 _RECENT_WORKOUT_LIMIT = 30
+_RECENT_WORKOUT_PAGE_SIZE = 10
 
 _TRACKED_EXERCISES = [
     ("Squat (Barbell)", "D04AC939"),
@@ -21,6 +23,13 @@ _TRACKED_EXERCISES = [
     ("Sumo Squat (Kettlebell)", "5E10D0E6"),
     ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
 ]
+
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
 
 def _api_key() -> str:
@@ -35,9 +44,11 @@ def _get(path: str) -> dict:
     req.add_header("api-key", _api_key())
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
+            logger.info("[hevy] request status_code=%s path=%s", getattr(resp, "status", 200), path)
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as e:
         body = e.read().decode() if e.fp else ""
+        logger.warning("[hevy] request failed status_code=%s path=%s: %s", e.code, path, body[:200])
         raise RuntimeError(f"Hevy API {e.code} for {path}: {body[:200]}")
 
 
@@ -63,45 +74,59 @@ def fetch() -> dict:
     }
 
     try:
-        data = _get(f"/workouts?page=1&pageSize={_RECENT_WORKOUT_LIMIT}")
-        workouts = data.get("workouts", [])
-        if not isinstance(workouts, list):
-            raise RuntimeError("unexpected response shape")
-
         recent = []
-        for w in workouts:
-            if not isinstance(w, dict):
-                continue
-            recent.append(_summarize_workout(w))
-            for ex in w.get("exercises", []):
-                if not isinstance(ex, dict):
+        page = 1
+        while len(recent) < _RECENT_WORKOUT_LIMIT:
+            remaining = _RECENT_WORKOUT_LIMIT - len(recent)
+            page_size = min(_RECENT_WORKOUT_PAGE_SIZE, remaining)
+            data = _get(f"/workouts?page={page}&pageSize={page_size}")
+            workouts = data.get("workouts", [])
+            if not isinstance(workouts, list):
+                raise RuntimeError("unexpected response shape")
+            if not workouts:
+                break
+
+            for w in workouts:
+                if not isinstance(w, dict):
                     continue
-                tid = ex.get("exercise_template_id", "")
-                if tid in tracked_ids:
-                    for s in ex.get("sets", []):
-                        if not isinstance(s, dict):
-                            continue
-                        weight = _safe_float(s.get("weight_kg"))
-                        reps = _safe_int(s.get("reps"))
-                        if weight is None or reps is None or reps == 0:
-                            continue
-                        per_exercise_sets[tid].append(
-                            {
-                                "weight": weight,
-                                "reps": reps,
-                                "exerciseTemplateId": tid,
-                                "workoutStartTime": w.get("start_time", ""),
-                                "workoutTitle": w.get("title", ""),
-                            }
-                        )
+                recent.append(_summarize_workout(w))
+                for ex in w.get("exercises", []):
+                    if not isinstance(ex, dict):
+                        continue
+                    tid = ex.get("exercise_template_id", "")
+                    if tid in tracked_ids:
+                        for s in ex.get("sets", []):
+                            if not isinstance(s, dict):
+                                continue
+                            weight = _safe_float(s.get("weight_kg"))
+                            reps = _safe_int(s.get("reps"))
+                            if weight is None or reps is None or reps == 0:
+                                continue
+                            per_exercise_sets[tid].append(
+                                {
+                                    "weight": weight,
+                                    "reps": reps,
+                                    "exerciseTemplateId": tid,
+                                    "workoutStartTime": w.get("start_time", ""),
+                                    "workoutTitle": w.get("title", ""),
+                                }
+                            )
+                if len(recent) >= _RECENT_WORKOUT_LIMIT:
+                    break
+
+            if len(workouts) < page_size:
+                break
+            page += 1
 
         if recent:
             payload["last_workout"] = recent[0]
             payload["recent_workouts"] = recent
             payload["muscle_group_fatigue"] = _infer_fatigue(workouts[0])
+            logger.info("[hevy] auth status_code=200 source=workout-history page_count=%d", page)
 
     except Exception as e:
-        print(f"[hevy] workouts unavailable: {e}", file=sys.stderr)
+        print(f"[hevy] workouts unavailable status_code=500: {e}", file=sys.stderr)
+        logger.warning("[hevy] workouts unavailable status_code=500: %s", e)
 
     bests = []
     for tid in tracked_ids:
@@ -196,6 +221,7 @@ def _safe_int(v) -> int | None:
 
 def main() -> int:
     try:
+        _configure_logging()
         payload = fetch()
         json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")

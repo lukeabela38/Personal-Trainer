@@ -44,7 +44,7 @@ const recActions = document.getElementById("rec-actions");
 const state = {
   currentPayload: null,
   currentPriority: null,
-  previousSnapshot: readStoredSnapshot(),
+  previousSnapshot: null,
   completedSessions: readCompletedSessions(),
   foodEntries: readFoodEntries(),
   foodTiming: readFoodTiming(),
@@ -55,6 +55,9 @@ const state = {
 
 document.getElementById("file-input").addEventListener("change", handleFile);
 document.getElementById("open-raw").addEventListener("click", openRawView);
+document
+  .getElementById("open-deploy-log")
+  .addEventListener("click", openDeploymentLogView);
 document.getElementById("load-history").addEventListener("click", loadHistory);
 document
   .getElementById("add-food-entry")
@@ -186,7 +189,7 @@ function renderEmptyState() {
   renderSessionShell();
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
-  freshnessBar.innerHTML = "";
+  freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null)}</div>`;
   if (dashboardSummary) dashboardSummary.innerHTML = renderGuidanceTilesEmpty();
   if (guidanceTargets) guidanceTargets.innerHTML = renderGuidanceTargetsEmpty();
   if (guidanceConfidence) guidanceConfidence.textContent = "Confidence: -";
@@ -216,12 +219,13 @@ function renderEmptyState() {
   statusBanner.textContent = "No file loaded";
   state.currentPayload = null;
   state.currentPriority = null;
-  clearStoredSnapshot();
 }
 
 function renderFatalState(message) {
   renderFoodShell();
   renderSessionShell();
+  if (freshnessBar)
+    freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null, message)}</div>`;
   if (checkInShell) {
     checkInShell.innerHTML = `
       <div class="checkin-shell-header">
@@ -386,8 +390,8 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const cronometer = snapshot.cronometer ?? {};
   const manual = snapshot.manual_context ?? {};
   const derived = snapshot.derived ?? {};
-  const sourceIsLive =
-    snapshot.source === "live" || hasLiveSnapshotData(snapshot);
+  const importStatus = describeImportStatus(snapshot);
+  const sourceIsLive = importStatus.kind === "fresh";
   const priority = formatPriorityLabel(
     recommendation.Priority ?? recommendation.priority ?? "No recommendation",
   );
@@ -422,7 +426,12 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   const macros = recommendation.Macros ?? {};
   const today = cronometer.today ?? {};
 
-  freshnessBar.innerHTML = renderFreshnessBar(snapshot);
+  freshnessBar.innerHTML = `
+    <div class="freshness-stack">
+      ${renderImportStatusBar(snapshot)}
+      ${renderFreshnessBar(snapshot)}
+    </div>
+  `;
   if (dashboardSummary) {
     dashboardSummary.innerHTML = renderGuidanceTiles({
       priority,
@@ -466,7 +475,6 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     .filter(Boolean)
     .join("");
   state.previousSnapshot = snapshot;
-  persistSnapshot(snapshot);
 }
 
 function renderGuidanceTiles({ priority, session, nutrition, snapshotDate }) {
@@ -776,6 +784,63 @@ export function describeSessionHelp(context) {
   return "This context will later help the app reason about fueling before, during, and after the session.";
 }
 
+export function describeImportStatus(snapshot, detailOverride = "") {
+  const source = snapshot?.source ?? "unknown";
+  if (source === "live") {
+    if (hasLiveSnapshotData(snapshot)) {
+      return {
+        kind: "fresh",
+        label: "Live import successful",
+        detail:
+          detailOverride ||
+          "Garmin, Hevy, and Cronometer data loaded into the site.",
+      };
+    }
+    return {
+      kind: "missing",
+      label: "Live import failed",
+      detail:
+        detailOverride ||
+        "The live snapshot did not contain enough usable data to publish.",
+    };
+  }
+  if (source === "example") {
+    return {
+      kind: "stale",
+      label: "Example snapshot loaded",
+      detail:
+        detailOverride ||
+        "This is preview data, not a live import from connected services.",
+    };
+  }
+  if (hasLiveSnapshotData(snapshot)) {
+    return {
+      kind: "stale",
+      label: "Import partial",
+      detail:
+        detailOverride ||
+        "Some live data loaded, but the snapshot is not marked as a live import.",
+    };
+  }
+  return {
+    kind: "missing",
+    label: "Import unavailable",
+    detail:
+      detailOverride ||
+      "Load a live snapshot to see whether ingestion succeeded.",
+  };
+}
+
+export function renderImportStatusBar(snapshot, detailOverride = "") {
+  const status = describeImportStatus(snapshot, detailOverride);
+  return `
+    <div id="import-status" class="freshness-bar ${status.kind} import-status">
+      <span class="freshness-bar-label">${escapeHtml(status.label)}</span>
+      <span class="freshness-bar-detail">${escapeHtml(status.detail)}</span>
+    </div>
+  `;
+}
+
 /* ── Freshness bar ── */
 
 function renderFreshnessBar(snapshot) {
@@ -793,7 +858,10 @@ function renderFreshnessBar(snapshot) {
     stale: "Some data sources stale",
     missing: "Some data sources missing",
   };
-  return `<div class="freshness-bar ${worst}">${labels[worst]}</div>`;
+  return `<div class="freshness-bar ${worst}">
+    <span class="freshness-bar-label">Source freshness</span>
+    <span class="freshness-bar-detail">${escapeHtml(labels[worst])}</span>
+  </div>`;
 }
 
 /* ── Stat groups ── */
@@ -1070,7 +1138,8 @@ function renderFreshnessCard(snapshot) {
 /* ── Delta card ── */
 
 function renderDeltaCard(previousSnapshot, currentSnapshot) {
-  const rows = buildDeltaRows(previousSnapshot ?? {}, currentSnapshot ?? {});
+  if (!previousSnapshot) return "";
+  const rows = buildDeltaRows(previousSnapshot, currentSnapshot ?? {});
   if (!rows.length) return "";
   return `
     <details class="card section-panel">
@@ -1444,30 +1513,12 @@ function openRawView() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/* ── Persistence ── */
-
-function persistSnapshot(snapshot) {
-  try {
-    localStorage.setItem(
-      "personal-trainer:last-snapshot",
-      JSON.stringify(snapshot),
-    );
-  } catch {}
-}
-
-function readStoredSnapshot() {
-  try {
-    const raw = localStorage.getItem("personal-trainer:last-snapshot");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function clearStoredSnapshot() {
-  try {
-    localStorage.removeItem("personal-trainer:last-snapshot");
-  } catch {}
+export function openDeploymentLogView() {
+  window.open(
+    new URL("./deploy-log.txt", window.location.href),
+    "_blank",
+    "noopener",
+  );
 }
 
 function persistFoodEntries(entries) {

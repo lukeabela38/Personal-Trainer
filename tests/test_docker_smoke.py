@@ -45,6 +45,8 @@ class DockerSmokeTest(TestCase):
                     "/tmp/out/snapshot.json",
                     "--site-output",
                     "/tmp/out/dist",
+                    "--deploy-log-output",
+                    "/tmp/out/deploy-log.txt",
                 ]
             )
 
@@ -52,11 +54,13 @@ class DockerSmokeTest(TestCase):
             raw_path = output_dir / "raw.json"
             strength_path = output_dir / "strength.json"
             speed_path = output_dir / "speed.json"
+            deploy_log_path = tmp_path / "deploy-log.txt"
 
             self.assertTrue(snapshot_path.exists())
             self.assertTrue(raw_path.exists())
             self.assertTrue(strength_path.exists())
             self.assertTrue(speed_path.exists())
+            self.assertTrue(deploy_log_path.exists())
 
             snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
             self.assertIn("recommendation", snapshot)

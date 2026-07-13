@@ -1,42 +1,5 @@
 {
   "source": "Garmin personal records",
-  "snapshot_date": "2026-07-02",
-  "entries": [
-    {
-      "name": "Fastest 5K",
-      "category": "Running",
-      "value": "19:42",
-      "date": "2026-06-28"
-    },
-    {
-      "name": "Fastest 10K",
-      "category": "Running",
-      "value": "41:15",
-      "date": "2026-06-14"
-    },
-    {
-      "name": "Fastest Mile",
-      "category": "Running",
-      "value": "5:58",
-      "date": "2026-06-21"
-    },
-    {
-      "name": "Fastest 1K",
-      "category": "Running",
-      "value": "3:32",
-      "date": "2026-06-07"
-    },
-    {
-      "name": "Fastest Half Marathon",
-      "category": "Running",
-      "value": "1:31:44",
-      "date": "2026-05-10"
-    },
-    {
-      "name": "Longest Run",
-      "category": "Running",
-      "value": "18.2 km",
-      "date": "2026-05-10"
-    }
-  ]
+  "snapshot_date": "2026-07-13",
+  "entries": []
 }

@@ -4,7 +4,29 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Make the progress page use only live recent-day data and stop falling back to generated archive history.
+Make the site render only from live snapshot pulls, remove snapshot-baseline persistence, and fix live Hevy paging so the pipeline keeps real source coverage.
+
+- Strength history now comes from the full 30-day workout window via Hevy `get-workouts`, and the report groups exercise rows dynamically instead of limiting itself to eight tracked lifts.
+
+## GitHub Agent Note
+
+- `gh` can be authenticated locally but still fail against `api.github.com` in this environment.
+- When that happens, use the GitHub app/MCP tools for PR metadata, check runs, and workflow logs instead of blocking on `gh`.
+- Keep `gh auth status` as the quick local auth sanity check, but treat MCP as the reliable fallback for GitHub Actions inspection here.
+
+## 2026-07-13 Browser Smoke Sync
+
+- `scripts/build_site_artifacts.py` now copies the `history/` subtree into `dist/`, which fixes the strength-page 404s in the built bundle.
+- `site/speed.js` now renders a visible empty-state summary when Garmin bests are absent, so the page no longer hides its summary strip on a valid zero-data payload.
+- Rebuilt `dist/` from the current snapshot after those changes so the checked-in bundle and the served site matched.
+- Validation passed with `docker compose run --rm -v "$PWD":/app -w /app app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s tests -v"`, `docker compose run --rm -v "$PWD":/app -w /app app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest tests.test_daily_snapshot_runner -v"`, `npm run format:js:check`, `npm run lint:js`, `node --test tests/frontend/*.test.js`, and `npm run test:browser`.
+
+## 2026-07-13 Live Snapshot Only
+
+- Removed browser-stored snapshot baselines from the dashboard and progress pages so those views no longer compare against persisted local snapshots.
+- The dashboard/progress copy now treats the current live snapshot as the only source for rendered snapshot values.
+- Hevy live pulling now paginates in batches of 10 instead of requesting an invalid `pageSize=30`, which restores the live source capture path.
+- Validation passed with `docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest personal_trainer.tests.test_script_entrypoints -v"` and a fresh `docker compose run --rm app python3 scripts/daily_snapshot_runner.py --deploy-log-output dist/deploy-log.txt`.
 
 ## Progress Live-Only Fix
 
@@ -187,3 +209,29 @@ Garmin auth/session caching card from the project board.
 - CI lint failure reproduced only when running Ruff from `personal_trainer/`, matching the workflow.
 - `scripts/build_site_artifacts.py` and `scripts/wrappers/fetch_cronometer.py` were reformatted to satisfy that context.
 - Root-level Ruff still differs on those files, but the CI job uses the package directory config and now passes there.
+
+## 2026-07-12 Live coverage gate
+
+- Added pipeline logging in live source capture and Garmin fetch so missing data surfaces in deploy logs.
+- Added a strict Pages preflight that fails when Garmin/Hevy/Cronometer coverage is effectively empty after live capture.
+- Pages workflow now enables the strict live coverage gate.
+- Added daily runner coverage tests for both the success path and the fail-loud path.
+
+## 2026-07-12 Import Status UI
+
+- Added an explicit home-page import status banner above the existing freshness markers.
+- The banner distinguishes live import success, live import failure, example snapshots, and generic unavailable states.
+- Browser smoke now checks that the import status banner renders on the dashboard.
+
+## 2026-07-12 Deployment Log Artifact
+
+- The live snapshot runner now writes `dist/deploy-log.txt` alongside the published site bundle.
+- The log file records the run mode, live capture command, captured live-source stderr, and the final build status.
+- The generated file is served from the local preview bundle so it can be inspected during review.
+- The dashboard Actions menu now includes an `Open deployment log` entry, and the browser smoke test opens the menu before checking it.
+
+## 2026-07-13 Pipeline Logging Expansion
+
+- The live source wrappers now emit plain-text logging for their own capture steps and fallback paths.
+- `scripts/live_sources.py` forwards wrapper stderr so the runner log can include upstream capture messages instead of dropping them.
+- `personal_trainer.recommendation` now logs the selected recommendation priority, confidence, and check-in state.

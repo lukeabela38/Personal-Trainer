@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import shlex
 import sys
@@ -29,19 +30,30 @@ RUN_RECORD_TYPES = {
     7: "Longest Run",
 }
 
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+
 
 async def fetch() -> dict:
     garmin_email = os.environ.get("GARMIN_EMAIL") or os.environ.get("GC_EMAIL")
     garmin_password = os.environ.get("GARMIN_PASSWORD") or os.environ.get("GC_PASSWORD")
+    logger.info("[garmin-speed] fetching recent running records")
 
     if garmin_email and garmin_password:
         try:
+            logger.info("[garmin-speed] trying direct credential login")
             return await _fetch_direct(garmin_email, garmin_password)
         except Exception as e:
             print(
                 f"[garmin-speed] direct fetch failed, falling back to MCP: {e}",
                 file=sys.stderr,
             )
+            logger.warning("[garmin-speed] direct fetch failed, falling back to MCP: %s", e)
+    logger.info("[garmin-speed] fetching via MCP")
     return await _fetch_via_mcp()
 
 
@@ -72,6 +84,7 @@ async def _fetch_direct(email: str, password: str) -> dict:
     raw = json.loads(stdout.decode())
     if isinstance(raw, dict) and "error" in raw:
         print(f"[garmin-speed] {raw['error']}", file=sys.stderr)
+        logger.warning("[garmin-speed] %s", raw["error"])
         return {"result": []}
 
     records = _extract_records(raw)
@@ -88,6 +101,7 @@ async def _fetch_via_mcp() -> dict:
         records = _extract_records(source)
     except McpError as e:
         print(f"[garmin-speed] personal records unavailable: {e}", file=sys.stderr)
+        logger.warning("[garmin-speed] personal records unavailable: %s", e)
     return {"result": records}
 
 
@@ -133,6 +147,7 @@ def _record_type_for_entry(entry: dict) -> str | None:
 
 def main() -> int:
     try:
+        _configure_logging()
         payload = asyncio.run(fetch())
         json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")

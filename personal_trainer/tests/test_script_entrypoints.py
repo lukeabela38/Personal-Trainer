@@ -174,25 +174,49 @@ class ManualWrapperTests(TestCase):
                     os.environ["PERSONAL_TRAINER_MANUAL_FILE"] = original
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(stderr.getvalue(), "")
+            self.assertIn("[manual] reading check-in from file", stderr.getvalue())
+            self.assertIn("[manual] loaded check-in from file", stderr.getvalue())
             self.assertEqual(json.loads(stdout.getvalue()), payload)
 
 
 class HevyStrengthWrapperTests(TestCase):
-    def test_fetch_marks_rows_with_exercise_name(self) -> None:
-        async def fake_call_tool(_command: str, method: str, params: dict[str, object]) -> list[dict[str, object]]:
-            if method != "get-exercise-history":
+    def test_fetch_collects_all_exercises_from_workout_history(self) -> None:
+        async def fake_call_tool(
+            _command: str, method: str, params: dict[str, object]
+        ) -> list[dict[str, object]] | dict[str, object]:
+            if method != "get-workouts":
                 return []
-            if params.get("exerciseTemplateId") == "79D0BB3A":
-                return [{"weight": 80, "reps": 5, "workoutTitle": "Bench"}]
-            return []
+            self.assertEqual(params.get("page"), 1)
+            self.assertEqual(params.get("pageSize"), 10)
+            return {
+                "workouts": [
+                    {
+                        "title": "Lower Body",
+                        "start_time": "2026-07-09T08:00:00Z",
+                        "exercises": [
+                            {
+                                "exercise_template_id": "D04AC939",
+                                "name": "Squat (Barbell)",
+                                "sets": [{"weight_kg": 110, "reps": 3}],
+                            },
+                            {
+                                "exercise_template_id": "392887AA",
+                                "name": "Push Up",
+                                "sets": [{"weight_kg": 0, "reps": 20}],
+                            },
+                        ],
+                    }
+                ]
+            }
 
         with patch.object(fetch_hevy_strength, "call_tool", side_effect=fake_call_tool):
             rows = asyncio.run(fetch_hevy_strength.fetch())
 
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["_exercise_name"], "Bench Press (Barbell)")
-        self.assertEqual(rows[0]["weight"], 80)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["exerciseName"], "Squat (Barbell)")
+        self.assertEqual(rows[0]["weight"], 110.0)
+        self.assertEqual(rows[1]["exerciseName"], "Push Up")
+        self.assertEqual(rows[1]["reps"], 20)
 
 
 class HevyWrapperTests(TestCase):
@@ -267,7 +291,7 @@ class HevyWrapperTests(TestCase):
                 os.environ["HEVY_API_KEY"] = original
 
         self.assertEqual(len(captured_requests), 1)
-        self.assertEqual(captured_requests[0].full_url, "https://api.hevyapp.com/v1/workouts?page=1&pageSize=30")
+        self.assertEqual(captured_requests[0].full_url, "https://api.hevyapp.com/v1/workouts?page=1&pageSize=10")
         self.assertEqual(captured_requests[0].headers["Api-key"], "test-hevy-key")
         self.assertEqual(payload["freshness"], "fresh")
         self.assertEqual(payload["last_workout"]["title"], "Lower Body")
@@ -315,6 +339,67 @@ class HevyWrapperTests(TestCase):
         self.assertIsNone(payload["last_workout"])
         self.assertEqual(payload["recent_bests"], [])
         self.assertEqual(payload["muscle_group_fatigue"]["legs"], "unknown")
+
+    def test_fetch_paginates_recent_workouts_in_batches_of_ten(self) -> None:
+        class FakeResponse:
+            def __init__(self, body: dict) -> None:
+                self._body = body
+
+            def read(self) -> bytes:
+                return json.dumps(self._body).encode("utf-8")
+
+            def __enter__(self) -> FakeResponse:
+                return self
+
+            def __exit__(self, exc_type, exc, tb) -> None:
+                return None
+
+        captured_requests: list = []
+
+        def fake_urlopen(req, timeout: int = 30) -> FakeResponse:
+            captured_requests.append(req)
+            if "page=1&pageSize=10" in req.full_url:
+                workouts = [
+                    {
+                        "title": f"Workout {index}",
+                        "start_time": f"2026-07-{index:02d}T08:00:00Z",
+                        "end_time": f"2026-07-{index:02d}T09:00:00Z",
+                        "exercises": [],
+                    }
+                    for index in range(1, 11)
+                ]
+                return FakeResponse({"workouts": workouts})
+            if "page=2&pageSize=10" in req.full_url:
+                return FakeResponse(
+                    {
+                        "workouts": [
+                            {
+                                "title": "Workout 11",
+                                "start_time": "2026-07-11T08:00:00Z",
+                                "end_time": "2026-07-11T09:00:00Z",
+                                "exercises": [],
+                            }
+                        ]
+                    }
+                )
+            raise AssertionError(f"unexpected request: {req.full_url}")
+
+        original = os.environ.get("HEVY_API_KEY")
+        os.environ["HEVY_API_KEY"] = "test-hevy-key"
+        try:
+            with patch.object(fetch_hevy.urllib.request, "urlopen", side_effect=fake_urlopen):
+                payload = fetch_hevy.fetch()
+        finally:
+            if original is None:
+                os.environ.pop("HEVY_API_KEY", None)
+            else:
+                os.environ["HEVY_API_KEY"] = original
+
+        self.assertEqual(len(captured_requests), 2)
+        self.assertEqual(captured_requests[0].full_url, "https://api.hevyapp.com/v1/workouts?page=1&pageSize=10")
+        self.assertEqual(captured_requests[1].full_url, "https://api.hevyapp.com/v1/workouts?page=2&pageSize=10")
+        self.assertEqual(len(payload["recent_workouts"]), 11)
+        self.assertEqual(payload["last_workout"]["title"], "Workout 1")
 
     def test_fetch_logs_and_recovers_when_api_key_is_missing(self) -> None:
         original = os.environ.pop("HEVY_API_KEY", None)

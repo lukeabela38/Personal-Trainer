@@ -22,14 +22,14 @@ class SetRecord:
 
 
 ALIASES = {
-    "squat": "Squat (Barbell)",
-    "bench press": "Bench Press (Barbell)",
-    "chin up": "Chin Up",
-    "triceps dip": "Triceps Dip",
-    "push up": "Push Up",
-    "dumbbell row": "Dumbbell Row",
-    "sumo squat": "Sumo Squat (Kettlebell)",
-    "single arm tricep extension": "Single Arm Tricep Extension (Dumbbell)",
+    "D04AC939": "Squat (Barbell)",
+    "79D0BB3A": "Bench Press (Barbell)",
+    "29083183": "Chin Up",
+    "28BB4A95": "Triceps Dip",
+    "392887AA": "Push Up",
+    "F1E57334": "Dumbbell Row",
+    "5E10D0E6": "Sumo Squat (Kettlebell)",
+    "8347DFD1": "Single Arm Tricep Extension (Dumbbell)",
 }
 
 
@@ -61,25 +61,48 @@ def _load_from_command() -> Any:
 
 
 def build_report(raw: Any) -> dict[str, Any]:
-    entries = []
-    for name, template_id in [
-        ("Squat (Barbell)", "D04AC939"),
-        ("Bench Press (Barbell)", "79D0BB3A"),
-        ("Chin Up", "29083183"),
-        ("Triceps Dip", "28BB4A95"),
-        ("Push Up", "392887AA"),
-        ("Dumbbell Row", "F1E57334"),
-        ("Sumo Squat (Kettlebell)", "5E10D0E6"),
-        ("Single Arm Tricep Extension (Dumbbell)", "8347DFD1"),
-    ]:
-        records = _extract_records(raw, template_id)
-        if not records:
+    grouped: dict[str, dict[str, Any]] = {}
+    for row in _extract_records(raw):
+        template_id = str(
+            row.get("exerciseTemplateId") or row.get("exercise_template_id") or row.get("template_id") or ""
+        )
+        name = str(
+            row.get("exerciseName")
+            or row.get("_exercise_name")
+            or row.get("exercise_name")
+            or ALIASES.get(template_id, template_id)
+        ).strip()
+        if not name:
             continue
-        best = _best_record(records)
-        entries.append(
+        key = template_id or name
+        grouped.setdefault(
+            key,
             {
                 "name": name,
-                "category": _category_for(name),
+                "records": [],
+            },
+        )["records"].append(
+            SetRecord(
+                name=name,
+                category="",
+                weight_kg=_to_float(row.get("weight") or row.get("weight_kg")),
+                reps=int(row.get("reps") or 0),
+                workout_start_time=str(
+                    row.get("workoutStartTime") or row.get("workout_start_time") or row.get("start_time") or ""
+                ),
+            )
+        )
+
+    entries = []
+    for group in grouped.values():
+        records = group["records"]
+        best = _best_record(records)
+        if best is None:
+            continue
+        entries.append(
+            {
+                "name": group["name"],
+                "category": _category_for(group["name"]),
                 "best_set": {
                     "weight_kg": best.weight_kg,
                     "reps": best.reps,
@@ -88,6 +111,7 @@ def build_report(raw: Any) -> dict[str, Any]:
                 "estimated_one_rm_kg": _estimate_one_rm(best.weight_kg, best.reps),
             }
         )
+    entries.sort(key=lambda entry: entry["best_set"]["workout_start_date"], reverse=True)
     return {
         "source": "Hevy exercise history",
         "snapshot_date": datetime.now(UTC).date().isoformat(),
@@ -95,31 +119,26 @@ def build_report(raw: Any) -> dict[str, Any]:
     }
 
 
-def _extract_records(raw: Any, template_id: str) -> list[SetRecord]:
+def _extract_records(raw: Any) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     if isinstance(raw, list):
         rows = [row for row in raw if isinstance(row, dict)]
     elif isinstance(raw, dict):
-        for value in raw.values():
-            if isinstance(value, list):
-                rows.extend(row for row in value if isinstance(row, dict))
-    records = []
-    for row in rows:
-        if str(row.get("exerciseTemplateId")) != template_id:
-            continue
-        records.append(
-            SetRecord(
-                name=str(row.get("workoutTitle", "")),
-                category="",
-                weight_kg=_to_float(row.get("weight")),
-                reps=int(row.get("reps") or 0),
-                workout_start_time=str(row.get("workoutStartTime") or ""),
-            )
-        )
-    return records
+        if isinstance(raw.get("recent_exercises"), list):
+            rows.extend(row for row in raw["recent_exercises"] if isinstance(row, dict))
+        elif isinstance(raw.get("entries"), list):
+            rows.extend(row for row in raw["entries"] if isinstance(row, dict))
+        else:
+            for value in raw.values():
+                if isinstance(value, list):
+                    rows.extend(row for row in value if isinstance(row, dict))
+    return rows
 
 
-def _best_record(records: Iterable[SetRecord]) -> SetRecord:
+def _best_record(records: Iterable[SetRecord]) -> SetRecord | None:
+    records = list(records)
+    if not records:
+        return None
     return max(records, key=lambda r: ((r.weight_kg or 0) * (1 + r.reps / 30), r.reps))
 
 
