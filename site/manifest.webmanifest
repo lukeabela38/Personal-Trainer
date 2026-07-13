@@ -1,0 +1,22 @@
+{
+  "name": "Personal Trainer",
+  "short_name": "Trainer",
+  "description": "Track training, nutrition, recovery, and progress in one installable app.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050914",
+  "theme_color": "#0a1020",
+  "icons": [
+    {
+      "src": "./favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
