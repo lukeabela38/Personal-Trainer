@@ -253,3 +253,6 @@ Garmin auth/session caching card from the project board.
 - Cronometer intake grams were being populated from `summary.macros`, which matched the target macro set instead of the consumed totals.
 - The wrapper now reads `summary.consumed.protein_g`, `summary.consumed.carbs_g`, and `summary.consumed.fat_g` for the Food page live summary.
 - Rebuilt the live snapshot after the fix so the Food page now reflects consumed macro grams instead of target grams.
+## 2026-07-13
+
+- Runtime-generated artifacts should not be committed. Added a repo-level convention for build outputs/logs and ignored `dist/speed.json` alongside the existing generated files.

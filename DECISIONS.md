@@ -154,3 +154,21 @@ Implications:
 - The site relies on normal browser and CDN caching instead of a custom worker.
 - Pages and dist builds should not copy or register `sw.js`.
 - If offline support becomes a real product need later, it should be added intentionally as a new decision rather than resurrecting dead worker code.
+
+## 2026-07-13 — Runtime Artifacts Stay Out Of Git
+
+Decision:
+
+- Files generated during local runs or CI runs should not be committed to GitHub.
+- Commit source files, templates, and intentional fixtures; ignore logs and build outputs that can be regenerated.
+
+Reason:
+
+- Keeps the repository focused on source-of-truth inputs instead of ephemeral outputs.
+- Reduces noise in PRs and avoids accidental drift between committed artifacts and regenerated ones.
+- Makes it clearer which files are authoritative versus disposable.
+
+Implications:
+
+- Generated runtime artifacts should be added to `.gitignore` where practical.
+- If a generated file currently needs to be versioned, that should be a deliberate exception with an explicit follow-up decision.

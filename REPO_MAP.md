@@ -73,7 +73,7 @@ Purpose: Operational scripts for live data capture, site building, and reporting
 
 - `daily_snapshot_runner.py` — end-to-end pipeline: live sources -> snapshot -> site artifacts
 - `live_sources.py` — merge per-source commands into one payload JSON
-- `build_site_artifacts.py` — copy site shell + emit data JSONs to `dist/`
+- `build_site_artifacts.py` — copy site shell + emit data JSONs into generated `dist/`
 - `mcp_client.py` — reusable async MCP stdio client
 - `strength_report.py` — standalone strength PB report from Hevy history
 - `speed_report.py` — standalone speed PB report from Garmin records

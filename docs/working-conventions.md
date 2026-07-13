@@ -45,6 +45,7 @@ If the decision is durable enough to outlive a single task, record it in [`DECIS
 - Keep body composition and other indirect metrics optional until the product needs them.
 - Do not mix contract changes with UI changes unless the card explicitly requires integration.
 - Keep the default path simple, then add detail through progressive disclosure.
+- Runtime-generated artifacts MUST stay out of git. Commit source inputs, templates, and fixtures; do not commit build outputs, logs, or other files that are produced during local or CI execution.
 - If source code changes, update the matching test surface in the same PR:
   - `personal_trainer/src/personal_trainer/*.py` needs a change in `personal_trainer/tests/`
   - `scripts/**/*.py` needs a change in `tests/`

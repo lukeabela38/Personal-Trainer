@@ -70,7 +70,7 @@ docker compose run --rm app python3 scripts/generate_history.py
 ```
 
 This writes `dist/history/` and updates `dist/history/index.json` for local browsing.
-The main snapshot payloads (`dist/data/snapshot.json` and `dist/raw.json`) are also generated locally by the build pipeline and are not meant to live in the repository.
+The entire `dist/` publish tree is generated locally by the build pipeline and is not meant to live in the repository.
 
 Open:
 
