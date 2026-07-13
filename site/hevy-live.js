@@ -341,14 +341,44 @@ function buildPageState(hasData) {
 function summarizeWorkout(workout) {
   const startTime = String(workout.start_time ?? workout.startTime ?? "");
   const endTime = String(workout.end_time ?? workout.endTime ?? "");
+  const exercises = Array.isArray(workout.exercises)
+    ? workout.exercises.map(summarizeExercise).filter(Boolean)
+    : [];
   return {
     title: String(workout.title ?? workout.name ?? ""),
     start_time: startTime,
     end_time: endTime,
-    exercise_count: Array.isArray(workout.exercises)
-      ? workout.exercises.length
-      : 0,
+    exercise_count: exercises.length,
+    exercises,
   };
+}
+
+function summarizeExercise(exercise) {
+  if (!isObject(exercise)) return null;
+  const sets = Array.isArray(exercise.sets)
+    ? exercise.sets.map(summarizeWorkoutSet).filter(Boolean)
+    : [];
+  return {
+    exercise_template_id: String(exercise.exercise_template_id ?? ""),
+    name: String(exercise.name ?? exercise.title ?? ""),
+    sets,
+  };
+}
+
+function summarizeWorkoutSet(set) {
+  if (!isObject(set)) return null;
+  const reps = parseInteger(set.reps);
+  const weight = parseFloatNumber(set.weight_kg);
+  if (weight == null && reps == null) return null;
+  const payload = {
+    weight_kg: weight,
+    reps,
+  };
+  const rpe = parseFloatNumber(set.rpe);
+  if (rpe != null) {
+    payload.rpe = rpe;
+  }
+  return payload;
 }
 
 function summarizeSet(set, workout, exercise, templateId) {

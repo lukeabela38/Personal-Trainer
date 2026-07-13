@@ -213,6 +213,9 @@ def _build_strength_view(
     exercise_catalog: dict[str, dict[str, str]],
 ) -> dict[str, Any]:
     hevy = snapshot.get("hevy", {})
+    recent_workouts = [
+        workout for workout in hevy.get("recent_workouts", []) if isinstance(workout, dict)
+    ]
     entries = []
     for b in hevy.get("recent_bests", []):
         if not isinstance(b, dict):
@@ -221,6 +224,7 @@ def _build_strength_view(
         exercise = exercise_catalog.get(tid, {})
         entries.append(
             {
+                "templateId": tid,
                 "name": exercise.get("name", tid),
                 "category": exercise.get("category", "Strength"),
                 "best_set": {
@@ -228,6 +232,7 @@ def _build_strength_view(
                     "reps": b.get("reps"),
                 },
                 "estimated_one_rm_kg": b.get("estimated_one_rm_kg"),
+                "workout_title": b.get("workout_title"),
             }
         )
     return {
@@ -235,6 +240,7 @@ def _build_strength_view(
         "snapshot_date": snapshot.get("snapshot_date"),
         "page_state": page_state,
         "entries": entries,
+        "recent_workouts": recent_workouts,
     }
 
 
