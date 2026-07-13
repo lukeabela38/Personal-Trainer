@@ -6,16 +6,19 @@ import re
 from pathlib import Path
 from unittest import TestCase
 
-from personal_trainer.snapshot import _validate_snapshot
-
 from personal_trainer import build_daily_recommendation, build_snapshot
+from personal_trainer.snapshot import _validate_snapshot
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[1] / "personal_trainer" / "examples"
 
 
 class SnapshotFuzzTests(TestCase):
     def test_validate_snapshot_rejects_mutated_variants(self) -> None:
-        valid_snapshot = build_snapshot(json.loads((EXAMPLES_DIR / "sources-ready.json").read_text(encoding="utf-8")))
+        valid_snapshot = build_snapshot(
+            json.loads(
+                (EXAMPLES_DIR / "sources-ready.json").read_text(encoding="utf-8")
+            )
+        )
         cases = [
             (
                 "snapshot_date",
@@ -40,12 +43,16 @@ class SnapshotFuzzTests(TestCase):
             ),
             (
                 "athlete.block",
-                lambda snap: snap["athlete"].__setitem__("current_block", "marathon_peak"),
+                lambda snap: snap["athlete"].__setitem__(
+                    "current_block", "marathon_peak"
+                ),
                 "athlete.current_block",
             ),
             (
                 "athlete.vo2_waypoint",
-                lambda snap: snap["athlete"].__setitem__("current_vo2max_waypoint", "52"),
+                lambda snap: snap["athlete"].__setitem__(
+                    "current_vo2max_waypoint", "52"
+                ),
                 "athlete.current_vo2max_waypoint",
             ),
             (
@@ -55,7 +62,9 @@ class SnapshotFuzzTests(TestCase):
             ),
             (
                 "derived.hard_session",
-                lambda snap: snap["derived"].__setitem__("hard_session_allowed", "maybe"),
+                lambda snap: snap["derived"].__setitem__(
+                    "hard_session_allowed", "maybe"
+                ),
                 "derived.hard_session_allowed",
             ),
             (
@@ -124,7 +133,9 @@ class SnapshotFuzzTests(TestCase):
                     snap["derived"]["check_in_questions"].append(
                         {"id": "broken", "prompt": "Broken?", "options": ["yes"]}
                     ),
-                    snap["derived"]["check_in_questions"][0].__setitem__("options", [""]),
+                    snap["derived"]["check_in_questions"][0].__setitem__(
+                        "options", [""]
+                    ),
                 ),
                 "derived.check_in_questions[0].options[0]",
             ),
@@ -155,7 +166,9 @@ class SnapshotFuzzTests(TestCase):
             ),
             (
                 "hevy.fatigue",
-                lambda snap: snap["hevy"].__setitem__("muscle_group_fatigue", "not-a-dict"),
+                lambda snap: snap["hevy"].__setitem__(
+                    "muscle_group_fatigue", "not-a-dict"
+                ),
                 "hevy.muscle_group_fatigue",
             ),
             (
@@ -175,7 +188,9 @@ class SnapshotFuzzTests(TestCase):
             ),
             (
                 "hevy.muscle_fatigue_value",
-                lambda snap: snap["hevy"]["muscle_group_fatigue"].__setitem__("legs", "sore"),
+                lambda snap: snap["hevy"]["muscle_group_fatigue"].__setitem__(
+                    "legs", "sore"
+                ),
                 "hevy.muscle_group_fatigue.legs",
             ),
             (
@@ -195,7 +210,9 @@ class SnapshotFuzzTests(TestCase):
             ),
             (
                 "cronometer.carbs",
-                lambda snap: snap["cronometer"].__setitem__("carb_availability", "empty"),
+                lambda snap: snap["cronometer"].__setitem__(
+                    "carb_availability", "empty"
+                ),
                 "cronometer.carb_availability",
             ),
             (
@@ -205,7 +222,9 @@ class SnapshotFuzzTests(TestCase):
             ),
             (
                 "manual.sleep",
-                lambda snap: snap["manual_context"].__setitem__("sleep_quality", "exhausted"),
+                lambda snap: snap["manual_context"].__setitem__(
+                    "sleep_quality", "exhausted"
+                ),
                 "manual_context.sleep_quality",
             ),
             (
@@ -215,12 +234,16 @@ class SnapshotFuzzTests(TestCase):
             ),
             (
                 "manual.fatigue",
-                lambda snap: snap["manual_context"].__setitem__("mental_fatigue", "fried"),
+                lambda snap: snap["manual_context"].__setitem__(
+                    "mental_fatigue", "fried"
+                ),
                 "manual_context.mental_fatigue",
             ),
             (
                 "manual.tt",
-                lambda snap: snap["manual_context"].__setitem__("table_tennis_today", "tournament"),
+                lambda snap: snap["manual_context"].__setitem__(
+                    "table_tennis_today", "tournament"
+                ),
                 "manual_context.table_tennis_today",
             ),
             (
