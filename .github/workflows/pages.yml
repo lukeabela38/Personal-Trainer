@@ -83,4 +83,4 @@ jobs:
             echo "Pages dashboard never became available" >&2
             exit 1
           fi
-          curl --fail --silent --show-error --location "${base_url}favicon.svg" | grep -q "<svg"
+          curl --fail --silent --show-error --location "${base_url}favicon.png" >/dev/null

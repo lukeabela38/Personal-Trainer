@@ -9,6 +9,8 @@ node_modules/
 dist/history/
 dist/data/snapshot.json
 dist/raw.json
+dist/deploy-log.txt
+dist/strength.json
 .venv/
 .cache/
 test-results/

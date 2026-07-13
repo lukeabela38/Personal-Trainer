@@ -24,7 +24,7 @@ class BuildSiteArtifactsTest(TestCase):
                 "food.js",
                 "food/index.html",
                 "data-helpers.js",
-                "favicon.svg",
+                "favicon.png",
                 "progress.html",
                 "progress.js",
                 "progress.css",
