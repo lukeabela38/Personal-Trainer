@@ -181,7 +181,9 @@ class ManualWrapperTests(TestCase):
 
 class HevyStrengthWrapperTests(TestCase):
     def test_fetch_collects_all_exercises_from_workout_history(self) -> None:
-        async def fake_call_tool(_command: str, method: str, params: dict[str, object]) -> list[dict[str, object]] | dict[str, object]:
+        async def fake_call_tool(
+            _command: str, method: str, params: dict[str, object]
+        ) -> list[dict[str, object]] | dict[str, object]:
             if method != "get-workouts":
                 return []
             self.assertEqual(params.get("page"), 1)
