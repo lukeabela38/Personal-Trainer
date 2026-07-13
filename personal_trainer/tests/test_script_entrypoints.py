@@ -338,6 +338,15 @@ class HevyWrapperTests(TestCase):
         self.assertEqual(payload["last_workout"]["title"], "Lower Body")
         self.assertEqual(payload["last_workout"]["exercise_count"], 3)
         self.assertEqual(len(payload["recent_workouts"]), 2)
+        self.assertEqual(len(payload["recent_workouts"][0]["exercises"]), 3)
+        self.assertEqual(
+            payload["recent_workouts"][0]["exercises"][0]["sets"][0]["weight_kg"],
+            100.0,
+        )
+        self.assertEqual(
+            payload["recent_workouts"][0]["exercises"][0]["sets"][1]["weight_kg"],
+            110.0,
+        )
         self.assertEqual(payload["muscle_group_fatigue"]["legs"], "high")
         self.assertEqual(payload["muscle_group_fatigue"]["push"], "high")
         self.assertEqual(payload["muscle_group_fatigue"]["posterior_chain"], "moderate")

@@ -141,12 +141,45 @@ def fetch() -> dict:
 
 
 def _summarize_workout(w: dict) -> dict:
+    exercises = [
+        _summarize_exercise(ex)
+        for ex in (w.get("exercises") if isinstance(w.get("exercises"), list) else [])
+    ]
     return {
         "title": w.get("title") or w.get("name") or "",
         "start_time": w.get("start_time") or w.get("start_time") or "",
         "end_time": w.get("end_time") or w.get("end_time") or "",
-        "exercise_count": len(w.get("exercises", []) if isinstance(w.get("exercises"), list) else []),
+        "exercise_count": len(exercises),
+        "exercises": exercises,
     }
+
+
+def _summarize_exercise(exercise: dict) -> dict:
+    sets = [
+        _summarize_set(summary)
+        for summary in (exercise.get("sets") if isinstance(exercise.get("sets"), list) else [])
+        if isinstance(summary, dict)
+    ]
+    return {
+        "exercise_template_id": str(exercise.get("exercise_template_id") or ""),
+        "name": str(exercise.get("name") or exercise.get("title") or ""),
+        "sets": [s for s in sets if s is not None],
+    }
+
+
+def _summarize_set(summary: dict) -> dict | None:
+    weight = _safe_float(summary.get("weight_kg"))
+    reps = _safe_int(summary.get("reps"))
+    if weight is None and reps is None:
+        return None
+    payload = {
+        "weight_kg": weight,
+        "reps": reps,
+    }
+    rpe = _safe_float(summary.get("rpe"))
+    if rpe is not None:
+        payload["rpe"] = rpe
+    return payload
 
 
 def _infer_fatigue(workout: dict) -> dict:

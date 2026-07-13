@@ -11,7 +11,7 @@
       content="black-translucent"
     />
     <link rel="stylesheet" href="./styles.css?v=17" />
-    <link rel="stylesheet" href="./strength.css?v=5" />
+    <link rel="stylesheet" href="./strength.css?v=10" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./favicon.png?v=3" type="image/png" />
     <link rel="apple-touch-icon" href="./favicon.png?v=3" />
@@ -37,11 +37,14 @@
 
     <main class="shell">
       <header class="hero">
-        <div>
+        <div class="strength-hero-copy">
           <p class="eyebrow">Personal Trainer</p>
           <h1>Strength</h1>
           <p class="lede">
             All-time PBs and estimated 1RMs from live Hevy history.
+          </p>
+          <p id="strength-hero-note" class="strength-hero-note skeleton">
+            Loading coaching context...
           </p>
         </div>
       </header>
@@ -68,75 +71,150 @@
 
         <div id="strength-summary" class="summary-strip strength-summary"></div>
 
-        <div id="strength-controls" class="strength-controls" hidden>
-          <div class="sort-controls">
-            <button
-              id="set-hevy-key"
-              class="sort-btn"
-              type="button"
-              title="Save a Hevy API key locally"
-            >
-              Set Hevy key
+        <div id="strength-highlights" class="strength-highlights" hidden></div>
+
+        <div class="strength-command-stack">
+          <div id="strength-tabs" class="strength-tabs" role="tablist" aria-label="Strength views">
+            <button class="strength-tab is-active" type="button" data-tab="history" aria-selected="true">
+              History
             </button>
-            <button id="refresh-hevy" class="sort-btn" type="button">
-              Refresh Hevy
+            <button class="strength-tab" type="button" data-tab="exercises" aria-selected="false">
+              Exercises
             </button>
           </div>
-          <label class="strength-window-control" for="hevy-workout-window">
-            <span class="label">Recent window</span>
-            <input
-              id="hevy-workout-window"
-              class="search-input"
-              type="number"
-              min="1"
-              max="90"
-              step="1"
-              inputmode="numeric"
-              value="30"
-              title="How many workouts the browser refresh should fetch"
-            />
-          </label>
-          <span id="hevy-window-status" class="muted">Window 30 workouts</span>
-          <span id="hevy-refresh-status" class="muted">Via daily pipeline</span>
-          <div class="strength-search">
-            <input
-              id="strength-search"
-              class="search-input"
-              type="search"
-              placeholder="Search exercises…"
-              autocomplete="off"
-            />
-          </div>
-          <div class="filter-pills" id="filter-pills"></div>
-          <div class="sort-controls">
-            <button class="sort-btn is-active" data-sort="date" type="button">
-              By date
-            </button>
-            <button class="sort-btn" data-sort="weight" type="button">
-              By 1RM
-            </button>
-            <button class="sort-btn" data-sort="gain" type="button">
-              By gain
-            </button>
-            <button
-              class="view-toggle sort-btn"
-              type="button"
-              onclick="toggleView()"
-            >
-              Compact
-            </button>
+
+          <div id="strength-controls" class="strength-controls" hidden>
+            <div class="strength-controls-head">
+              <div>
+                <p class="label">Hevy sync</p>
+                <p class="strength-controls-copy">
+                  API key, refresh, and window stay active on every tab.
+                </p>
+              </div>
+              <span class="strength-controls-chip">Live sync</span>
+            </div>
+            <div class="sort-controls">
+              <button
+                id="set-hevy-key"
+                class="sort-btn"
+                type="button"
+                title="Save a Hevy API key locally"
+              >
+                Set Hevy key
+              </button>
+              <button id="refresh-hevy" class="sort-btn" type="button">
+                Refresh Hevy
+              </button>
+            </div>
+            <label class="strength-window-control" for="hevy-workout-window">
+              <span class="label">Recent window</span>
+              <input
+                id="hevy-workout-window"
+                class="search-input"
+                type="number"
+                min="1"
+                max="90"
+                step="1"
+                inputmode="numeric"
+                value="30"
+                title="How many workouts the browser refresh should fetch"
+              />
+            </label>
+            <span id="hevy-window-status" class="muted">Window 30 workouts</span>
+            <span id="hevy-refresh-status" class="muted">Via daily pipeline</span>
           </div>
         </div>
 
-        <div id="strength-grid" class="strength-grid">
-          <div class="skeleton skeleton-card"></div>
-          <div class="skeleton skeleton-card"></div>
-          <div class="skeleton skeleton-card"></div>
+        <div class="strength-panels">
+          <section
+            id="history-panel"
+            class="strength-panel"
+            data-strength-tab-panel="history"
+          >
+            <div class="history-toolbar">
+              <div class="history-toolbar-head">
+                <div class="history-toolbar-title">
+                  <p class="label">History</p>
+                  <h3>Workout timeline</h3>
+                  <p class="history-toolbar-copy">
+                    Search by workout title, exercise name, or template id.
+                  </p>
+                </div>
+                <span
+                  id="history-window-chip"
+                  class="strength-controls-chip history-toolbar-chip"
+                >
+                  Window 30 workouts
+                </span>
+              </div>
+              <div class="history-toolbar-controls">
+                <input
+                  id="history-search"
+                  class="search-input"
+                  type="search"
+                  placeholder="Filter workouts…"
+                  autocomplete="off"
+                />
+                <span id="history-results-count" class="history-results-count">
+                  0 of 0 workouts · 0 exercises
+                </span>
+              </div>
+            </div>
+            <div id="history-content" class="history-content">
+              <div class="history-skeleton">
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+              </div>
+            </div>
+          </section>
+
+          <section
+            id="exercises-panel"
+            class="strength-panel"
+            data-strength-tab-panel="exercises"
+            hidden
+          >
+            <div class="strength-search">
+              <input
+                id="strength-search"
+                class="search-input"
+                type="search"
+                placeholder="Search exercises…"
+                autocomplete="off"
+              />
+            </div>
+            <div class="filter-pills" id="filter-pills"></div>
+            <div class="sort-controls">
+              <button class="sort-btn is-active" data-sort="date" type="button">
+                By date
+              </button>
+              <button class="sort-btn" data-sort="weight" type="button">
+                By 1RM
+              </button>
+              <button class="sort-btn" data-sort="gain" type="button">
+                By gain
+              </button>
+              <button
+                class="view-toggle sort-btn"
+                type="button"
+                onclick="toggleView()"
+              >
+                Compact
+              </button>
+            </div>
+
+            <div id="strength-grid" class="strength-grid">
+              <div class="skeleton skeleton-card"></div>
+              <div class="skeleton skeleton-card"></div>
+              <div class="skeleton skeleton-card"></div>
+            </div>
+          </section>
         </div>
 
         <div id="insights" class="stat-groups" hidden></div>
       </section>
     </main>
-    <script type="module" src="./strength.js?v=9"></script>
+    <script type="module" src="./strength.js?v=14"></script>
   </body>
 </html>

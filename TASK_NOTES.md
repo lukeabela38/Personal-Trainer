@@ -118,6 +118,22 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 
 - `scripts/build_site_artifacts.py` now copies the `history/` subtree into `dist/`, which fixes the strength-page 404s in the built bundle.
 - `site/speed.js` now renders a visible empty-state summary when Garmin bests are absent, so the page no longer hides its summary strip on a valid zero-data payload.
+
+## 2026-07-13 Strength Tabs Refresh
+
+- The strength page now ships a tabbed History/Exercises layout, with `site/strength.html` using `#strength-tabs`, `#history-panel`, and `#exercises-panel` as the core hooks.
+- `scripts/build_site_artifacts.py` now includes `hevy.recent_workouts` in `strength.json`, so the served `dist/` bundle can render the workout timeline instead of only the exercise list.
+- The browser smoke suite now treats the History tab as the default visible shell and verifies tab switching separately, which matches the intended hidden Exercises panel on first paint.
+- Validation passed with `docker compose run --rm app python3 scripts/build_site_artifacts.py`, `python3 -m unittest tests.test_build_site_artifacts -v`, and `npx playwright test tests/browser/site-smoke.test.js`.
+- The shared Hevy controls now live outside the tab panels, so the API key, refresh button, and window selector remain visible on both tabs.
+- The shared Hevy toolbar now has a small live chip, helper copy, and a soft glow so it reads more like a featured control surface than a plain form block.
+- The strength header now uses one shared stack for tabs and controls, with a unified frame and accent line so the page reads as a single control area instead of two separate boxes.
+- The strength tabs now have a more prominent active state with lift, sheen, and a small indicator line so the navigation reads as a deliberate header system.
+- The Hevy workout history cards were empty because both `scripts/wrappers/fetch_hevy.py` and `site/hevy-live.js` summarized workouts down to counts; both paths now keep nested `exercises` and `sets` so the history tab can render the actual workout contents.
+- Added a browser regression in `tests/browser/site-smoke.test.js` that mocks a strength payload with nested workout exercises and verifies the History tab renders the workout title, exercise name, and set details.
+- The strength page loader now treats the History/Exercises helper functions as required runtime dependencies, so the page no longer falls back to the unavailable shell when those helpers are missing.
+- The mobile strength tab bar now stays on one horizontal row and scrolls sideways instead of wrapping into a cramped two-line layout.
+- Validation passed with `docker compose run --rm app python3 scripts/build_site_artifacts.py` and `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4174 npm run test:browser`.
 - Rebuilt `dist/` from the current snapshot after those changes so the checked-in bundle and the served site matched.
 - Validation passed with `docker compose run --rm -v "$PWD":/app -w /app app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s tests -v"`, `docker compose run --rm -v "$PWD":/app -w /app app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest tests.test_daily_snapshot_runner -v"`, `npm run format:js:check`, `npm run lint:js`, `node --test tests/frontend/*.test.js`, and `npm run test:browser`.
 
@@ -356,3 +372,9 @@ Garmin auth/session caching card from the project board.
 - Added `site/manifest.webmanifest` for the installable mobile shell.
 - Canonical site pages now link the manifest and reuse `favicon.png` as the app icon / apple touch icon.
 - `scripts/build_site_artifacts.py` copies the manifest into `dist/`, and tests now cover both the generated file and direct serving in browser smoke.
+
+## 2026-07-13 Strength Page Presentation Pass
+
+- Strength now shows a personalized coaching note in the hero, a lead momentum tile in the summary strip, and lighter command-stack chrome.
+- Exercise cards now emphasize the latest session first and de-emphasize the older best-ever metric.
+- Workout history summaries now expose duration and exercise-count badges for quicker scanning on desktop and mobile.

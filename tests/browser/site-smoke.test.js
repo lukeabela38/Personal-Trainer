@@ -28,20 +28,19 @@ const pages = [
       "#food-list",
     ],
   },
-  {
-    path: "/strength.html",
-    title: "Strength",
-    ready: "#strength-grid",
-    checks: [
-      "#strength-summary",
-      "#strength-controls",
-      "#hevy-workout-window",
-      "#hevy-window-status",
-      "#refresh-hevy",
-      "#set-hevy-key",
-      "#strength-grid",
-    ],
-  },
+    {
+      path: "/strength.html",
+      title: "Strength",
+      ready: "#history-panel",
+      checks: [
+        "#strength-summary",
+        "#strength-tabs",
+        "#strength-controls",
+        'button[data-tab="history"]',
+        'button[data-tab="exercises"]',
+        "#history-panel",
+      ],
+    },
   {
     path: "/speed.html",
     title: "Speed",
@@ -130,6 +129,79 @@ test("strength page renders at its short route", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: "Food" }),
   ).toBeVisible();
+});
+
+test("strength tabs switch between history and exercises", async ({ page }) => {
+  await page.goto("/strength.html");
+  await expect(page.locator('button[data-tab="history"]')).toBeVisible();
+  await expect(page.locator('button[data-tab="exercises"]')).toBeVisible();
+  await expect(page.locator("#strength-controls")).toBeVisible();
+
+  await page.locator('button[data-tab="exercises"]').click();
+  await expect(page.locator("#exercises-panel")).toBeVisible();
+  await expect(page.locator("#strength-grid")).toBeVisible();
+  await expect(page.locator("#strength-controls")).toBeVisible();
+
+  await page.locator('button[data-tab="history"]').click();
+  await expect(page.locator("#history-panel")).toBeVisible();
+});
+
+test("strength history renders nested workout contents", async ({ page }) => {
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Hevy exercise history",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Strength history ready",
+          detail: "Hevy data is available and current.",
+        },
+        entries: [
+          {
+            templateId: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            category: "Push",
+            best_set: {
+              weight_kg: 70,
+              reps: 4,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: 79.3,
+            workout_title: "Upper Body",
+          },
+        ],
+        recent_workouts: [
+          {
+            title: "Upper Body",
+            start_time: "2026-07-13T07:00:00Z",
+            end_time: "2026-07-13T08:00:00Z",
+            exercises: [
+              {
+                exercise_template_id: "79D0BB3A",
+                name: "Bench Press (Barbell)",
+                sets: [
+                  { weight_kg: 70, reps: 4, rpe: 8 },
+                  { weight_kg: 65, reps: 6 },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.goto("/strength.html");
+  await expect(page.locator("#history-panel")).toBeVisible();
+  await expect(page.locator("#history-panel")).toContainText("Upper Body");
+  await expect(page.locator("#history-panel")).toContainText(
+    "Bench Press (Barbell)",
+  );
+  await expect(page.locator("#history-panel")).toContainText("70 kg");
+  await expect(page.locator("#history-panel")).toContainText("4 reps");
+  await expect(page.locator("#history-panel")).toContainText("RPE 8");
 });
 
 test("favicon is served", async ({ request }) => {

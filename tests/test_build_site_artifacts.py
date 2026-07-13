@@ -78,7 +78,23 @@ class BuildSiteArtifactsTest(TestCase):
                     },
                     "hevy": {
                         "freshness": "fresh",
-                        "recent_workouts": [],
+                        "recent_workouts": [
+                            {
+                                "title": "Leg Day",
+                                "start_time": "2026-07-05T07:00:00Z",
+                                "end_time": "2026-07-05T08:00:00Z",
+                                "exercises": [
+                                    {
+                                        "exercise_template_id": "D04AC939",
+                                        "name": "Squat (Barbell)",
+                                        "sets": [
+                                            {"weight_kg": 100, "reps": 5},
+                                            {"weight_kg": 102.5, "reps": 4},
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
                         "recent_bests": [
                             {
                                 "exercise_template_id": "D04AC939",
@@ -181,8 +197,10 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertEqual(built_snapshot["derived"]["page_states"]["speed"]["kind"], "fresh")
             built_strength = json.loads((output_dir / "strength.json").read_text(encoding="utf-8"))
             self.assertEqual(built_strength["page_state"]["kind"], "fresh")
+            self.assertEqual(len(built_strength["recent_workouts"]), 1)
             self.assertEqual(built_strength["entries"][0]["name"], "Squat (Barbell)")
             self.assertEqual(built_strength["entries"][0]["category"], "Lower body")
+            self.assertEqual(built_strength["entries"][0]["templateId"], "D04AC939")
             built_speed = json.loads((output_dir / "speed.json").read_text(encoding="utf-8"))
             self.assertEqual(built_speed["page_state"]["kind"], "fresh")
             self.assertEqual(
