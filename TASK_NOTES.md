@@ -19,6 +19,13 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - When that happens, use the GitHub app/MCP tools for PR metadata, check runs, and workflow logs instead of blocking on `gh`.
 - Keep `gh auth status` as the quick local auth sanity check, but treat MCP as the reliable fallback for GitHub Actions inspection here.
 
+## 2026-07-13 Deploy Failure Debug
+
+- The Pages deploy workflow was failing in `Prepare site output` because it always passed `--require-garmin-vo2max` to `scripts/daily_snapshot_runner.py`.
+- That gate made the whole publish job abort when Garmin returned empty or unauthorized data, even though the site could still be built from the remaining sources.
+- Removed the hard Garmin flag from `.github/workflows/pages.yml` so deploys can publish best-effort site artifacts instead of failing the entire Pages run.
+- Validation passed with `docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s personal_trainer/tests -v"`.
+
 ## 2026-07-13 Browser Smoke Sync
 
 - `scripts/build_site_artifacts.py` now copies the `history/` subtree into `dist/`, which fixes the strength-page 404s in the built bundle.
