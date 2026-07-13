@@ -154,3 +154,37 @@ Implications:
 - The site relies on normal browser and CDN caching instead of a custom worker.
 - Pages and dist builds should not copy or register `sw.js`.
 - If offline support becomes a real product need later, it should be added intentionally as a new decision rather than resurrecting dead worker code.
+
+## 2026-07-13 — Runtime Artifacts Stay Out Of Git
+
+Decision:
+
+- Files generated during local runs or CI runs should not be committed to GitHub.
+- Commit source files, templates, and intentional fixtures; ignore logs and build outputs that can be regenerated.
+
+Reason:
+
+- Keeps the repository focused on source-of-truth inputs instead of ephemeral outputs.
+- Reduces noise in PRs and avoids accidental drift between committed artifacts and regenerated ones.
+- Makes it clearer which files are authoritative versus disposable.
+
+Implications:
+
+- Generated runtime artifacts should be added to `.gitignore` where practical.
+- If a generated file currently needs to be versioned, that should be a deliberate exception with an explicit follow-up decision.
+
+## 2026-07-13 — CI Auto-Formats Before Ruff Check
+
+Decision:
+
+- The CI lint job should run `ruff format` before `ruff check` so formatting drift is normalized before linting.
+
+Reason:
+
+- Prevents CI from failing on pure formatting issues when the repo uses Ruff as the formatter.
+- Keeps the lint signal focused on actual rule violations after formatting has been applied.
+
+Implications:
+
+- CI will rewrite files in the ephemeral runner before linting them.
+- Contributors still SHOULD format locally before pushing, but formatting-only drift will no longer block the PR by itself.

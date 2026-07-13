@@ -23,7 +23,13 @@ def _diary_payload() -> dict:
                 "fat": 70,
                 "fiber": 30,
             },
-            "consumed": {"total": 1500},
+            "consumed": {
+                "total": 1500,
+                "protein_g": 110,
+                "carbs_g": 180,
+                "fat_g": 55,
+                "fiber_g": 20,
+            },
         }
     }
 
@@ -50,6 +56,9 @@ class CronometerWrapperTests(unittest.TestCase):
         self.assertRegex(post.call_args.args[3]["day"], r"^\d{4}-\d{2}-\d{2}$")
         self.assertEqual(payload["today"]["calories_consumed"], 1500.0)
         self.assertEqual(payload["today"]["calories_target"], 2000.0)
+        self.assertEqual(payload["today"]["protein_g"], 110.0)
+        self.assertEqual(payload["today"]["carbs_g"], 180.0)
+        self.assertEqual(payload["today"]["fat_g"], 55.0)
         self.assertEqual(payload["fueling_status"], "adequate")
         self.assertEqual(len(payload["recent_days"]), 30)
 
@@ -85,6 +94,7 @@ class CronometerWrapperTests(unittest.TestCase):
             )
             self.assertEqual(len(payload["recent_days"]), 30)
             self.assertEqual(payload["today"]["calories_consumed"], 1500.0)
+            self.assertEqual(payload["today"]["protein_g"], 110.0)
             self.assertEqual(payload["fueling_status"], "adequate")
 
     def test_fetch_uses_explicit_date(self) -> None:
@@ -101,6 +111,7 @@ class CronometerWrapperTests(unittest.TestCase):
         self.assertEqual(post.call_args.args[:3], (12, "cached-token", "/get_diary"))
         self.assertEqual(post.call_args.args[3], {"day": "2026-07-04"})
         self.assertEqual(len(payload["recent_days"]), 30)
+        self.assertEqual(payload["today"]["carbs_g"], 180.0)
 
 
 if __name__ == "__main__":

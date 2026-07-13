@@ -194,6 +194,7 @@ Calls `get-workouts` and flattens every exercise set from the recent workout win
 ### Cronometer — `scripts/wrappers/fetch_cronometer.py`
 
 Calls `get_daily_nutrition_summary` and `get_macro_targets`. Computes fueling/protein/carb status and log completeness. Used by `PERSONAL_TRAINER_CRONOMETER_COMMAND`.
+The wrapper uses `summary.consumed` for consumed calorie and macro totals, and `summary.macros` for calorie target context.
 The wrapper caches Cronometer session state in `~/.cronometer_session.json` by default and reuses it before falling back to a fresh login. The Docker pipeline overrides `CRONOMETER_SESSION_FILE` to `/app/.cronometer_session/session.json` and mounts that directory as a named volume so the token survives repeated `docker compose run` invocations.
 The live Cronometer wrapper now backfills `recent_days` for the last 30 days so the deploy snapshot can surface a short live nutrition history without a database.
 

@@ -20,7 +20,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - Backend: None (local Python scripts, no server)
 - Frontend: Static HTML/CSS/JS (vanilla, no framework)
 - Database: None today (JSON files only); future phases may add a SQL ledger and API
-- Deployment: GitHub Pages (from `site/` and `dist/` artifacts)
+- Deployment: GitHub Pages (from generated `dist/` artifacts built from `site/`)
 - Live sources: MCP servers (Garmin, Hevy, Cronometer) via stdio JSON-RPC
 - Build: Hatchling (package), shell scripts (site artifacts)
 - Testing: `unittest` (stdlib)
@@ -66,7 +66,7 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - Location: `scripts/`
 - `live_sources.py` — merges per-source commands into one payload JSON
 - `daily_snapshot_runner.py` — end-to-end capture, snapshot, and site artifact generation
-- `build_site_artifacts.py` — builds `dist/` directory from one snapshot (copies site shell, emits data JSONs)
+- `build_site_artifacts.py` — builds the generated `dist/` directory from one snapshot (copies site shell, emits data JSONs)
 - `strength_report.py` — standalone strength report builder from Hevy history
 - `speed_report.py` — standalone speed report builder from Garmin records
 - `mcp_client.py` — shared async MCP stdio client used by all wrappers
@@ -87,8 +87,8 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 2. `live_sources.py` (or `daily_snapshot_runner.py`) collects all four source payloads into one merged JSON object
 3. `build_snapshot()` in `snapshot.py` normalizes each source into the contract shape, infers derived fields (data quality, constraints, conflicts), and validates the result
 4. `build_daily_recommendation()` in `recommendation.py` reads the snapshot and applies decision rules (recovery > nutrition > table tennis > aerobic quality > aerobic base > strength progression)
-5. `build_site_artifacts.py` copies the site shell and emits `data/snapshot.json`, `raw.json`, `strength.json`, `speed.json` to `dist/`
-6. GitHub Pages serves `dist/` as static files
+5. `build_site_artifacts.py` copies the site shell and emits `data/snapshot.json`, `raw.json`, `strength.json`, `speed.json` to generated `dist/`
+6. GitHub Pages serves the generated `dist/` bundle as static files
 
 ## Boundaries
 

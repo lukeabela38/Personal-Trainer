@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Trainer - Food</title>
+    <link rel="stylesheet" href="./styles.css?v=17" />
+    <link rel="icon" href="./favicon.png" type="image/png" />
+  </head>
+  <body>
+    <nav class="bottom-nav">
+      <a class="bottom-nav-item" href="./index.html"
+        ><span class="bottom-nav-icon">&#9679;</span>Home</a
+      >
+      <a class="bottom-nav-item is-active" href="./food.html"
+        ><span class="bottom-nav-icon">&#9635;</span>Food</a
+      >
+      <a class="bottom-nav-item" href="./strength.html"
+        ><span class="bottom-nav-icon">&#9651;</span>Strength</a
+      >
+      <a class="bottom-nav-item" href="./speed.html"
+        ><span class="bottom-nav-icon">&#9654;</span>Speed</a
+      >
+      <a class="bottom-nav-item" href="./progress.html"
+        ><span class="bottom-nav-icon">&#8645;</span>Progress</a
+      >
+    </nav>
+
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Personal Trainer</p>
+          <h1>Food</h1>
+          <p class="lede">
+            A dedicated place to log meals, capture barcode scans, and tag
+            timing around training.
+          </p>
+        </div>
+        <div class="header-actions">
+          <a class="button secondary" href="./index.html">Back to dashboard</a>
+        </div>
+      </header>
+
+      <section
+        class="card food-shell"
+        id="food-shell"
+        aria-label="Food logging"
+      >
+        <div
+          class="food-live-shell"
+          id="food-live-shell"
+          aria-label="Live nutrition snapshot"
+        >
+          <div class="food-shell-header">
+            <div>
+              <p class="label">Live data</p>
+              <h2 id="food-live-title" class="food-title">
+                Loading live snapshot
+              </h2>
+              <p id="food-live-help" class="food-help">
+                Fetching today's live nutrition context from the deployed
+                snapshot.
+              </p>
+              <p id="food-live-meta" class="food-live-meta">
+                Waiting for the imported Cronometer day.
+              </p>
+            </div>
+            <span class="rec-badge" id="food-live-status">Loading…</span>
+          </div>
+
+          <div id="food-live-targets" class="food-live-grid"></div>
+        </div>
+
+        <div class="food-shell-header">
+          <div>
+            <p class="label">Food</p>
+            <h2 id="food-summary" class="food-title">No food logged yet</h2>
+            <p id="food-help" class="food-help">
+              Log meals and snacks as you go. Add a time and timing tag so the
+              app can later reason about fuel before, during, or after training.
+            </p>
+          </div>
+          <span class="rec-badge" id="food-status">0 entries today</span>
+        </div>
+
+        <div class="food-shell-grid">
+          <label class="food-field">
+            <span class="food-label">Item</span>
+            <input
+              id="food-item"
+              class="food-input"
+              type="text"
+              placeholder="Greek yogurt, banana, recovery shake"
+            />
+          </label>
+          <label class="food-field">
+            <span class="food-label">When</span>
+            <input id="food-time" class="food-input" type="datetime-local" />
+          </label>
+          <label class="food-field">
+            <span class="food-label">Barcode</span>
+            <div class="food-input-row">
+              <input
+                id="food-barcode"
+                class="food-input"
+                type="text"
+                placeholder="Scan or paste code"
+              />
+              <button
+                id="scan-barcode"
+                class="button secondary food-scan"
+                type="button"
+              >
+                Scan barcode
+              </button>
+            </div>
+          </label>
+          <div class="food-field food-field-wide">
+            <span class="food-label">Timing</span>
+            <div class="food-chip-row" role="group" aria-label="Food timing">
+              <button
+                type="button"
+                class="button secondary food-chip is-active"
+                data-food-timing="flexible"
+              >
+                Flexible
+              </button>
+              <button
+                type="button"
+                class="button secondary food-chip"
+                data-food-timing="before"
+              >
+                Before training
+              </button>
+              <button
+                type="button"
+                class="button secondary food-chip"
+                data-food-timing="during"
+              >
+                During training
+              </button>
+              <button
+                type="button"
+                class="button secondary food-chip"
+                data-food-timing="after"
+              >
+                After training
+              </button>
+            </div>
+          </div>
+          <div class="food-field food-field-wide food-actions">
+            <button id="add-food-entry" class="button" type="button">
+              Add food entry
+            </button>
+            <button id="reset-food-form" class="button secondary" type="button">
+              Reset form
+            </button>
+          </div>
+        </div>
+
+        <div class="food-day-header">
+          <div>
+            <p class="label">Today</p>
+            <h3 class="food-day-title">Logged food for the day</h3>
+          </div>
+          <span class="rec-badge" id="food-day-count">0 entries</span>
+        </div>
+
+        <div id="food-list" class="food-log"></div>
+      </section>
+    </main>
+    <script type="module" src="./food.js?v=5"></script>
+  </body>
+</html>

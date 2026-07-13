@@ -4,13 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Personal Trainer</title>
-    <link rel="stylesheet" href="./styles.css?v=14" />
+    <link rel="stylesheet" href="./styles.css?v=17" />
     <link rel="icon" href="./favicon.png" type="image/png" />
   </head>
   <body>
     <nav class="bottom-nav">
       <a class="bottom-nav-item is-active" href="./index.html"
         ><span class="bottom-nav-icon">&#9679;</span>Home</a
+      >
+      <a class="bottom-nav-item" href="./food.html"
+        ><span class="bottom-nav-icon">&#9635;</span>Food</a
       >
       <a class="bottom-nav-item" href="./strength.html"
         ><span class="bottom-nav-icon">&#9651;</span>Strength</a
@@ -118,104 +121,19 @@
 
         <div id="freshness-bar"></div>
 
-        <section
-          class="card food-shell"
-          id="food-shell"
-          aria-label="Food logging"
-        >
-          <div class="food-shell-header">
-            <div>
-              <p class="label">Food</p>
-              <h2 id="food-summary" class="food-title">No food logged yet</h2>
-              <p id="food-help" class="food-help">
-                Log meals and snacks as you go. Add a time and timing tag so the
-                app can later reason about fuel before, during, or after
-                training.
-              </p>
-            </div>
-            <span class="rec-badge" id="food-status">0 entries today</span>
+        <section class="card food-cta" id="food-cta" aria-label="Food logging">
+          <div class="food-cta-copy">
+            <p class="label">Food</p>
+            <h2 class="food-cta-title">Dedicated food logging page</h2>
+            <p class="food-cta-text">
+              Log meals, scan barcodes, and tag timing around training without
+              crowding the dashboard.
+            </p>
           </div>
-
-          <div class="food-shell-grid">
-            <label class="food-field">
-              <span class="food-label">Item</span>
-              <input
-                id="food-item"
-                class="food-input"
-                type="text"
-                placeholder="Greek yogurt, banana, recovery shake"
-              />
-            </label>
-            <label class="food-field">
-              <span class="food-label">When</span>
-              <input id="food-time" class="food-input" type="datetime-local" />
-            </label>
-            <label class="food-field">
-              <span class="food-label">Barcode</span>
-              <div class="food-input-row">
-                <input
-                  id="food-barcode"
-                  class="food-input"
-                  type="text"
-                  placeholder="Scan or paste code"
-                />
-                <button
-                  id="scan-barcode"
-                  class="button secondary food-scan"
-                  type="button"
-                >
-                  Scan barcode
-                </button>
-              </div>
-            </label>
-            <div class="food-field food-field-wide">
-              <span class="food-label">Timing</span>
-              <div class="food-chip-row" role="group" aria-label="Food timing">
-                <button
-                  type="button"
-                  class="button secondary food-chip is-active"
-                  data-food-timing="flexible"
-                >
-                  Flexible
-                </button>
-                <button
-                  type="button"
-                  class="button secondary food-chip"
-                  data-food-timing="before"
-                >
-                  Before training
-                </button>
-                <button
-                  type="button"
-                  class="button secondary food-chip"
-                  data-food-timing="during"
-                >
-                  During training
-                </button>
-                <button
-                  type="button"
-                  class="button secondary food-chip"
-                  data-food-timing="after"
-                >
-                  After training
-                </button>
-              </div>
-            </div>
-            <div class="food-field food-field-wide food-actions">
-              <button id="add-food-entry" class="button" type="button">
-                Add food entry
-              </button>
-              <button
-                id="reset-food-form"
-                class="button secondary"
-                type="button"
-              >
-                Reset form
-              </button>
-            </div>
+          <div class="food-cta-actions">
+            <span class="rec-badge">Saved locally</span>
+            <a class="button" href="./food.html">Open food logging</a>
           </div>
-
-          <div id="food-list" class="food-log"></div>
         </section>
 
         <section
@@ -430,6 +348,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="./app.js?v=16"></script>
+    <script type="module" src="./app.js?v=17"></script>
   </body>
 </html>

@@ -20,6 +20,9 @@ class BuildSiteArtifactsTest(TestCase):
                 "index.html",
                 "styles.css",
                 "app.js",
+                "food.html",
+                "food.js",
+                "food/index.html",
                 "data-helpers.js",
                 "favicon.png",
                 "progress.html",
@@ -153,6 +156,9 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertTrue((output_dir / "favicon.png").exists())
             self.assertTrue((output_dir / "progress.html").exists())
             self.assertTrue((output_dir / "progress.js").exists())
+            self.assertTrue((output_dir / "food.html").exists())
+            self.assertTrue((output_dir / "food.js").exists())
+            self.assertTrue((output_dir / "food/index.html").exists())
             self.assertTrue((output_dir / "strength.json").exists())
             self.assertTrue((output_dir / "history/index.json").exists())
             self.assertTrue((output_dir / "history/exercises/_gains.json").exists())

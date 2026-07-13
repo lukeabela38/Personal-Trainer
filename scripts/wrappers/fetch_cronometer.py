@@ -126,11 +126,20 @@ def _post(user_id: int, token: str, path: str, payload: dict) -> dict:
     )
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
-            logger.info("[cronometer] request status_code=%s path=%s", getattr(resp, "status", 200), path)
+            logger.info(
+                "[cronometer] request status_code=%s path=%s",
+                getattr(resp, "status", 200),
+                path,
+            )
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as e:
         body_text = e.read().decode()[:200] if e.fp else ""
-        logger.warning("[cronometer] request failed status_code=%s path=%s: %s", e.code, path, body_text)
+        logger.warning(
+            "[cronometer] request failed status_code=%s path=%s: %s",
+            e.code,
+            path,
+            body_text,
+        )
         raise CronometerAPIError(e.code, path, body_text)
 
 
@@ -175,11 +184,11 @@ def fetch(date_str: str | None = None) -> dict:
             td["remaining_kcal"] = _safe_float(target - consumed) if target is not None else None
             td["log_completeness"] = "complete" if consumed > 0 else "incomplete"
 
-        entry_macros = summary.get("macros") or {}
-        td["protein_g"] = _safe_float(entry_macros.get("protein"))
-        td["carbs_g"] = _safe_float(entry_macros.get("carbs") or entry_macros.get("net_carbs"))
-        td["fat_g"] = _safe_float(entry_macros.get("fat"))
-        td["fiber_g"] = _safe_float(entry_macros.get("fiber"))
+        consumed_macros = summary.get("consumed") or {}
+        td["protein_g"] = _safe_float(consumed_macros.get("protein_g"))
+        td["carbs_g"] = _safe_float(consumed_macros.get("carbs_g"))
+        td["fat_g"] = _safe_float(consumed_macros.get("fat_g"))
+        td["fiber_g"] = _safe_float(consumed_macros.get("fiber_g"))
 
         payload["recent_days"] = _build_recent_days(user_id, token, day)
 
@@ -239,26 +248,29 @@ def _build_recent_days(user_id: int, token: str, day: str) -> list[dict]:
         try:
             diary = _fetch_diary_with_retry(user_id, token, day_str)
         except CronometerAPIError as e:
-            print(f"[cronometer] skipping {day_str} status_code={e.code}: {e}", file=sys.stderr)
+            print(
+                f"[cronometer] skipping {day_str} status_code={e.code}: {e}",
+                file=sys.stderr,
+            )
             logger.warning("[cronometer] skipping %s status_code=%s: %s", day_str, e.code, e)
             continue
         summary = (diary or {}).get("summary") or {}
         macros = summary.get("macros") or {}
-        consumed = (summary.get("consumed") or {}).get("total")
+        consumed = summary.get("consumed") or {}
         target = macros.get("energy")
         recent_days.append(
             {
                 "date": day_str,
-                "calories_consumed": _safe_float(consumed),
+                "calories_consumed": _safe_float(consumed.get("total")),
                 "calories_target": _safe_float(target),
-                "protein_g": _safe_float(macros.get("protein")),
-                "carbs_g": _safe_float(macros.get("carbs") or macros.get("net_carbs")),
-                "fat_g": _safe_float(macros.get("fat")),
-                "fiber_g": _safe_float(macros.get("fiber")),
-                "remaining_kcal": _safe_float(target - consumed)
-                if target is not None and consumed is not None
+                "protein_g": _safe_float(consumed.get("protein_g")),
+                "carbs_g": _safe_float(consumed.get("carbs_g")),
+                "fat_g": _safe_float(consumed.get("fat_g")),
+                "fiber_g": _safe_float(consumed.get("fiber_g")),
+                "remaining_kcal": _safe_float(target - consumed.get("total"))
+                if target is not None and consumed.get("total") is not None
                 else None,
-                "log_completeness": "complete" if consumed and consumed > 0 else "incomplete",
+                "log_completeness": "complete" if consumed.get("total") and consumed.get("total") > 0 else "incomplete",
             }
         )
     return recent_days
