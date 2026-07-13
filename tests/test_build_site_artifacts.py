@@ -21,7 +21,7 @@ class BuildSiteArtifactsTest(TestCase):
                 "styles.css",
                 "app.js",
                 "data-helpers.js",
-                "favicon.svg",
+                "favicon.png",
                 "progress.html",
                 "progress.js",
                 "progress.css",
@@ -150,6 +150,7 @@ class BuildSiteArtifactsTest(TestCase):
             built_snapshot = json.loads((output_dir / "data" / "snapshot.json").read_text(encoding="utf-8"))
             self.assertEqual(built_snapshot["recommendation"]["Priority"], "aerobic_quality")
             self.assertTrue((output_dir / "raw.json").exists())
+            self.assertTrue((output_dir / "favicon.png").exists())
             self.assertTrue((output_dir / "progress.html").exists())
             self.assertTrue((output_dir / "progress.js").exists())
             self.assertTrue((output_dir / "strength.json").exists())
