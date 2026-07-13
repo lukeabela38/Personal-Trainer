@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from strength_report import build_report
+from strength_report import build_catalog, build_report
 
 
 class StrengthReportTests(unittest.TestCase):
@@ -59,6 +59,22 @@ class StrengthReportTests(unittest.TestCase):
         curl = next(entry for entry in report["entries"] if entry["name"] == "Incline Dumbbell Curl")
         self.assertEqual(curl["category"], "Accessory")
         self.assertEqual(curl["best_set"]["weight_kg"], 20.0)
+
+    def test_build_catalog_discovers_new_exercises(self) -> None:
+        raw = [
+            {
+                "exerciseTemplateId": "ABCD1234",
+                "exerciseName": "Incline Dumbbell Curl",
+                "workoutTitle": "B",
+                "weight": 20,
+                "reps": 10,
+                "workoutStartTime": "2026-01-02T00:00:00Z",
+            }
+        ]
+        catalog = build_catalog(raw)
+        entry = next(item for item in catalog["exercises"] if item["exercise_template_id"] == "ABCD1234")
+        self.assertEqual(entry["name"], "Incline Dumbbell Curl")
+        self.assertEqual(entry["category"], "Accessory")
 
 
 if __name__ == "__main__":

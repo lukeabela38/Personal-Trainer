@@ -2,6 +2,25 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-13 Hevy Exercise Catalog Externalized
+
+- `site/history/exercises/index.json` now holds the shared Hevy template-id catalog with names and categories.
+- `site/strength.js` loads that catalog before rendering so `findTemplateId()` no longer hardcodes the mapping in-module.
+- `scripts/build_site_artifacts.py` uses the same catalog to emit `strength.json`, and the build test now verifies the shared lookup path.
+- Validation passed with `python3 -m unittest tests.test_build_site_artifacts -v`, `node --test tests/frontend/frontend_helpers.test.js`, `npm run format:js:check`, and `git diff --check`.
+
+## 2026-07-13 Hevy Catalog Auto-Discovery
+
+- `scripts/strength_report.py` can now write a merged `history/exercises/index.json` alongside `strength.json` when the live Hevy strength command is available.
+- `scripts/daily_snapshot_runner.py` passes that catalog output path through so live workout rows with `exerciseName` can append newly observed template IDs automatically.
+- A Docker smoke run with a synthetic live Hevy row wrote `dist/history/exercises/index.json` containing the discovered `Incline Dumbbell Curl` entry.
+
+## 2026-07-13 Hevy Discovery Window
+
+- `scripts/wrappers/fetch_hevy_strength.py` now reads `PERSONAL_TRAINER_HEVY_STRENGTH_RECENT_DAYS`, defaulting to 30 locally.
+- `.github/workflows/pages.yml` sets that window to 90 for the Pages build, so deployed catalog discovery scans deeper workout history than the local default.
+- `personal_trainer/tests/test_script_entrypoints.py` now covers both the default window and the 90-day override.
+
 ## Current Task
 
 Split food logging into its own dedicated page shell, keep the dashboard as a pointer to it, and wire the new page into the build and browser smoke coverage.

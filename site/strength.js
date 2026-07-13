@@ -9,6 +9,10 @@ const controls = document.getElementById("strength-controls");
 const filterPills = document.getElementById("filter-pills");
 const sortButtons = document.querySelectorAll(".sort-btn");
 const searchInput = document.getElementById("strength-search");
+const exerciseCatalogUrl = new URL(
+  "./history/exercises/index.json",
+  import.meta.url,
+);
 
 let entries = [];
 let activeCategory = "All";
@@ -16,12 +20,18 @@ let activeSort = "date";
 let searchQuery = "";
 let compactView = false;
 let gainsCache = null;
+let exerciseIdByName = new Map();
+let exerciseCatalogLoaded = false;
 
+await loadExerciseCatalog();
 loadStrength();
 
 async function loadStrength() {
   try {
-    const response = await fetch(`${strengthUrl.pathname}?v=${Date.now()}`);
+    const [response] = await Promise.all([
+      fetch(`${strengthUrl.pathname}?v=${Date.now()}`),
+      loadExerciseCatalog(),
+    ]);
     const payload = await response.json();
     const pageState = payload.page_state ?? {
       kind: "fresh",
@@ -70,6 +80,30 @@ async function loadGains() {
   } catch {
     return {};
   }
+}
+
+async function loadExerciseCatalog() {
+  if (exerciseCatalogLoaded) return exerciseIdByName;
+  try {
+    const resp = await fetch(`${exerciseCatalogUrl.pathname}?v=${Date.now()}`);
+    const payload = await resp.json();
+    const exercises = Array.isArray(payload?.exercises)
+      ? payload.exercises
+      : [];
+    exerciseIdByName = new Map(
+      exercises
+        .filter((exercise) => exercise?.exercise_template_id && exercise?.name)
+        .map((exercise) => [
+          String(exercise.name),
+          String(exercise.exercise_template_id),
+        ]),
+    );
+  } catch {
+    exerciseIdByName = new Map();
+  } finally {
+    exerciseCatalogLoaded = true;
+  }
+  return exerciseIdByName;
 }
 
 function renderControls() {
@@ -394,43 +428,7 @@ grid.addEventListener("click", async (e) => {
 });
 
 export function findTemplateId(name) {
-  const mapping = {
-    "Squat (Barbell)": "D04AC939",
-    "Bench Press (Barbell)": "79D0BB3A",
-    "Chin Up": "29083183",
-    "Triceps Dip": "28BB4A95",
-    "Push Up": "392887AA",
-    "Dumbbell Row": "F1E57334",
-    "Sumo Squat (Kettlebell)": "5E10D0E6",
-    "Single Arm Tricep Extension (Dumbbell)": "8347DFD1",
-    "Deadlift (Barbell)": "A1B2C3D4",
-    "Overhead Press (Barbell)": "B2C3D4E5",
-    "Pull Up": "C3D4E5F6",
-    "Romanian Deadlift": "D4E5F6A7",
-    "Bulgarian Split Squat": "E5F6A7B8",
-    "Dumbbell Bench Press": "F6A7B8C9",
-    "Seated Cable Row": "A7B8C9D0",
-    "Bicep Curl (Dumbbell)": "B8C9D0A1",
-    "Tricep Pushdown": "C9D0A1B2",
-    "Lateral Raise": "D0A1B2C3",
-    "Leg Press": "E1F2A3B4",
-    "Hamstring Curl": "F2A3B4C5",
-    "Calf Raise": "A3B4C5D6",
-    "Face Pull": "B4C5D6E7",
-    "Pendlay Row": "C5D6E7F8",
-    "Front Squat": "D6E7F8A9",
-    "Incline Bench Press": "E7F8A9B0",
-    "Skull Crusher": "F8A9B0C1",
-    "Dumbbell Shoulder Press": "A9B0C1D2",
-    "Barbell Hip Thrust": "B0C1D2E3",
-    "Farmer Walk": "C1D2E3F4",
-    "Pistol Squat": "D2E3F4A5",
-    "Weighted Plank": "E3F4A5B6",
-    "Kettlebell Swing": "F4A5B6C7",
-    "Box Jump": "A5B6C7D8",
-    "Dips (Weighted)": "B6C7D8E9",
-  };
-  return mapping[name] ?? null;
+  return exerciseIdByName.get(name) ?? null;
 }
 
 function showTrendModal(name, history) {

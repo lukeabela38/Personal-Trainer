@@ -192,6 +192,7 @@ def _build_history_artifacts(site_output: Path, deployment_log: list[str] | None
         env_var="PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND",
         script="strength_report.py",
         output_path=site_output / "strength.json",
+        catalog_output_path=site_output / "history" / "exercises" / "index.json",
         deployment_log=deployment_log,
     )
     _run_optional_history_report(
@@ -206,6 +207,7 @@ def _run_optional_history_report(
     env_var: str,
     script: str,
     output_path: Path,
+    catalog_output_path: Path | None = None,
     deployment_log: list[str] | None = None,
 ) -> None:
     if not os.environ.get(env_var):
@@ -221,6 +223,11 @@ def _run_optional_history_report(
                 str(REPO_ROOT / "scripts" / script),
                 "--output",
                 str(output_path),
+                *(
+                    ["--catalog-output", str(catalog_output_path)]
+                    if catalog_output_path is not None
+                    else []
+                ),
             ],
             check=True,
             env=_with_pythonpath(),
