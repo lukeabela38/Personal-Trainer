@@ -23,6 +23,18 @@ import {
   extractVo2,
   weeklySummary,
 } from "../../site/history.js";
+import {
+  buildHevyStrengthView,
+  formatHevyRefreshLabel,
+  formatHevyWorkoutWindowLabel,
+  mergeHevySnapshot,
+  refreshHevyStrength,
+  readStoredHevyApiKey,
+  readStoredHevyLiveStrength,
+  readStoredHevyWorkoutWindow,
+  saveStoredHevyApiKey,
+  saveStoredHevyWorkoutWindow,
+} from "../../site/hevy-live.js";
 
 function createElementStub() {
   const target = {
@@ -102,6 +114,7 @@ globalThis.window = {
   },
 };
 globalThis.fetch = async (url) => ({
+  ok: true,
   json: async () => {
     if (String(url).includes("/history/exercises/index.json")) {
       return {
@@ -110,6 +123,43 @@ globalThis.fetch = async (url) => ({
             exercise_template_id: "79D0BB3A",
             name: "Bench Press (Barbell)",
             category: "Push",
+          },
+          {
+            exercise_template_id: "D04AC939",
+            name: "Squat (Barbell)",
+            category: "Lower body",
+          },
+        ],
+      };
+    }
+    if (String(url).includes("api.hevyapp.com/v1/workouts")) {
+      return {
+        workouts: [
+          {
+            title: "Lower body day",
+            start_time: "2026-07-13T07:00:00Z",
+            exercises: [
+              {
+                exercise_template_id: "79D0BB3A",
+                name: "Bench Press (Barbell)",
+                sets: [
+                  {
+                    weight_kg: 70,
+                    reps: 4,
+                  },
+                ],
+              },
+              {
+                exercise_template_id: "D04AC939",
+                name: "Squat (Barbell)",
+                sets: [
+                  {
+                    weight_kg: 100,
+                    reps: 8,
+                  },
+                ],
+              },
+            ],
           },
         ],
       };
@@ -207,6 +257,88 @@ test("goals save and load round-trip through localStorage", () => {
   } finally {
     globalThis.localStorage = original;
   }
+});
+
+test("hevy live refresh normalizes workouts and saves locally", async () => {
+  const originalLocalStorage = globalThis.localStorage;
+  const originalFetch = globalThis.fetch;
+  const store = new Map();
+  let liveStrengthDuringFetch = "unset";
+  globalThis.localStorage = {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => store.set(key, String(value)),
+    removeItem: (key) => store.delete(key),
+  };
+  globalThis.fetch = async (url, ...args) => {
+    if (String(url).includes("api.hevyapp.com/v1/workouts")) {
+      liveStrengthDuringFetch = readStoredHevyLiveStrength();
+    }
+    return originalFetch(url, ...args);
+  };
+  try {
+    store.set(
+      "personal-trainer:hevy-live-strength",
+      JSON.stringify({ stale: true }),
+    );
+    saveStoredHevyApiKey("demo-key");
+    assert.equal(readStoredHevyApiKey(), "demo-key");
+    saveStoredHevyWorkoutWindow(45);
+    assert.equal(readStoredHevyWorkoutWindow(), 45);
+    assert.equal(formatHevyWorkoutWindowLabel(1), "1 workout");
+    assert.equal(formatHevyWorkoutWindowLabel(45), "45 workouts");
+    const payload = await refreshHevyStrength(undefined, { workoutWindow: 45 });
+    assert.equal(payload.freshness, "fresh");
+    assert.equal(payload.refresh_window, 45);
+    assert.equal(payload.entries.length, 2);
+    assert.equal(payload.recent_bests.length, 2);
+    assert.equal(readStoredHevyLiveStrength()?.entries.length, 2);
+    assert.equal(liveStrengthDuringFetch, null);
+    assert.match(formatHevyRefreshLabel(payload), /ago|just now/);
+  } finally {
+    globalThis.localStorage = originalLocalStorage;
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("hevy snapshot merges the live overlay into dashboard freshness", () => {
+  const live = buildHevyStrengthView(
+    [
+      {
+        title: "Lower body day",
+        start_time: "2026-07-13T07:00:00Z",
+        exercises: [
+          {
+            exercise_template_id: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            sets: [
+              {
+                weight_kg: 70,
+                reps: 4,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    new Map([
+      [
+        "79D0BB3A",
+        {
+          name: "Bench Press (Barbell)",
+          category: "Push",
+        },
+      ],
+    ]),
+  );
+  const merged = mergeHevySnapshot(
+    {
+      hevy: { freshness: "missing" },
+      derived: { page_states: { strength: { kind: "missing" } } },
+    },
+    live,
+  );
+  assert.equal(merged.hevy.freshness, "fresh");
+  assert.equal(merged.derived.page_states.strength.kind, "fresh");
 });
 
 test("check-in panel renders fixed questions and answer chips", () => {

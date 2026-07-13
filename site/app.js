@@ -7,6 +7,14 @@ import {
   fmtNum,
 } from "./goals.js";
 import {
+  formatHevyRefreshLabel,
+  mergeHevySnapshot,
+  readStoredHevyApiKey,
+  readStoredHevyLiveStrength,
+  refreshHevyStrength,
+  saveStoredHevyApiKey,
+} from "./hevy-live.js";
+import {
   escapeHtml,
   hasLiveSnapshotData,
   formatDisplayValue,
@@ -41,6 +49,9 @@ const guidanceCheckIn = document.getElementById("guidance-checkin");
 const guidanceDate = document.getElementById("guidance-date");
 const guidanceGuardrail = document.getElementById("guardrail");
 const recActions = document.getElementById("rec-actions");
+const refreshHevyButton = document.getElementById("refresh-hevy");
+const setHevyKeyButton = document.getElementById("set-hevy-key");
+const hevyRefreshStatus = document.getElementById("hevy-refresh-status");
 const state = {
   currentPayload: null,
   currentPriority: null,
@@ -59,6 +70,8 @@ document
   .getElementById("open-deploy-log")
   .addEventListener("click", openDeploymentLogView);
 document.getElementById("load-history").addEventListener("click", loadHistory);
+refreshHevyButton?.addEventListener("click", handleHevyRefresh);
+setHevyKeyButton?.addEventListener("click", handleHevySetKey);
 document
   .getElementById("add-food-entry")
   ?.addEventListener("click", addFoodEntry);
@@ -125,6 +138,7 @@ function noHistoryHTML() {
 function renderHistory(snapshots) {
   if (!historySections) return;
   const goals = updateGoalCurrent(state.goals, snapshots[snapshots.length - 1]);
+  state.goals = goals;
   saveGoals(goals);
 
   const summary = weeklySummary(snapshots);
@@ -164,12 +178,15 @@ async function handleFile(event) {
 async function loadFromUrl(url, sourceLabel) {
   const response = await fetch(url);
   const payload = await response.json();
-  const snapshot = payload.snapshot ?? payload;
+  const snapshot = mergeHevySnapshot(
+    payload.snapshot ?? payload,
+    readStoredHevyLiveStrength(),
+  );
   if (!hasRenderableDashboardSnapshot(snapshot)) {
     renderEmptyState(`Live data unavailable from ${sourceLabel}.`);
     return;
   }
-  renderPayload(payload, sourceLabel);
+  renderPayload({ ...payload, snapshot }, sourceLabel);
 }
 
 export function hasRenderableDashboardSnapshot(snapshot) {
@@ -422,6 +439,11 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   setText("reason", reason);
   statusBanner.textContent = `${sourceLabel} loaded`;
   state.currentPriority = priority;
+  state.goals = updateGoalCurrent(state.goals, snapshot);
+  saveGoals(state.goals);
+  if (hevyRefreshStatus) {
+    hevyRefreshStatus.textContent = formatHevyRefreshLabel(snapshot.hevy ?? {});
+  }
 
   const macros = recommendation.Macros ?? {};
   const today = cronometer.today ?? {};
@@ -474,6 +496,54 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     .filter(Boolean)
     .join("");
   state.previousSnapshot = snapshot;
+}
+
+async function handleHevyRefresh() {
+  if (refreshHevyButton) refreshHevyButton.disabled = true;
+  if (hevyRefreshStatus) hevyRefreshStatus.textContent = "Refreshing Hevy...";
+  try {
+    const liveStrength = await refreshHevyStrength();
+    const snapshot = mergeHevySnapshot(
+      state.currentPayload?.snapshot ?? state.currentPayload ?? {},
+      liveStrength,
+    );
+    if (!hasRenderableDashboardSnapshot(snapshot)) {
+      renderEmptyState(
+        "Hevy refresh completed, but no live data was returned.",
+      );
+      return;
+    }
+    renderPayload(
+      {
+        ...(state.currentPayload ?? {}),
+        snapshot,
+      },
+      "Hevy browser refresh",
+    );
+    if (hevyRefreshStatus) {
+      hevyRefreshStatus.textContent = `Hevy refreshed ${formatHevyRefreshLabel(liveStrength)}`;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (hevyRefreshStatus) hevyRefreshStatus.textContent = message;
+    statusBanner.textContent = "Hevy refresh failed";
+  } finally {
+    if (refreshHevyButton) refreshHevyButton.disabled = false;
+  }
+}
+
+function handleHevySetKey() {
+  const current = readStoredHevyApiKey();
+  const next = window.prompt("Paste your Hevy API key", current);
+  if (next == null) return;
+  const trimmed = next.trim();
+  if (!trimmed) {
+    if (hevyRefreshStatus) hevyRefreshStatus.textContent = "Hevy key not saved";
+    return;
+  }
+  saveStoredHevyApiKey(trimmed);
+  if (hevyRefreshStatus)
+    hevyRefreshStatus.textContent = "Hevy key saved locally";
 }
 
 function renderGuidanceTiles({ priority, session, nutrition, snapshotDate }) {

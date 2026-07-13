@@ -69,6 +69,35 @@
         <div id="strength-summary" class="summary-strip strength-summary"></div>
 
         <div id="strength-controls" class="strength-controls" hidden>
+          <div class="sort-controls">
+            <button
+              id="set-hevy-key"
+              class="sort-btn"
+              type="button"
+              title="Save a Hevy API key locally"
+            >
+              Set Hevy key
+            </button>
+            <button id="refresh-hevy" class="sort-btn" type="button">
+              Refresh Hevy
+            </button>
+          </div>
+          <label class="strength-window-control" for="hevy-workout-window">
+            <span class="label">Recent window</span>
+            <input
+              id="hevy-workout-window"
+              class="search-input"
+              type="number"
+              min="1"
+              max="90"
+              step="1"
+              inputmode="numeric"
+              value="30"
+              title="How many workouts the browser refresh should fetch"
+            />
+          </label>
+          <span id="hevy-window-status" class="muted">Window 30 workouts</span>
+          <span id="hevy-refresh-status" class="muted">Via daily pipeline</span>
           <div class="strength-search">
             <input
               id="strength-search"
@@ -108,6 +137,6 @@
         <div id="insights" class="stat-groups" hidden></div>
       </section>
     </main>
-    <script type="module" src="./strength.js?v=7"></script>
+    <script type="module" src="./strength.js?v=9"></script>
   </body>
 </html>

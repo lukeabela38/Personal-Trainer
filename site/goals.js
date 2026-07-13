@@ -67,23 +67,22 @@ export function defaultGoals() {
 
 export function updateGoalCurrent(goals, snapshot) {
   return goals.map((g) => {
+    const next = { ...g };
     if (g.type === "strength" && g.exerciseId) {
       const best = snapshot.hevy?.recent_bests?.find(
         (b) => b.exercise_template_id === g.exerciseId,
       );
-      if (best) {
-        g.current = best.estimated_one_rm_kg ?? best.weight_kg ?? null;
-      }
+      next.current = best
+        ? (best.estimated_one_rm_kg ?? best.weight_kg ?? null)
+        : null;
     }
     if (g.type === "speed" && g.recordType) {
       const best = snapshot.garmin?.recent_bests?.find(
         (b) => b.record_type === g.recordType,
       );
-      if (best) {
-        g.current = best.value ?? null;
-      }
+      next.current = best ? (best.value ?? null) : null;
     }
-    return g;
+    return next;
   });
 }
 
