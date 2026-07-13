@@ -189,7 +189,7 @@ function renderEmptyState() {
   renderSessionShell();
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
-  freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null)}</div>`;
+  freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null)}${renderFreshnessSection({})}</div>`;
   if (dashboardSummary) dashboardSummary.innerHTML = renderGuidanceTilesEmpty();
   if (guidanceTargets) guidanceTargets.innerHTML = renderGuidanceTargetsEmpty();
   if (guidanceConfidence) guidanceConfidence.textContent = "Confidence: -";
@@ -225,7 +225,7 @@ function renderFatalState(message) {
   renderFoodShell();
   renderSessionShell();
   if (freshnessBar)
-    freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null, message)}</div>`;
+    freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null, message)}${renderFreshnessSection({})}</div>`;
   if (checkInShell) {
     checkInShell.innerHTML = `
       <div class="checkin-shell-header">
@@ -429,7 +429,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   freshnessBar.innerHTML = `
     <div class="freshness-stack">
       ${renderImportStatusBar(snapshot)}
-      ${renderFreshnessBar(snapshot)}
+      ${renderFreshnessSection(snapshot)}
     </div>
   `;
   if (dashboardSummary) {
@@ -464,7 +464,6 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   ].join("");
   recActions.innerHTML = renderSessionLog(priority);
   sections.innerHTML = [
-    renderFreshnessCard(snapshot),
     renderDeltaCard(state.previousSnapshot, snapshot),
     renderCompactSection("Garmin", garmin),
     renderCompactSection("Hevy", hevy),
@@ -843,25 +842,80 @@ export function renderImportStatusBar(snapshot, detailOverride = "") {
 
 /* ── Freshness bar ── */
 
-function renderFreshnessBar(snapshot) {
-  const sources = ["garmin", "hevy", "cronometer", "manual_context"];
-  const levels = sources.map((key) => snapshot[key]?.freshness ?? "missing");
-  const worst = levels.includes("missing")
-    ? "missing"
-    : levels.includes("stale")
-      ? "stale"
-      : levels.includes("partial")
-        ? "stale"
-        : "fresh";
-  const labels = {
-    fresh: "All data sources fresh",
-    stale: "Some data sources stale",
-    missing: "Some data sources missing",
-  };
-  return `<div class="freshness-bar ${worst}">
-    <span class="freshness-bar-label">Source freshness</span>
-    <span class="freshness-bar-detail">${escapeHtml(labels[worst])}</span>
-  </div>`;
+function renderFreshnessSection(snapshot) {
+  const sources = [
+    { key: "garmin", label: "Garmin" },
+    { key: "hevy", label: "Hevy" },
+    { key: "cronometer", label: "Cronometer" },
+    { key: "manual_context", label: "Manual context" },
+  ];
+  const rows = sources
+    .map(({ key, label }) => {
+      const status = getFreshnessStatus(snapshot[key]);
+      return `
+        <div class="item freshness-item">
+          <span>${label}</span>
+          <strong><span class="freshness-dot ${status.kind}"></span>${status.label}</strong>
+        </div>
+      `;
+    })
+    .join("");
+  const summary = summarizeFreshnessStatus(
+    sources.map(({ key }) => snapshot[key]),
+  );
+  return `
+    <details class="card section-panel freshness-panel" open>
+      <summary class="section-summary">
+        <div>
+          <p class="label">Freshness</p>
+          <h2>Data source freshness</h2>
+        </div>
+        <span class="section-count freshness-summary ${summary.kind}">${escapeHtml(summary.label)}</span>
+      </summary>
+      <div class="section-list freshness-source-list">${rows}</div>
+    </details>
+  `;
+}
+
+function summarizeFreshnessStatus(sources) {
+  const statuses = sources.map((source) => getFreshnessStatus(source).kind);
+  if (statuses.every((kind) => kind === "fresh")) {
+    return { kind: "fresh", label: "All sources fresh" };
+  }
+  if (statuses.includes("missing")) {
+    return { kind: "missing", label: "Some sources missing" };
+  }
+  return { kind: "stale", label: "Some sources not fresh" };
+}
+
+function getFreshnessStatus(source) {
+  if (!hasUsefulSourceData(source)) {
+    return { kind: "missing", label: "No data" };
+  }
+  return source?.freshness === "fresh"
+    ? { kind: "fresh", label: "Fresh" }
+    : { kind: "stale", label: "Not fresh" };
+}
+
+function hasUsefulSourceData(source) {
+  if (!source || typeof source !== "object") return false;
+  return Object.entries(source).some(([key, value]) => {
+    if (key === "freshness") return false;
+    return hasMeaningfulValue(value);
+  });
+}
+
+function hasMeaningfulValue(value) {
+  if (value == null) return false;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value))
+    return value.some((entry) => hasMeaningfulValue(entry));
+  if (typeof value === "object") {
+    return Object.entries(value).some(
+      ([key, entry]) => key !== "freshness" && hasMeaningfulValue(entry),
+    );
+  }
+  return true;
 }
 
 /* ── Stat groups ── */
@@ -1097,43 +1151,6 @@ document.addEventListener("click", (e) => {
     focusBarcodeInput();
   }
 });
-
-/* ── Freshness card ── */
-
-function renderFreshnessCard(snapshot) {
-  const sources = ["garmin", "hevy", "cronometer", "manual_context"];
-  const rows = sources
-    .map((key) => {
-      const source = snapshot[key];
-      if (!source) return null;
-      const freshness = source.freshness ?? "missing";
-      const label =
-        key === "manual_context"
-          ? "Manual context"
-          : key.charAt(0).toUpperCase() + key.slice(1);
-      return `
-        <div class="item">
-          <span>${label}</span>
-          <strong><span class="freshness-dot ${freshness}"></span>${formatDisplayValue(freshness)}</strong>
-        </div>
-      `;
-    })
-    .filter(Boolean)
-    .join("");
-  if (!rows) return "";
-  return `
-    <details class="card section-panel" open>
-      <summary class="section-summary">
-        <div>
-          <p class="label">Freshness</p>
-          <h2>Data source freshness</h2>
-        </div>
-        <span class="section-count">${sources.length} sources</span>
-      </summary>
-      <div class="section-list">${rows}</div>
-    </details>
-  `;
-}
 
 /* ── Delta card ── */
 

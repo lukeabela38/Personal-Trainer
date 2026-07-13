@@ -8,6 +8,9 @@ services:
       CRONOMETER_SESSION_FILE: /app/.cronometer_session/session.json
       GARMINTOKENS: /app/.garminconnect
     volumes:
+      - ./personal_trainer:/app/personal_trainer:ro
+      - ./scripts:/app/scripts:ro
+      - ./site:/app/site:ro
       - ./dist:/app/dist
       - ./.env:/app/.env:ro
       - ./.cache/garmin:/app/.garminconnect

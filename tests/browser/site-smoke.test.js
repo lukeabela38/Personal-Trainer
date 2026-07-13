@@ -6,6 +6,7 @@ const pages = [
     title: "Dashboard",
     ready: "#food-cta",
     checks: [
+      "#freshness-bar .section-panel",
       "#food-cta",
       "#session-shell",
       "#status-banner",
@@ -73,6 +74,7 @@ for (const pageSpec of pages) {
       await page.locator("details.nav-menu").evaluate((menu) => {
         menu.open = true;
       });
+      await page.waitForLoadState("networkidle");
     }
 
     for (const selector of pageSpec.checks) {

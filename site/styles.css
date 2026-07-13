@@ -809,6 +809,15 @@ input[type="file"] {
   font-weight: 500;
   color: inherit;
 }
+.freshness-summary.fresh {
+  color: var(--green);
+}
+.freshness-summary.stale {
+  color: var(--amber);
+}
+.freshness-summary.missing {
+  color: var(--red);
+}
 
 /* Stat groups */
 .stat-groups {

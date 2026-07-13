@@ -19,6 +19,14 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - When that happens, use the GitHub app/MCP tools for PR metadata, check runs, and workflow logs instead of blocking on `gh`.
 - Keep `gh auth status` as the quick local auth sanity check, but treat MCP as the reliable fallback for GitHub Actions inspection here.
 
+## 2026-07-13 Freshness UI Consolidation
+
+- The home page now renders a single consolidated freshness panel in the `#freshness-bar` area instead of a separate bar plus a duplicate freshness card in the expandable section stack.
+- Each source row now maps freshness to a simple traffic-light state: fresh = green, stale/partial = orange, missing or empty = red.
+- The empty dashboard state now shows the same consolidated freshness panel so the home page stays informative before a snapshot is loaded.
+- `docker-compose.yml` now mounts `./personal_trainer`, `./scripts`, and `./site` into the `app` container so `docker compose run` regenerates `dist/` from the live working tree instead of baked image files.
+- Validation passed with `npm run format:js:check` and `PLAYWRIGHT_USE_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npm run test:browser`.
+
 ## 2026-07-13 Deploy Failure Debug
 
 - The Pages deploy workflow was failing in `Prepare site output` because it always passed `--require-garmin-vo2max` to `scripts/daily_snapshot_runner.py`.
