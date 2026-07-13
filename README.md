@@ -21,6 +21,14 @@ This repository documents a personal performance system using training, nutritio
 
 Prefer Docker for Python 3.12 runs. Use local Python only if Docker is unavailable.
 
+Install pre-commit once so Ruff formatting and lint checks run before commits:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
 If you need live source credentials, unlock the repo-backed `.env` first:
 
 ```bash

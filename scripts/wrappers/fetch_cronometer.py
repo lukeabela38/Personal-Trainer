@@ -96,14 +96,10 @@ def _login() -> tuple[int, str]:
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             body = json.loads(resp.read().decode())
-            logger.info(
-                "[cronometer] login status_code=%s", getattr(resp, "status", 200)
-            )
+            logger.info("[cronometer] login status_code=%s", getattr(resp, "status", 200))
     except urllib.error.HTTPError as e:
         body_text = e.read().decode()[:200] if e.fp else ""
-        logger.warning(
-            "[cronometer] login failed status_code=%s: %s", e.code, body_text
-        )
+        logger.warning("[cronometer] login failed status_code=%s: %s", e.code, body_text)
         raise RuntimeError(f"Cronometer login HTTP {e.code}: {body_text}")
 
     user_id = body.get("id")
@@ -185,9 +181,7 @@ def fetch(date_str: str | None = None) -> dict:
             td["calories_target"] = _safe_float(target)
         if consumed is not None:
             td["calories_consumed"] = _safe_float(consumed)
-            td["remaining_kcal"] = (
-                _safe_float(target - consumed) if target is not None else None
-            )
+            td["remaining_kcal"] = _safe_float(target - consumed) if target is not None else None
             td["log_completeness"] = "complete" if consumed > 0 else "incomplete"
 
         consumed_macros = summary.get("consumed") or {}
@@ -198,19 +192,13 @@ def fetch(date_str: str | None = None) -> dict:
 
         payload["recent_days"] = _build_recent_days(user_id, token, day)
 
-        payload["fueling_status"] = _fueling_status(
-            td["calories_consumed"], td["calories_target"]
-        )
-        payload["protein_status"] = _protein_status(
-            td["protein_g"], td["calories_target"]
-        )
+        payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
+        payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
         payload["carb_availability"] = _carb_status(td["carbs_g"])
         logger.info("[cronometer] built nutrition payload for %s status_code=200", day)
 
     except Exception as e:
-        print(
-            f"[cronometer] nutrition unavailable status_code=500: {e}", file=sys.stderr
-        )
+        print(f"[cronometer] nutrition unavailable status_code=500: {e}", file=sys.stderr)
         logger.warning("[cronometer] nutrition unavailable status_code=500: %s", e)
 
     flags = payload["flags"]
@@ -264,9 +252,7 @@ def _build_recent_days(user_id: int, token: str, day: str) -> list[dict]:
                 f"[cronometer] skipping {day_str} status_code={e.code}: {e}",
                 file=sys.stderr,
             )
-            logger.warning(
-                "[cronometer] skipping %s status_code=%s: %s", day_str, e.code, e
-            )
+            logger.warning("[cronometer] skipping %s status_code=%s: %s", day_str, e.code, e)
             continue
         summary = (diary or {}).get("summary") or {}
         macros = summary.get("macros") or {}
@@ -284,9 +270,7 @@ def _build_recent_days(user_id: int, token: str, day: str) -> list[dict]:
                 "remaining_kcal": _safe_float(target - consumed.get("total"))
                 if target is not None and consumed.get("total") is not None
                 else None,
-                "log_completeness": "complete"
-                if consumed.get("total") and consumed.get("total") > 0
-                else "incomplete",
+                "log_completeness": "complete" if consumed.get("total") and consumed.get("total") > 0 else "incomplete",
             }
         )
     return recent_days
@@ -339,9 +323,7 @@ def _safe_float(v) -> float | None:
 def main() -> int:
     try:
         _configure_logging()
-        parser = argparse.ArgumentParser(
-            description="Emit a live Cronometer source payload."
-        )
+        parser = argparse.ArgumentParser(description="Emit a live Cronometer source payload.")
         parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
         args = parser.parse_args()
 

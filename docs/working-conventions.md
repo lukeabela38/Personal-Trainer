@@ -61,6 +61,12 @@ Before opening a PR, check that:
 - validation is obvious
 - the docs reflect any durable new rule
 
+## Developer Workflow
+
+- Install and use `pre-commit` locally so Ruff formatting and lint checks run before commits.
+- Run `pre-commit run --all-files` after larger refactors or before opening a PR.
+- Keep the hook set aligned with CI so local failures match the PR checks.
+
 ## Source References
 
 - [RFC 2119](https://www.rfc-editor.org/info/rfc2119)

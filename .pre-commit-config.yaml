@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.21
+    hooks:
+      - id: ruff-format
+        args: [--config=personal_trainer/pyproject.toml]
+        files: ^(personal_trainer/src|personal_trainer/tests|scripts|tests)/
+      - id: ruff-check
+        args: [--config=personal_trainer/pyproject.toml]
+        files: ^(personal_trainer/src|personal_trainer/tests|scripts|tests)/
