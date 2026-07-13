@@ -96,8 +96,10 @@ def _login() -> tuple[int, str]:
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             body = json.loads(resp.read().decode())
+            logger.info("[cronometer] login status_code=%s", getattr(resp, "status", 200))
     except urllib.error.HTTPError as e:
         body_text = e.read().decode()[:200] if e.fp else ""
+        logger.warning("[cronometer] login failed status_code=%s: %s", e.code, body_text)
         raise RuntimeError(f"Cronometer login HTTP {e.code}: {body_text}")
 
     user_id = body.get("id")
@@ -124,9 +126,11 @@ def _post(user_id: int, token: str, path: str, payload: dict) -> dict:
     )
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
+            logger.info("[cronometer] request status_code=%s path=%s", getattr(resp, "status", 200), path)
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as e:
         body_text = e.read().decode()[:200] if e.fp else ""
+        logger.warning("[cronometer] request failed status_code=%s path=%s: %s", e.code, path, body_text)
         raise CronometerAPIError(e.code, path, body_text)
 
 
@@ -182,11 +186,11 @@ def fetch(date_str: str | None = None) -> dict:
         payload["fueling_status"] = _fueling_status(td["calories_consumed"], td["calories_target"])
         payload["protein_status"] = _protein_status(td["protein_g"], td["calories_target"])
         payload["carb_availability"] = _carb_status(td["carbs_g"])
-        logger.info("[cronometer] built nutrition payload for %s", day)
+        logger.info("[cronometer] built nutrition payload for %s status_code=200", day)
 
     except Exception as e:
-        print(f"[cronometer] nutrition unavailable: {e}", file=sys.stderr)
-        logger.warning("[cronometer] nutrition unavailable: %s", e)
+        print(f"[cronometer] nutrition unavailable status_code=500: {e}", file=sys.stderr)
+        logger.warning("[cronometer] nutrition unavailable status_code=500: %s", e)
 
     flags = payload["flags"]
     if payload["fueling_status"] == "low":
@@ -235,8 +239,8 @@ def _build_recent_days(user_id: int, token: str, day: str) -> list[dict]:
         try:
             diary = _fetch_diary_with_retry(user_id, token, day_str)
         except CronometerAPIError as e:
-            print(f"[cronometer] skipping {day_str}: {e}", file=sys.stderr)
-            logger.warning("[cronometer] skipping %s: %s", day_str, e)
+            print(f"[cronometer] skipping {day_str} status_code={e.code}: {e}", file=sys.stderr)
+            logger.warning("[cronometer] skipping %s status_code=%s: %s", day_str, e.code, e)
             continue
         summary = (diary or {}).get("summary") or {}
         macros = summary.get("macros") or {}

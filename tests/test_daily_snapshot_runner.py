@@ -6,7 +6,7 @@ from contextlib import redirect_stderr
 from io import StringIO
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import scripts.daily_snapshot_runner as daily_snapshot_runner
 
@@ -89,7 +89,7 @@ class DailySnapshotRunnerTest(TestCase):
             self.assertTrue(snapshot_output.exists())
             self.assertTrue(deploy_log_output.exists())
             build_site_artifacts.assert_called_once()
-            build_history_artifacts.assert_called_once_with(site_output)
+            build_history_artifacts.assert_called_once_with(site_output, ANY)
 
             saved_sources = json.loads(sources_output.read_text(encoding="utf-8"))
             saved_snapshot = json.loads(snapshot_output.read_text(encoding="utf-8"))

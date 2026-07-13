@@ -45,31 +45,31 @@ def main(argv: list[str] | None = None) -> int:
     try:
         logger.info("capturing Garmin source")
         garmin = _load_payload(args.garmin_command, "garmin")
-        logger.info("captured Garmin source")
+        logger.info("captured Garmin source status_code=200")
     except Exception as exc:
-        logger.warning("[sources] garmin unavailable: %s", exc)
+        logger.warning("[sources] garmin unavailable status_code=500: %s", exc)
 
     try:
         logger.info("capturing Hevy source")
         hevy = _load_payload(args.hevy_command, "hevy")
-        logger.info("captured Hevy source")
+        logger.info("captured Hevy source status_code=200")
     except Exception as exc:
-        logger.warning("[sources] hevy unavailable: %s", exc)
+        logger.warning("[sources] hevy unavailable status_code=500: %s", exc)
 
     try:
         logger.info("capturing Cronometer source")
         cronometer = _load_payload(args.cronometer_command, "cronometer")
-        logger.info("captured Cronometer source")
+        logger.info("captured Cronometer source status_code=200")
     except Exception as exc:
-        logger.warning("[sources] cronometer unavailable: %s", exc)
+        logger.warning("[sources] cronometer unavailable status_code=500: %s", exc)
 
     if args.manual_command:
         try:
             logger.info("capturing manual check-in source")
             manual = _load_payload(args.manual_command, "manual_context")
-            logger.info("captured manual check-in source")
+            logger.info("captured manual check-in source status_code=200")
         except Exception as exc:
-            logger.warning("[sources] manual check-in unavailable: %s", exc)
+            logger.warning("[sources] manual check-in unavailable status_code=500: %s", exc)
 
     payload = {
         "snapshot_date": args.date,

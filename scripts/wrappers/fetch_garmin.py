@@ -37,20 +37,23 @@ def fetch() -> dict:
         try:
             logger.info("[garmin] using cached token store at %s", tokenstore)
             cached_payload = _fetch_cached(tokenstore, today, month_ago)
+            logger.info("[garmin] auth status_code=200 mode=cached tokenstore=%s", tokenstore)
             if not _payload_needs_refresh(cached_payload) or not (garmin_email and garmin_password):
                 return cached_payload
             logger.warning("[garmin] cached session returned no usable data, retrying with password")
         except Exception as e:
-            logger.warning("[garmin] cached session fetch failed: %s", e)
+            logger.warning("[garmin] cached session fetch failed status_code=%s: %s", _status_code(e), e)
 
     if garmin_email and garmin_password and Garmin is not None:
         try:
             logger.info("[garmin] using direct credential login")
-            return _fetch_direct(garmin_email, garmin_password, tokenstore, today, month_ago)
+            payload = _fetch_direct(garmin_email, garmin_password, tokenstore, today, month_ago)
+            logger.info("[garmin] auth status_code=200 mode=password")
+            return payload
         except Exception as e:
-            logger.warning("[garmin] direct fetch failed: %s", e)
+            logger.warning("[garmin] direct fetch failed status_code=%s: %s", _status_code(e), e)
 
-    logger.warning("[garmin] credentials unavailable or unusable; returning empty payload")
+    logger.warning("[garmin] credentials unavailable or unusable; returning empty payload status_code=401")
     return _empty_payload()
 
 
@@ -82,6 +85,16 @@ def _fetch_direct(email: str, password: str, tokenstore: Path, today: str, month
         pass
 
     return _build_payload(client, today, month_ago)
+
+
+def _status_code(exc: Exception) -> int:
+    response = getattr(exc, "response", None)
+    if response is not None and getattr(response, "status_code", None) is not None:
+        try:
+            return int(response.status_code)
+        except (TypeError, ValueError):
+            pass
+    return 500
 
 
 def _build_payload(client, today: str, month_ago: str) -> dict:

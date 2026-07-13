@@ -1,17 +1,60 @@
 status: succeeded
-started_at: 2026-07-12T22:15:29.718899+00:00
+started_at: 2026-07-13T08:19:59.969145+00:00
 timezone: Europe/Malta
 sources_mode: live
 capture_command: /usr/local/bin/python3 /app/scripts/live_sources.py --timezone Europe/Malta
 live_sources_stderr:
   INFO capturing Garmin source
-  INFO captured Garmin source
+  INFO [garmin] using direct credential login
+  INFO [garmin] auth status_code=200 mode=password
+  INFO captured Garmin source status_code=200
   INFO capturing Hevy source
-  INFO captured Hevy source
+  INFO [hevy] request status_code=200 path=/workouts?page=1&pageSize=10
+  INFO [hevy] request status_code=200 path=/workouts?page=2&pageSize=10
+  INFO [hevy] request status_code=200 path=/workouts?page=3&pageSize=10
+  INFO [hevy] auth status_code=200 source=workout-history page_count=4
+  INFO captured Hevy source status_code=200
   INFO capturing Cronometer source
-  INFO captured Cronometer source
+  INFO [cronometer] fetching nutrition data for 2026-07-13
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] request status_code=200 path=/get_diary
+  INFO [cronometer] built nutrition payload for 2026-07-13 status_code=200
+  INFO captured Cronometer source status_code=200
 captured_live_sources: true
 wrote_sources: dist/live-sources.json
+building_snapshot: start
+building_snapshot: done
+building_recommendation: start
+building_recommendation: done
 wrote_snapshot: dist/snapshot.json
 building_site_artifacts: start
 building_history_artifacts: start

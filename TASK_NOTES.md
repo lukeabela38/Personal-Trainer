@@ -4,7 +4,23 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## Current Task
 
-Add a deployment log artifact for live preview runs so the build output can be inspected after deployment.
+Make the site render only from live snapshot pulls, remove snapshot-baseline persistence, and fix live Hevy paging so the pipeline keeps real source coverage.
+
+- Strength history now comes from the full 30-day workout window via Hevy `get-workouts`, and the report groups exercise rows dynamically instead of limiting itself to eight tracked lifts.
+
+## 2026-07-13 Browser Smoke Sync
+
+- `scripts/build_site_artifacts.py` now copies the `history/` subtree into `dist/`, which fixes the strength-page 404s in the built bundle.
+- `site/speed.js` now renders a visible empty-state summary when Garmin bests are absent, so the page no longer hides its summary strip on a valid zero-data payload.
+- Rebuilt `dist/` from the current snapshot after those changes so the checked-in bundle and the served site matched.
+- Validation passed with `docker compose run --rm -v "$PWD":/app -w /app app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s tests -v"`, `docker compose run --rm -v "$PWD":/app -w /app app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest tests.test_daily_snapshot_runner -v"`, `npm run format:js:check`, `npm run lint:js`, `node --test tests/frontend/*.test.js`, and `npm run test:browser`.
+
+## 2026-07-13 Live Snapshot Only
+
+- Removed browser-stored snapshot baselines from the dashboard and progress pages so those views no longer compare against persisted local snapshots.
+- The dashboard/progress copy now treats the current live snapshot as the only source for rendered snapshot values.
+- Hevy live pulling now paginates in batches of 10 instead of requesting an invalid `pageSize=30`, which restores the live source capture path.
+- Validation passed with `docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest personal_trainer.tests.test_script_entrypoints -v"` and a fresh `docker compose run --rm app python3 scripts/daily_snapshot_runner.py --deploy-log-output dist/deploy-log.txt`.
 
 ## Progress Live-Only Fix
 

@@ -1,5 +1,5 @@
 {
-  "snapshot_date": "2026-07-12",
+  "snapshot_date": "2026-07-13",
   "timezone": "Europe/Malta",
   "athlete": {
     "age": 28,
@@ -15,10 +15,10 @@
     "training_status": null,
     "training_load_trend": null,
     "readiness": {
-      "sleep_score": 26540,
+      "sleep_score": 27420,
       "hrv": null,
       "stress": null,
-      "body_battery": 71
+      "body_battery": 70
     },
     "recent_activities": [
       {
@@ -291,14 +291,14 @@
         "endTimeGMT": "2026-07-11 22:04:17",
         "qualifyingDive": false,
         "activityUUID": "e8554ec2-d9ff-4e5c-bdb7-718acedc31fd",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -501,14 +501,14 @@
         "endTimeGMT": "2026-07-09 17:51:34",
         "qualifyingDive": false,
         "activityUUID": "eb94dd31-b8ef-4ff4-aff8-b463e065ab10",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -745,14 +745,14 @@
         "endTimeGMT": "2026-07-09 17:44:22",
         "qualifyingDive": false,
         "activityUUID": "d12fa26d-3027-4b90-ba65-47728643cc39",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -946,14 +946,14 @@
         "endTimeGMT": "2026-07-09 16:42:42",
         "qualifyingDive": false,
         "activityUUID": "141485d8-cc13-4194-85d6-69ef9ac4c9f9",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -1140,14 +1140,14 @@
         "endTimeGMT": "2026-07-07 18:06:51",
         "qualifyingDive": false,
         "activityUUID": "42142e35-1648-492c-8ab0-c328bc710faf",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -1355,14 +1355,14 @@
         "endTimeGMT": "2026-07-07 17:58:55",
         "qualifyingDive": false,
         "activityUUID": "bea9b443-7667-4b7c-a419-1d92cae9d059",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -1566,14 +1566,14 @@
         "endTimeGMT": "2026-07-07 16:45:14",
         "qualifyingDive": false,
         "activityUUID": "57bef7c7-bcad-468b-a963-89201a1caa4a",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -1781,14 +1781,14 @@
         "endTimeGMT": "2026-07-03 20:27:43",
         "qualifyingDive": false,
         "activityUUID": "5b997f78-cabc-4b25-b5cc-dfdfdbf12a3e",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -1976,14 +1976,14 @@
         "endTimeGMT": "2026-07-02 17:57:12",
         "qualifyingDive": false,
         "activityUUID": "bd53f39f-545a-4036-9738-6f2d24ce4026",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       },
       {
@@ -2220,14 +2220,14 @@
         "endTimeGMT": "2026-07-02 17:49:47",
         "qualifyingDive": false,
         "activityUUID": "990d0fee-bf52-4125-b920-b3a0a52f577a",
-        "pr": false,
-        "purposeful": false,
-        "manualActivity": false,
-        "autoCalcCalories": false,
         "elevationCorrected": false,
-        "atpActivity": false,
-        "favorite": false,
+        "pr": false,
         "decoDive": false,
+        "atpActivity": false,
+        "autoCalcCalories": false,
+        "favorite": false,
+        "manualActivity": false,
+        "purposeful": false,
         "parent": false
       }
     ],
@@ -2243,44 +2243,262 @@
   },
   "hevy": {
     "freshness": "fresh",
-    "recent_workouts": [],
-    "last_workout": null,
+    "recent_workouts": [
+      {
+        "title": "Loft",
+        "start_time": "2026-07-08T05:16:07+00:00",
+        "end_time": "2026-07-08T06:41:41+00:00",
+        "exercise_count": 6
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-07-06T05:12:48+00:00",
+        "end_time": "2026-07-06T06:36:45+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-07-03T05:12:44+00:00",
+        "end_time": "2026-07-03T06:25:21+00:00",
+        "exercise_count": 4
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-07-02T05:15:50+00:00",
+        "end_time": "2026-07-02T06:36:31+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-30T05:15:15+00:00",
+        "end_time": "2026-06-30T06:33:39+00:00",
+        "exercise_count": 4
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-26T04:41:57+00:00",
+        "end_time": "2026-06-26T05:54:39+00:00",
+        "exercise_count": 4
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-24T05:15:01+00:00",
+        "end_time": "2026-06-24T06:27:13+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-22T04:58:48+00:00",
+        "end_time": "2026-06-22T06:21:29+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-16T05:09:32+00:00",
+        "end_time": "2026-06-16T06:42:45+00:00",
+        "exercise_count": 4
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-15T05:15:13+00:00",
+        "end_time": "2026-06-15T06:31:38+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-10T06:08:13+00:00",
+        "end_time": "2026-06-10T07:07:22+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-09T05:00:12+00:00",
+        "end_time": "2026-06-09T06:11:23+00:00",
+        "exercise_count": 3
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-08T14:06:25+00:00",
+        "end_time": "2026-06-08T15:15:18+00:00",
+        "exercise_count": 6
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-03T05:04:48+00:00",
+        "end_time": "2026-06-03T06:31:08+00:00",
+        "exercise_count": 4
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-06-01T05:09:18+00:00",
+        "end_time": "2026-06-01T06:38:09+00:00",
+        "exercise_count": 6
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-29T15:16:57+00:00",
+        "end_time": "2026-05-29T16:00:22+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-27T04:57:51+00:00",
+        "end_time": "2026-05-27T06:48:09+00:00",
+        "exercise_count": 6
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-19T05:36:34+00:00",
+        "end_time": "2026-05-19T06:49:50+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-18T04:57:45+00:00",
+        "end_time": "2026-05-18T06:20:04+00:00",
+        "exercise_count": 4
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-15T04:48:40+00:00",
+        "end_time": "2026-05-15T06:19:09+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-11T04:57:51+00:00",
+        "end_time": "2026-05-11T06:24:23+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-06T05:22:06+00:00",
+        "end_time": "2026-05-06T06:44:27+00:00",
+        "exercise_count": 7
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-05-04T04:54:46+00:00",
+        "end_time": "2026-05-04T06:32:14+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-04-30T04:54:31+00:00",
+        "end_time": "2026-04-30T06:13:37+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-04-29T05:15:03+00:00",
+        "end_time": "2026-04-29T06:17:31+00:00",
+        "exercise_count": 4
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-04-22T05:12:42+00:00",
+        "end_time": "2026-04-22T06:30:16+00:00",
+        "exercise_count": 5
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-04-20T05:15:36+00:00",
+        "end_time": "2026-04-20T06:42:56+00:00",
+        "exercise_count": 6
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-04-15T05:15:06+00:00",
+        "end_time": "2026-04-15T06:46:25+00:00",
+        "exercise_count": 6
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-04-13T05:16:27+00:00",
+        "end_time": "2026-04-13T06:38:03+00:00",
+        "exercise_count": 6
+      },
+      {
+        "title": "Loft",
+        "start_time": "2026-04-08T05:11:21+00:00",
+        "end_time": "2026-04-08T06:30:57+00:00",
+        "exercise_count": 6
+      }
+    ],
+    "last_workout": {
+      "title": "Loft",
+      "start_time": "2026-07-08T05:16:07+00:00",
+      "end_time": "2026-07-08T06:41:41+00:00",
+      "exercise_count": 6
+    },
     "muscle_group_fatigue": {
-      "legs": "unknown",
+      "legs": "high",
       "posterior_chain": "unknown",
-      "push": "unknown",
+      "push": "high",
       "pull": "unknown",
-      "shoulders_arms": "unknown",
+      "shoulders_arms": "moderate",
       "core": "unknown"
     },
     "strength_trend": "unknown",
-    "recent_bests": [],
-    "flags": []
+    "recent_bests": [
+      {
+        "exercise_template_id": "79D0BB3A",
+        "weight_kg": 60.0,
+        "reps": 10,
+        "estimated_one_rm_kg": 80.0,
+        "workout_start_time": "2026-06-26T04:41:57+00:00",
+        "workout_title": "Loft"
+      },
+      {
+        "exercise_template_id": "5E10D0E6",
+        "weight_kg": 36.0,
+        "reps": 12,
+        "estimated_one_rm_kg": 50.4,
+        "workout_start_time": "2026-07-02T05:15:50+00:00",
+        "workout_title": "Loft"
+      },
+      {
+        "exercise_template_id": "D04AC939",
+        "weight_kg": 100.0,
+        "reps": 8,
+        "estimated_one_rm_kg": 126.7,
+        "workout_start_time": "2026-06-16T05:09:32+00:00",
+        "workout_title": "Loft"
+      },
+      {
+        "exercise_template_id": "F1E57334",
+        "weight_kg": 35.0,
+        "reps": 8,
+        "estimated_one_rm_kg": 44.3,
+        "workout_start_time": "2026-07-02T05:15:50+00:00",
+        "workout_title": "Loft"
+      },
+      {
+        "exercise_template_id": "8347DFD1",
+        "weight_kg": 12.5,
+        "reps": 10,
+        "estimated_one_rm_kg": 16.7,
+        "workout_start_time": "2026-05-27T04:57:51+00:00",
+        "workout_title": "Loft"
+      }
+    ],
+    "flags": [
+      "heavy_legs_recently"
+    ]
   },
   "cronometer": {
     "freshness": "fresh",
     "today": {
-      "calories_consumed": 2166.69,
+      "calories_consumed": 887.15,
       "calories_target": 1699.0,
       "protein_g": 127.425,
       "carbs_g": 212.375,
       "fat_g": 37.75555555555556,
       "fiber_g": null,
-      "remaining_kcal": -467.69000000000005,
+      "remaining_kcal": 811.85,
       "log_completeness": "complete"
     },
     "recent_days": [
-      {
-        "date": "2026-06-13",
-        "calories_consumed": 2594.02,
-        "calories_target": 3077.0,
-        "protein_g": 230.77499999999998,
-        "carbs_g": 384.625,
-        "fat_g": 68.3777777777778,
-        "fiber_g": null,
-        "remaining_kcal": 482.98,
-        "log_completeness": "complete"
-      },
       {
         "date": "2026-06-14",
         "calories_consumed": 2881.57,
@@ -2592,19 +2810,32 @@
       {
         "date": "2026-07-12",
         "calories_consumed": 2166.69,
+        "calories_target": 2853.0,
+        "protein_g": 213.975,
+        "carbs_g": 356.625,
+        "fat_g": 63.400000000000006,
+        "fiber_g": null,
+        "remaining_kcal": 686.31,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-13",
+        "calories_consumed": 887.15,
         "calories_target": 1699.0,
         "protein_g": 127.425,
         "carbs_g": 212.375,
         "fat_g": 37.75555555555556,
         "fiber_g": null,
-        "remaining_kcal": -467.69000000000005,
+        "remaining_kcal": 811.85,
         "log_completeness": "complete"
       }
     ],
-    "fueling_status": "high",
+    "fueling_status": "low",
     "protein_status": "high",
     "carb_availability": "high",
-    "flags": []
+    "flags": [
+      "under_fueled_today"
+    ]
   },
   "manual_context": {
     "freshness": "missing",
@@ -2619,9 +2850,15 @@
   },
   "derived": {
     "data_quality": "medium",
-    "hard_session_allowed": "conditional",
-    "primary_constraints": [],
-    "likely_conflicts": [],
+    "hard_session_allowed": "no",
+    "primary_constraints": [
+      "leg_fatigue",
+      "under_fueled"
+    ],
+    "likely_conflicts": [
+      "calorie_deficit_vs_hard_training",
+      "heavy_legs_vs_quality_run"
+    ],
     "check_in_required": true,
     "check_in_questions": [
       {
@@ -2631,22 +2868,31 @@
           "no",
           "yes"
         ]
+      },
+      {
+        "id": "fueling_status",
+        "prompt": "Have you logged most of today's food yet?",
+        "options": [
+          "yes",
+          "partly",
+          "no"
+        ]
       }
     ]
   },
   "source": "live",
   "recommendation": {
-    "Priority": "aerobic_quality",
-    "Session": "threshold, tempo, or VO2-focused run selected after warm-up readiness",
-    "Nutrition": "higher-carbohydrate day, protein target protected",
+    "Priority": "nutrition_repair",
+    "Session": "easy walk, light mobility, or rest",
+    "Nutrition": "close the calorie, protein, or carbohydrate gap before adding stress",
     "Macros": {
-      "calories": 3094,
+      "calories": 2250,
       "protein_g": 184,
-      "carbs_g": 421,
-      "fat_g": 75
+      "carbs_g": 228,
+      "fat_g": 67
     },
-    "Reason": "aerobic block is active and no major constraint blocks quality work",
-    "Guardrail": "do not add heavy lower-body volume after the run",
+    "Reason": "recent fueling does not support another hard session",
+    "Guardrail": "avoid combining a large deficit with intensity",
     "Confidence": "medium",
     "Needs check-in": "yes"
   }

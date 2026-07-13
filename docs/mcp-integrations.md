@@ -189,7 +189,7 @@ The live Hevy wrapper now pulls a wider recent workout window so the deploy-time
 
 ### Hevy Strength — `scripts/wrappers/fetch_hevy_strength.py`
 
-Calls `get_exercise_history` for all tracked template IDs and returns raw rows for the strength report. Used by `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND`.
+Calls `get-workouts` and flattens every exercise set from the recent workout window into raw rows for the strength report. The report then groups those rows by exercise so the strength page can show all exercises performed in the last 30 days. Used by `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND`.
 
 ### Cronometer — `scripts/wrappers/fetch_cronometer.py`
 

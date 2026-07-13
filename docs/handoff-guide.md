@@ -67,6 +67,6 @@ Per-source MCP wrapper scripts that connect to Garmin, Hevy, and Cronometer MCP 
 - `scripts/wrappers/fetch_cronometer.py` → `PERSONAL_TRAINER_CRONOMETER_COMMAND`
 - `scripts/wrappers/fetch_manual.py` → `PERSONAL_TRAINER_MANUAL_COMMAND`
 - `scripts/wrappers/fetch_garmin_speed.py` → `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND`
-- `scripts/wrappers/fetch_hevy_strength.py` → `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND`
+- `scripts/wrappers/fetch_hevy_strength.py` → `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND` (30-day workout history flattened into exercise rows)
 
 Each wrapper uses `scripts/mcp_client.py` (reusable async MCP stdio client) to start the server, call tools via JSON-RPC, and format the result. Failures per source are logged to stderr with fallback defaults emitted.

@@ -17,7 +17,7 @@ const dateFrom = document.getElementById("date-from");
 const dateTo = document.getElementById("date-to");
 
 const state = {
-  previous: readStoredSnapshot(),
+  previous: null,
   currentSnapshot: null,
   historyMode: null,
 };
@@ -242,28 +242,30 @@ function renderLiveRangeSummary(summary) {
 }
 
 function renderProgress(snapshot) {
-  const previous = state.previous ?? {};
+  const previous = state.previous;
   sourceLabel.textContent = `${snapshot.source ?? "Snapshot"} · ${snapshot.snapshot_date ?? "unknown date"}`;
   sourceLabel.classList.remove("skeleton");
   statusBanner.classList.remove("skeleton");
 
-  const rows = [
-    deltaRow(
-      "VO2 max",
-      readNumber(previous, ["garmin", "current_vo2max"]),
-      readNumber(snapshot, ["garmin", "current_vo2max"]),
-    ),
-    deltaRow(
-      "Fueling",
-      readText(previous, ["cronometer", "fueling_status"]),
-      readText(snapshot, ["cronometer", "fueling_status"]),
-    ),
-    deltaRow(
-      "Remaining kcal",
-      readNumber(previous, ["cronometer", "today", "remaining_kcal"]),
-      readNumber(snapshot, ["cronometer", "today", "remaining_kcal"]),
-    ),
-  ].filter(Boolean);
+  const rows = previous
+    ? [
+        deltaRow(
+          "VO2 max",
+          readNumber(previous, ["garmin", "current_vo2max"]),
+          readNumber(snapshot, ["garmin", "current_vo2max"]),
+        ),
+        deltaRow(
+          "Fueling",
+          readText(previous, ["cronometer", "fueling_status"]),
+          readText(snapshot, ["cronometer", "fueling_status"]),
+        ),
+        deltaRow(
+          "Remaining kcal",
+          readNumber(previous, ["cronometer", "today", "remaining_kcal"]),
+          readNumber(snapshot, ["cronometer", "today", "remaining_kcal"]),
+        ),
+      ].filter(Boolean)
+    : [];
 
   renderSummaryStrip([
     summaryTile(
@@ -273,13 +275,15 @@ function renderProgress(snapshot) {
     ),
     summaryTile(
       "Baseline",
-      previous.snapshot_date ?? "Previous snapshot",
-      previous.snapshot_date ? "Stored locally" : "No prior snapshot",
+      previous?.snapshot_date ?? "No prior live snapshot",
+      previous?.snapshot_date ? "Loaded in this session" : "Live snapshot only",
     ),
     summaryTile(
       "Changes",
       rows.length ? `${rows.length} changed` : "No changes",
-      rows.length ? "Compared with previous snapshot" : "Nothing moved",
+      rows.length
+        ? "Compared with previous live snapshot"
+        : "Live snapshot only",
     ),
   ]);
 
@@ -299,7 +303,6 @@ function renderProgress(snapshot) {
         .join("")
     : `<div class="item"><span>Progress</span><strong>No change since the previous snapshot</strong></div>`;
 
-  persistSnapshot(snapshot);
   state.previous = snapshot;
 }
 
@@ -419,22 +422,4 @@ function getLiveRangeDates(snapshot) {
         .filter(Boolean),
     ),
   ].sort();
-}
-
-function persistSnapshot(snapshot) {
-  try {
-    localStorage.setItem(
-      "personal-trainer:last-snapshot",
-      JSON.stringify(snapshot),
-    );
-  } catch {}
-}
-
-function readStoredSnapshot() {
-  try {
-    const raw = localStorage.getItem("personal-trainer:last-snapshot");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
 }

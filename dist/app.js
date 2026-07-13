@@ -44,7 +44,7 @@ const recActions = document.getElementById("rec-actions");
 const state = {
   currentPayload: null,
   currentPriority: null,
-  previousSnapshot: readStoredSnapshot(),
+  previousSnapshot: null,
   completedSessions: readCompletedSessions(),
   foodEntries: readFoodEntries(),
   foodTiming: readFoodTiming(),
@@ -219,7 +219,6 @@ function renderEmptyState() {
   statusBanner.textContent = "No file loaded";
   state.currentPayload = null;
   state.currentPriority = null;
-  clearStoredSnapshot();
 }
 
 function renderFatalState(message) {
@@ -476,7 +475,6 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     .filter(Boolean)
     .join("");
   state.previousSnapshot = snapshot;
-  persistSnapshot(snapshot);
 }
 
 function renderGuidanceTiles({ priority, session, nutrition, snapshotDate }) {
@@ -1140,7 +1138,8 @@ function renderFreshnessCard(snapshot) {
 /* ── Delta card ── */
 
 function renderDeltaCard(previousSnapshot, currentSnapshot) {
-  const rows = buildDeltaRows(previousSnapshot ?? {}, currentSnapshot ?? {});
+  if (!previousSnapshot) return "";
+  const rows = buildDeltaRows(previousSnapshot, currentSnapshot ?? {});
   if (!rows.length) return "";
   return `
     <details class="card section-panel">
@@ -1520,32 +1519,6 @@ export function openDeploymentLogView() {
     "_blank",
     "noopener",
   );
-}
-
-/* ── Persistence ── */
-
-function persistSnapshot(snapshot) {
-  try {
-    localStorage.setItem(
-      "personal-trainer:last-snapshot",
-      JSON.stringify(snapshot),
-    );
-  } catch {}
-}
-
-function readStoredSnapshot() {
-  try {
-    const raw = localStorage.getItem("personal-trainer:last-snapshot");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function clearStoredSnapshot() {
-  try {
-    localStorage.removeItem("personal-trainer:last-snapshot");
-  } catch {}
 }
 
 function persistFoodEntries(entries) {
