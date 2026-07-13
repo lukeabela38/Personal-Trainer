@@ -41,8 +41,6 @@ jobs:
       - name: Audit git-crypt coverage
         run: python3 scripts/audit_git_crypt.py
       - name: Prepare site output
-        env:
-          PERSONAL_TRAINER_HEVY_STRENGTH_RECENT_DAYS: 90
         run: |
           set -euo pipefail
           python3 ./scripts/daily_snapshot_runner.py \

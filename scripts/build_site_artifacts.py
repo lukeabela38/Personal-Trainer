@@ -97,6 +97,7 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
         Path("food.js"),
         Path("food/index.html"),
         Path("data-helpers.js"),
+        Path("hevy-live.js"),
         Path("favicon.png"),
         Path("progress.html"),
         Path("progress.js"),

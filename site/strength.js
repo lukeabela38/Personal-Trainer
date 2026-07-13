@@ -1,4 +1,15 @@
 import { renderSparkline, fmtNum } from "./goals.js";
+import {
+  formatHevyRefreshLabel,
+  formatHevyWorkoutWindowLabel,
+  readStoredHevyApiKey,
+  readStoredHevyLiveStrength,
+  readStoredHevyWorkoutWindow,
+  mergeHevyStrengthView,
+  refreshHevyStrength,
+  saveStoredHevyApiKey,
+  saveStoredHevyWorkoutWindow,
+} from "./hevy-live.js";
 
 const strengthUrl = new URL("./strength.json", import.meta.url);
 const grid = document.getElementById("strength-grid");
@@ -6,6 +17,11 @@ const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
 const summaryEl = document.getElementById("strength-summary");
 const controls = document.getElementById("strength-controls");
+const hevyRefreshButton = document.getElementById("refresh-hevy");
+const hevySetKeyButton = document.getElementById("set-hevy-key");
+const hevyWindowInput = document.getElementById("hevy-workout-window");
+const hevyRefreshStatus = document.getElementById("hevy-refresh-status");
+const hevyWindowStatus = document.getElementById("hevy-window-status");
 const filterPills = document.getElementById("filter-pills");
 const sortButtons = document.querySelectorAll(".sort-btn");
 const searchInput = document.getElementById("strength-search");
@@ -22,9 +38,14 @@ let compactView = false;
 let gainsCache = null;
 let exerciseIdByName = new Map();
 let exerciseCatalogLoaded = false;
+let controlsBound = false;
 
 await loadExerciseCatalog();
 loadStrength();
+
+hevyRefreshButton?.addEventListener("click", handleHevyRefresh);
+hevySetKeyButton?.addEventListener("click", handleHevySetKey);
+hevyWindowInput?.addEventListener("change", handleHevyWindowChange);
 
 async function loadStrength() {
   try {
@@ -32,7 +53,11 @@ async function loadStrength() {
       fetch(`${strengthUrl.pathname}?v=${Date.now()}`),
       loadExerciseCatalog(),
     ]);
-    const payload = await response.json();
+    const basePayload = await response.json();
+    const payload = mergeHevyStrengthView(
+      basePayload,
+      readStoredHevyLiveStrength(),
+    );
     const pageState = payload.page_state ?? {
       kind: "fresh",
       label: "Ready",
@@ -46,11 +71,12 @@ async function loadStrength() {
     }
     sourceLabel.textContent = `${payload.source ?? "Hevy"} · ${payload.snapshot_date ?? "unknown date"}`;
     sourceLabel.classList.remove("skeleton");
-    statusBanner.textContent =
-      pageState.kind === "fresh"
-        ? `${payload.entries.length} lifts`
-        : `${payload.entries.length} lifts · ${pageState.label}`;
+    statusBanner.textContent = `${payload.entries.length} lifts · ${formatHevyRefreshLabel(payload)}`;
     statusBanner.classList.remove("skeleton");
+    syncHevyWindowUI(
+      payload.refresh_window ?? readStoredHevyWorkoutWindow(),
+      payload,
+    );
     entries = payload.entries;
     renderControls();
     renderSummary();
@@ -65,8 +91,13 @@ async function loadStrength() {
 }
 
 function renderUnavailableStrength(message) {
+  entries = [];
   sourceLabel.textContent = "Unavailable";
   statusBanner.textContent = message;
+  controls?.removeAttribute("hidden");
+  if (filterPills) filterPills.innerHTML = "";
+  syncHevyWindowUI(readStoredHevyWorkoutWindow());
+  if (hevyRefreshStatus) hevyRefreshStatus.textContent = message;
   if (summaryEl) summaryEl.innerHTML = "";
   grid.innerHTML = `<div class="item"><span>Strength</span><strong>Failed to load data</strong></div>`;
 }
@@ -121,31 +152,34 @@ function renderControls() {
       return `<button class="pill${cat === activeCategory ? " is-active" : ""}" data-category="${cat}" type="button">${cat} (${count})</button>`;
     })
     .join("");
-  filterPills.addEventListener("click", (e) => {
-    const btn = e.target.closest(".pill");
-    if (!btn) return;
-    filterPills
-      .querySelectorAll(".pill")
-      .forEach((p) => p.classList.remove("is-active"));
-    btn.classList.add("is-active");
-    activeCategory = btn.dataset.category;
-    renderGrid();
-  });
-
-  sortButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      sortButtons.forEach((b) => b.classList.remove("is-active"));
+  if (!controlsBound) {
+    filterPills.addEventListener("click", (e) => {
+      const btn = e.target.closest(".pill");
+      if (!btn) return;
+      filterPills
+        .querySelectorAll(".pill")
+        .forEach((p) => p.classList.remove("is-active"));
       btn.classList.add("is-active");
-      activeSort = btn.dataset.sort;
+      activeCategory = btn.dataset.category;
       renderGrid();
     });
-  });
 
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      searchQuery = searchInput.value.toLowerCase().trim();
-      renderGrid();
+    sortButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        sortButtons.forEach((b) => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        activeSort = btn.dataset.sort;
+        renderGrid();
+      });
     });
+
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        searchQuery = searchInput.value.toLowerCase().trim();
+        renderGrid();
+      });
+    }
+    controlsBound = true;
   }
 }
 
@@ -209,6 +243,76 @@ function toggleView() {
   document.querySelectorAll(".view-toggle").forEach((b) => {
     b.textContent = compactView ? "Grid" : "Compact";
   });
+}
+
+async function handleHevyRefresh() {
+  if (hevyRefreshButton) hevyRefreshButton.disabled = true;
+  const workoutWindow = readStoredHevyWorkoutWindow();
+  if (hevyRefreshStatus)
+    hevyRefreshStatus.textContent = `Refreshing Hevy... · ${formatHevyWorkoutWindowLabel(workoutWindow)}`;
+  try {
+    const livePayload = await refreshHevyStrength(undefined, {
+      workoutWindow,
+    });
+    if (livePayload.page_state?.kind === "missing") {
+      entries = [];
+      renderUnavailableStrength(
+        livePayload.page_state.detail ?? "No strength data available",
+      );
+      renderSummary();
+      return;
+    }
+    entries = livePayload.entries ?? [];
+    sourceLabel.textContent = `${livePayload.source ?? "Hevy"} · ${livePayload.snapshot_date ?? "unknown date"}`;
+    statusBanner.textContent = `${entries.length} lifts · ${formatHevyRefreshLabel(livePayload)}`;
+    syncHevyWindowUI(livePayload.refresh_window ?? workoutWindow, livePayload);
+    controls?.removeAttribute("hidden");
+    renderControls();
+    renderSummary();
+    await loadGains();
+    renderGrid();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (hevyRefreshStatus) hevyRefreshStatus.textContent = message;
+  } finally {
+    if (hevyRefreshButton) hevyRefreshButton.disabled = false;
+  }
+}
+
+function handleHevySetKey() {
+  const current = readStoredHevyApiKey();
+  const next = window.prompt("Paste your Hevy API key", current);
+  if (next == null) return;
+  const trimmed = next.trim();
+  if (!trimmed) {
+    if (hevyRefreshStatus) hevyRefreshStatus.textContent = "Hevy key not saved";
+    return;
+  }
+  saveStoredHevyApiKey(trimmed);
+  if (hevyRefreshStatus)
+    hevyRefreshStatus.textContent = "Hevy key saved locally";
+}
+
+function handleHevyWindowChange() {
+  const value = hevyWindowInput?.value ?? "";
+  saveStoredHevyWorkoutWindow(value);
+  syncHevyWindowUI(value);
+}
+
+function syncHevyWindowUI(windowValue, payload) {
+  const normalizedWindow = formatHevyWorkoutWindowLabel(windowValue);
+  if (hevyWindowInput) hevyWindowInput.value = String(windowValue);
+  if (hevyWindowStatus) {
+    const refreshLabel = payload ? formatHevyRefreshLabel(payload) : "";
+    hevyWindowStatus.textContent = payload
+      ? `Window ${normalizedWindow} · ${refreshLabel}`
+      : `Window ${normalizedWindow}`;
+  }
+  if (hevyRefreshStatus && payload) {
+    hevyRefreshStatus.textContent = `${formatHevyRefreshLabel(payload)} · ${normalizedWindow}`;
+  } else if (hevyRefreshStatus && !payload) {
+    hevyRefreshStatus.textContent = `Window ${normalizedWindow}`;
+  }
 }
 
 function renderGrid() {

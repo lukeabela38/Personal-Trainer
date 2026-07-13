@@ -32,6 +32,14 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The live panel now leads with today's consumed macros, with targets shown underneath for context.
 - `food.js` cache-bust version was bumped so the browser doesn’t reuse the previous module after the panel change.
 
+## 2026-07-13 Hevy Browser Window
+
+- `site/hevy-live.js` now persists a browser-only recent-workout window in `localStorage` and passes it into the Hevy refresh path.
+- The refresh path clears any stored browser Hevy overlay before fetching, so the next render has to repull instead of reusing stale live data.
+- `site/strength.html` and `site/strength.js` expose that window so the user can change the lookback depth and see it reflected in the refresh status.
+- The browser smoke suite now checks that the strength page renders the new window control from the built `dist/` bundle.
+- The Pages workflow now uses the same 30-workout default as local, instead of overriding the window to 90 in CI.
+
 ## 2026-07-13 Source Independence Clarification
 
 - The freshness panel now says `Per-source freshness` and adds explicit copy that each source is tracked independently.

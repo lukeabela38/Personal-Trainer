@@ -32,7 +32,15 @@ const pages = [
     path: "/strength.html",
     title: "Strength",
     ready: "#strength-grid",
-    checks: ["#strength-summary", "#strength-controls", "#strength-grid"],
+    checks: [
+      "#strength-summary",
+      "#strength-controls",
+      "#hevy-workout-window",
+      "#hevy-window-status",
+      "#refresh-hevy",
+      "#set-hevy-key",
+      "#strength-grid",
+    ],
   },
   {
     path: "/speed.html",
@@ -76,6 +84,8 @@ for (const pageSpec of pages) {
         menu.open = true;
       });
       await page.waitForLoadState("networkidle");
+      await expect(page.locator("#refresh-hevy")).toBeVisible();
+      await expect(page.locator("#set-hevy-key")).toBeVisible();
     }
 
     for (const selector of pageSpec.checks) {
