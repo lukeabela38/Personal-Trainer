@@ -2,11 +2,109 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=../strength.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Personal Trainer - Strength</title>
+    <meta name="theme-color" content="#0a1020" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="stylesheet" href="../styles.css?v=17" />
+    <link rel="stylesheet" href="../strength.css?v=5" />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="icon" href="../favicon.png?v=3" type="image/png" />
+    <link rel="apple-touch-icon" href="../favicon.png?v=3" />
   </head>
   <body>
-    <p><a href="../strength.html">Open strength page</a></p>
+    <nav class="bottom-nav">
+      <a class="bottom-nav-item" href="../index.html"
+        ><span class="bottom-nav-icon">&#9679;</span>Home</a
+      >
+      <a class="bottom-nav-item" href="../food.html"
+        ><span class="bottom-nav-icon">&#9635;</span>Food</a
+      >
+      <a class="bottom-nav-item is-active" href="../strength.html"
+        ><span class="bottom-nav-icon">&#9651;</span>Strength</a
+      >
+      <a class="bottom-nav-item" href="../speed.html"
+        ><span class="bottom-nav-icon">&#9654;</span>Speed</a
+      >
+      <a class="bottom-nav-item" href="../progress.html"
+        ><span class="bottom-nav-icon">&#8645;</span>Progress</a
+      >
+    </nav>
+
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Personal Trainer</p>
+          <h1>Strength</h1>
+          <p class="lede">
+            All-time PBs and estimated 1RMs from live Hevy history.
+          </p>
+        </div>
+      </header>
+
+      <section class="card shell-panel">
+        <div class="strength-header">
+          <div>
+            <p class="label">Source</p>
+            <h2
+              id="source-label"
+              class="skeleton"
+              style="width: 200px; height: 16px"
+            >
+              Loading…
+            </h2>
+          </div>
+          <span
+            class="status-banner skeleton"
+            id="status-banner"
+            style="width: 80px; height: 28px"
+            >Waiting</span
+          >
+        </div>
+
+        <div id="strength-summary" class="summary-strip strength-summary"></div>
+
+        <div id="strength-controls" class="strength-controls" hidden>
+          <div class="strength-search">
+            <input
+              id="strength-search"
+              class="search-input"
+              type="search"
+              placeholder="Search exercises..."
+              autocomplete="off"
+            />
+          </div>
+          <div class="filter-pills" id="filter-pills"></div>
+          <div class="sort-controls">
+            <button class="sort-btn is-active" data-sort="date" type="button">
+              By date
+            </button>
+            <button class="sort-btn" data-sort="weight" type="button">
+              By 1RM
+            </button>
+            <button class="sort-btn" data-sort="gain" type="button">
+              By gain
+            </button>
+            <button
+              class="view-toggle sort-btn"
+              type="button"
+              onclick="toggleView()"
+            >
+              Compact
+            </button>
+          </div>
+        </div>
+
+        <div id="strength-grid" class="strength-grid">
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+
+        <div id="insights" class="stat-groups" hidden></div>
+      </section>
+    </main>
+    <script type="module" src="../strength.js?v=7"></script>
   </body>
 </html>

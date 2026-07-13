@@ -93,12 +93,14 @@ for (const pageSpec of pages) {
   });
 }
 
-test("redirect shells forward to their canonical pages", async ({ page }) => {
+test("strength page renders at its short route", async ({ page }) => {
   await page.goto("/strength/");
+  await expect(page).toHaveURL(/\/strength\/$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Strength" })).toBeVisible();
+
+  await page.goto("/strength.html");
   await expect(page).toHaveURL(/\/strength\.html$/);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Strength" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Strength" })).toBeVisible();
 
   await page.goto("/speed/");
   await expect(page).toHaveURL(/\/speed\.html$/);
@@ -118,4 +120,12 @@ test("favicon is served", async ({ request }) => {
   expect(response.ok()).toBe(true);
   expect(response.headers()["content-type"]).toContain("image/png");
   expect((await response.body()).length).toBeGreaterThan(0);
+});
+
+test("manifest is served", async ({ request }) => {
+  const response = await request.get("/manifest.webmanifest");
+  const body = await response.text();
+  expect(response.ok()).toBe(true);
+  expect(body).toContain('"name": "Personal Trainer"');
+  expect(body).toContain('"display": "standalone"');
 });

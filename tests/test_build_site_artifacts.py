@@ -20,6 +20,7 @@ class BuildSiteArtifactsTest(TestCase):
                 "index.html",
                 "styles.css",
                 "app.js",
+                "manifest.webmanifest",
                 "food.html",
                 "food.js",
                 "food/index.html",
@@ -153,6 +154,7 @@ class BuildSiteArtifactsTest(TestCase):
             built_snapshot = json.loads((output_dir / "data" / "snapshot.json").read_text(encoding="utf-8"))
             self.assertEqual(built_snapshot["recommendation"]["Priority"], "aerobic_quality")
             self.assertTrue((output_dir / "raw.json").exists())
+            self.assertTrue((output_dir / "manifest.webmanifest").exists())
             self.assertTrue((output_dir / "favicon.png").exists())
             self.assertTrue((output_dir / "progress.html").exists())
             self.assertTrue((output_dir / "progress.js").exists())

@@ -255,3 +255,9 @@ Garmin auth/session caching card from the project board.
 ## 2026-07-13
 
 - Runtime-generated artifacts should not be committed. Added a repo-level convention for build outputs/logs and ignored `dist/speed.json` alongside the existing generated files.
+
+## 2026-07-13 Task #141
+
+- Added `site/manifest.webmanifest` for the installable mobile shell.
+- Canonical site pages now link the manifest and reuse `favicon.png` as the app icon / apple touch icon.
+- `scripts/build_site_artifacts.py` copies the manifest into `dist/`, and tests now cover both the generated file and direct serving in browser smoke.
