@@ -86,6 +86,7 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
         Path("index.html"),
         Path("styles.css"),
         Path("app.js"),
+        Path("manifest.webmanifest"),
         Path("food.html"),
         Path("food.js"),
         Path("food/index.html"),

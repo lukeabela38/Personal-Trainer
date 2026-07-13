@@ -9,6 +9,9 @@ services:
       GARMINTOKENS: /app/.garminconnect
     volumes:
       - ./dist:/app/dist
+      - ./personal_trainer:/app/personal_trainer:ro
+      - ./scripts:/app/scripts:ro
+      - ./site:/app/site:ro
       - ./.env:/app/.env:ro
       - ./.cache/garmin:/app/.garminconnect
       - ./.cache/cronometer:/app/.cronometer_session
