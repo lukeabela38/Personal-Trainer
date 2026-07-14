@@ -279,8 +279,8 @@ grid?.addEventListener("click", async (event) => {
     );
     const history = await response.json();
     renderTrendModal(card.dataset.exerciseName ?? templateId, history);
-  } catch (e) {
-    console.error("Exercise history error:", e);
+  } catch {
+    // no history available
   }
 });
 
@@ -2767,20 +2767,19 @@ function renderTrendModal(name, history) {
     .map((item) => item.reps)
     .filter((value) => value != null);
   const latest = history[history.length - 1];
-  const isBodyweight = /chin.?up|pull.?up|push.?up|dip|trx/i.test(name);
   const modalWarmup =
-    !isBodyweight && latest?.weight_kg != null
+    latest?.weight_kg != null && latest.weight_kg > 0
       ? makeWarmupSets(latest.weight_kg)
       : null;
   const avgRep =
     reps.length > 0 ? reps.reduce((a, b) => a + b, 0) / reps.length : null;
   const modalRest =
-    !isBodyweight && avgRep != null
+    avgRep != null
       ? avgRep <= 5
-        ? "Rest: 3-5 min"
+        ? "3-5 min"
         : avgRep <= 12
-          ? "Rest: 60-90 sec"
-          : "Rest: 30-60 sec"
+          ? "60-90 sec"
+          : "30-60 sec"
       : null;
   const bestVolumeSet = getBestVolumeSet(history);
   const hasOneRmTrend = oneRms.length > 0;
