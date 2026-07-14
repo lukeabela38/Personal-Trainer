@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 dependencies = ["playwright>=1.54.0"]
 
 [project.optional-dependencies]
-lint = ["ruff==0.15.21"]
+lint = ["ruff==0.15.21", "pre-commit"]
 
 [project.scripts]
 personal-trainer = "personal_trainer.cli:main"
