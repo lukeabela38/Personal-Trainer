@@ -207,7 +207,9 @@ function renderEmptyState() {
   renderSessionShell();
   setText("priority", "Import a snapshot");
   setText("reason", "Drop in a JSON snapshot file or live payload export.");
-  freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null)}${renderFreshnessSection({})}</div>`;
+  freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(
+    null,
+  )}${renderFreshnessSection({})}</div>`;
   if (dashboardSummary) dashboardSummary.innerHTML = renderGuidanceTilesEmpty();
   if (guidanceTargets) guidanceTargets.innerHTML = renderGuidanceTargetsEmpty();
   if (guidanceConfidence) guidanceConfidence.textContent = "Confidence: -";
@@ -243,7 +245,10 @@ function renderFatalState(message) {
   renderFoodShell();
   renderSessionShell();
   if (freshnessBar)
-    freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(null, message)}${renderFreshnessSection({})}</div>`;
+    freshnessBar.innerHTML = `<div class="freshness-stack">${renderImportStatusBar(
+      null,
+      message,
+    )}${renderFreshnessSection({})}</div>`;
   if (checkInShell) {
     checkInShell.innerHTML = `
       <div class="checkin-shell-header">
@@ -278,7 +283,9 @@ function renderFoodShell() {
     ? `${todayEntries.length} logged today`
     : "0 entries today";
   const help = latest
-    ? `Latest: ${latest.item} · ${formatFoodTimingLabel(latest.timing)} · ${formatFoodTimeLabel(latest.time)}`
+    ? `Latest: ${latest.item} · ${formatFoodTimingLabel(
+        latest.timing,
+      )} · ${formatFoodTimeLabel(latest.time)}`
     : "Log meals and snacks as you go. Add a time and timing tag so the app can later reason about fuel before, during, or after training.";
 
   if (foodSummary)
@@ -370,14 +377,20 @@ function renderScanPreview(product) {
   el.innerHTML = `
     <div class="food-scan-header">
       <strong>${escapeHtml(product.name)}</strong>
-      ${subtitle ? `<span class="food-scan-sub">${escapeHtml(subtitle)}</span>` : ""}
+      ${
+        subtitle
+          ? `<span class="food-scan-sub">${escapeHtml(subtitle)}</span>`
+          : ""
+      }
     </div>
     ${
       hasNutrition
         ? `<div class="food-scan-grid">${rows
             .map(
               (r) =>
-                `<span class="food-scan-stat">${escapeHtml(r)}<span class="food-scan-unit">/100g</span></span>`,
+                `<span class="food-scan-stat">${escapeHtml(
+                  r,
+                )}<span class="food-scan-unit">/100g</span></span>`,
             )
             .join("")}</div>`
         : '<p class="food-scan-missing muted">Nutrition data not available for this product in the database.</p>'
@@ -482,7 +495,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   );
   const nutrition = formatSentenceValue(
     sourceIsLive
-      ? (recommendation.Nutrition ?? recommendation.nutrition ?? "-")
+      ? recommendation.Nutrition ?? recommendation.nutrition ?? "-"
       : "Unavailable",
   );
   const confidence =
@@ -532,7 +545,9 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
     );
   }
   if (guidanceConfidence)
-    guidanceConfidence.textContent = `Confidence: ${formatDisplayValue(confidence)}`;
+    guidanceConfidence.textContent = `Confidence: ${formatDisplayValue(
+      confidence,
+    )}`;
   if (guidanceCheckIn)
     guidanceCheckIn.textContent = `Check in: ${formatDisplayValue(checkIn)}`;
   if (guidanceDate)
@@ -581,7 +596,9 @@ async function handleHevyRefresh() {
       "Hevy browser refresh",
     );
     if (hevyRefreshStatus) {
-      hevyRefreshStatus.textContent = `Hevy refreshed ${formatHevyRefreshLabel(liveStrength)}`;
+      hevyRefreshStatus.textContent = `Hevy refreshed ${formatHevyRefreshLabel(
+        liveStrength,
+      )}`;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -619,7 +636,9 @@ function renderGuidanceTiles({ priority, session, nutrition, snapshotDate }) {
         <div class="summary-tile">
           <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
           <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
-          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(
+            tile.subvalue,
+          )}</span>
         </div>
       `,
     )
@@ -647,7 +666,11 @@ function renderFoodList(entries) {
           </div>
           <div class="food-entry-meta">
             <span>${escapeHtml(formatFoodTimeLabel(entry.time))}</span>
-            ${entry.barcode ? `<span>Barcode: ${escapeHtml(entry.barcode)}</span>` : ""}
+            ${
+              entry.barcode
+                ? `<span>Barcode: ${escapeHtml(entry.barcode)}</span>`
+                : ""
+            }
           </div>
         </div>
       `,
@@ -716,16 +739,24 @@ function renderGuidanceTargetsEmpty() {
 function renderCheckInQuestion(question, response) {
   const options = Array.isArray(question?.options) ? question.options : [];
   return `
-    <div class="checkin-question" data-checkin-question="${escapeHtml(question?.id ?? "")}">
-      <div class="checkin-question-prompt">${escapeHtml(question?.prompt ?? "")}</div>
-      <div class="checkin-option-row" role="group" aria-label="${escapeHtml(question?.prompt ?? "Check-in question")}">
+    <div class="checkin-question" data-checkin-question="${escapeHtml(
+      question?.id ?? "",
+    )}">
+      <div class="checkin-question-prompt">${escapeHtml(
+        question?.prompt ?? "",
+      )}</div>
+      <div class="checkin-option-row" role="group" aria-label="${escapeHtml(
+        question?.prompt ?? "Check-in question",
+      )}">
         ${options
           .map((option) => {
             const active = response === option;
             return `
               <button
                 type="button"
-                class="button secondary checkin-option${active ? " is-active" : ""}"
+                class="button secondary checkin-option${
+                  active ? " is-active" : ""
+                }"
                 data-checkin-answer="${escapeHtml(option)}"
                 aria-pressed="${String(active)}"
               >
@@ -736,7 +767,11 @@ function renderCheckInQuestion(question, response) {
           .join("")}
       </div>
       <div class="checkin-question-meta">
-        ${response ? `Selected: ${escapeHtml(formatDisplayValue(response))}` : "Pick one answer"}
+        ${
+          response
+            ? `Selected: ${escapeHtml(formatDisplayValue(response))}`
+            : "Pick one answer"
+        }
       </div>
     </div>
   `;
@@ -757,8 +792,10 @@ export function renderCheckInPanel({
     ? allAnswered
       ? "Captured"
       : checkInQuestions.length
-        ? `${checkInQuestions.length} question${checkInQuestions.length === 1 ? "" : "s"}`
-        : "Needed"
+      ? `${checkInQuestions.length} question${
+          checkInQuestions.length === 1 ? "" : "s"
+        }`
+      : "Needed"
     : "Not needed";
   const title = needsCheckIn
     ? allAnswered
@@ -796,7 +833,9 @@ export function renderCheckInPanel({
       <span class="checkin-status">${escapeHtml(statusLabel)}</span>
     </div>
     ${body}
-    <p class="checkin-question-meta">Snapshot: ${escapeHtml(formatDisplayValue(snapshotDate))}</p>
+    <p class="checkin-question-meta">Snapshot: ${escapeHtml(
+      formatDisplayValue(snapshotDate),
+    )}</p>
   `;
 }
 
@@ -838,7 +877,9 @@ export function formatFoodTimeLabel(value) {
 function formatDateTimeLocal(date) {
   const pad = (value) => String(value).padStart(2, "0");
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
+  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(
+    local.getDate(),
+  )}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
 }
 
 export function defaultFoodEntryTime(date = new Date()) {
@@ -925,8 +966,8 @@ export function describeImportStatus(snapshot, detailOverride = "") {
     source === "live"
       ? "Live import"
       : source === "example"
-        ? "Example snapshot"
-        : "Snapshot";
+      ? "Example snapshot"
+      : "Snapshot";
   if (freshness.kind === "fresh") {
     return {
       kind: "fresh",
@@ -995,7 +1036,9 @@ function renderFreshnessSection(snapshot) {
           <h2>Per-source freshness</h2>
           <p class="section-subtitle">Each source is tracked independently.</p>
         </div>
-        <span class="section-count freshness-summary ${summary.kind}">${escapeHtml(summary.label)}</span>
+        <span class="section-count freshness-summary ${
+          summary.kind
+        }">${escapeHtml(summary.label)}</span>
       </summary>
       <div class="section-list freshness-source-list">${rows}</div>
     </details>
@@ -1167,7 +1210,9 @@ function statItem(label, value) {
   return `
     <div class="stat-item">
       <span class="stat-item-label">${escapeHtml(label)}</span>
-      <span class="stat-item-value">${escapeHtml(formatDisplayValue(value))}</span>
+      <span class="stat-item-value">${escapeHtml(
+        formatDisplayValue(value),
+      )}</span>
     </div>
   `;
 }
@@ -1213,7 +1258,9 @@ function renderSessionLog(priority) {
   const tags = recent
     .map(
       (s) =>
-        `<span class="session-tag">${escapeHtml(formatPriorityLabel(s.priority))} <span class="muted">${escapeHtml(s.date.slice(5))}</span></span>`,
+        `<span class="session-tag">${escapeHtml(
+          formatPriorityLabel(s.priority),
+        )} <span class="muted">${escapeHtml(s.date.slice(5))}</span></span>`,
     )
     .join("");
   const btn = alreadyLogged
@@ -1323,7 +1370,9 @@ function renderDeltaCard(previousSnapshot, currentSnapshot) {
             (row) => `
               <div class="item">
                 <span>${escapeHtml(row.label)}</span>
-                <strong class="${row.deltaClass ?? ""}">${escapeHtml(row.value)}</strong>
+                <strong class="${row.deltaClass ?? ""}">${escapeHtml(
+                  row.value,
+                )}</strong>
               </div>
             `,
           )
@@ -1355,7 +1404,9 @@ function renderCompactSection(title, value) {
           .map(
             ([path, itemValue]) => `
               <div class="item">
-                <span>${escapeHtml(formatLabel(path[path.length - 1], title))}</span>
+                <span>${escapeHtml(
+                  formatLabel(path[path.length - 1], title),
+                )}</span>
                 <strong>${escapeHtml(formatRenderedValue(itemValue))}</strong>
               </div>
             `,
@@ -1546,7 +1597,9 @@ function renderDailyDiff(snapshots) {
   const diffs = [];
   if (pPriority !== cPriority)
     diffs.push(
-      `priority: ${formatDisplayValue(pPriority)} → ${formatDisplayValue(cPriority)}`,
+      `priority: ${formatDisplayValue(pPriority)} → ${formatDisplayValue(
+        cPriority,
+      )}`,
     );
   if (pVo2 !== cVo2 && pVo2 != null && cVo2 != null)
     diffs.push(`VO2: ${fmtNum(pVo2)} → ${fmtNum(cVo2)}`);
@@ -1623,10 +1676,15 @@ function renderGoalsCard(goals) {
         <div class="goal-item">
           <div class="goal-header">
             <span class="goal-name">${escapeHtml(g.name)}</span>
-            <span class="goal-numbers">${g.current ?? "-"} / ${g.target}${g.unit}</span>
+            <span class="goal-numbers">${g.current ?? "-"} / ${g.target}${
+              g.unit
+            }</span>
           </div>
           <div class="macro-track">
-            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(pct, 100)}%"></div>
+            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(
+              pct,
+              100,
+            )}%"></div>
           </div>
           <span class="goal-pct">${pct}%</span>
         </div>
@@ -1650,7 +1708,9 @@ function renderSparklineCard(bw) {
   return `
     <div class="stat-group">
       <div class="stat-group-title">Body weight trend (${bw.length} days)</div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir}: ${fmtNum(first)} → ${fmtNum(latest)} kg">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap" title="Body weight ${bwDir}: ${fmtNum(
+        first,
+      )} → ${fmtNum(latest)} kg">
         ${renderSparkline(values, 180, 48)}
         <div style="display:grid;gap:4px">
           <span class="stat-item-label">Start</span>

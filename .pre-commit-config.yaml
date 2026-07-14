@@ -6,5 +6,28 @@ repos:
         args: [--config=personal_trainer/pyproject.toml]
         files: ^(personal_trainer/src|personal_trainer/tests|scripts|tests)/
       - id: ruff-check
-        args: [--config=personal_trainer/pyproject.toml]
+        args: [--config=personal_trainer/pyproject.toml, --fix]
         files: ^(personal_trainer/src|personal_trainer/tests|scripts|tests)/
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+        files: \.(js|mjs|css|html)$
+        exclude: ^(dist|data|node_modules)/
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: npx eslint --quiet site tests
+        language: node
+        types: [javascript]
+        files: ^(site|tests/frontend)/
+
+      - id: testing-guardrails
+        name: testing guardrails
+        entry: python3 scripts/testing_guardrails.py --base origin/main --head HEAD
+        language: system
+        pass_filenames: false
+        always_run: true

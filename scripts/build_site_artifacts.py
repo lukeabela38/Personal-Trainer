@@ -224,9 +224,7 @@ def _build_strength_view(
     exercise_catalog: dict[str, dict[str, str]],
 ) -> dict[str, Any]:
     hevy = snapshot.get("hevy", {})
-    recent_workouts = [
-        workout for workout in hevy.get("recent_workouts", []) if isinstance(workout, dict)
-    ]
+    recent_workouts = [workout for workout in hevy.get("recent_workouts", []) if isinstance(workout, dict)]
     entries = []
     for b in hevy.get("recent_bests", []):
         if not isinstance(b, dict):

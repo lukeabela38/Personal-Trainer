@@ -32,8 +32,7 @@ body {
     "Segoe UI",
     sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle top left,
       rgba(127, 209, 185, 0.18),
       transparent 35%
@@ -168,8 +167,7 @@ input[type="file"] {
   margin-bottom: 16px;
   padding: 20px 22px;
   border-radius: 22px;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at top left,
       rgba(127, 209, 185, 0.12),
       transparent 34%
@@ -354,8 +352,7 @@ input[type="file"] {
   margin-bottom: 16px;
   padding: 18px 20px;
   border-radius: 22px;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at top left,
       rgba(240, 179, 75, 0.12),
       transparent 34%
@@ -407,8 +404,7 @@ input[type="file"] {
   margin-bottom: 16px;
   padding: 18px 20px;
   border-radius: 22px;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at top left,
       rgba(157, 140, 255, 0.1),
       transparent 34%
@@ -675,8 +671,7 @@ input[type="file"] {
   margin-bottom: 16px;
   padding: 18px 20px;
   border-radius: 22px;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at top left,
       rgba(240, 179, 75, 0.12),
       transparent 34%
