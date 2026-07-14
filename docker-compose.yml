@@ -39,3 +39,22 @@ services:
       - ./dist:/app/dist
       - ./personal_trainer/examples:/app/personal_trainer/examples
     command: python3 scripts/generate_history.py
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: personal-trainer-tunnel
+    command: tunnel --url http://host.docker.internal:4173
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  qr:
+    build: .
+    image: personal-trainer:latest
+    container_name: personal-trainer-qr
+    profiles:
+      - dev
+    volumes:
+      - ./dist:/app/dist
+    entrypoint: ["python3", "scripts/generate_qr.py"]
+    command: ["http://localhost:4173", "/app/dist/qr.png"]

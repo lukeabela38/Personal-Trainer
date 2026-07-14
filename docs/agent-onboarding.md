@@ -80,6 +80,23 @@ When a task touches live external data, keep the report tied to the exact comman
 
 Prefer Docker for Python 3.12 runs. Use local Python only as a fallback when Docker is unavailable.
 
+For mobile testing (e.g. barcode scanner), start the live server with a cloudflared tunnel:
+
+```bash
+./scripts/serve_site.sh --live --tunnel
+```
+
+The tunnel URL prints to stdout — open it on a phone to test features that need camera access. The `--tunnel` flag uses cloudflared if installed locally (`brew install cloudflared`), otherwise falls back to the `cloudflare/cloudflared` Docker image.
+
+Portable Docker-only equivalent:
+
+```bash
+docker compose up site -d
+docker compose up tunnel -d
+docker compose logs tunnel 2>&1 | grep trycloudflare   # get tunnel URL
+docker compose run --rm qr "<url>" /app/dist/qr.png     # generate QR code (saved to ./dist/qr.png)
+```
+
 - `./scripts/serve_site.sh`
 - `./scripts/serve_site.sh --live`
 - `docker compose run --rm app python3 scripts/build_site_artifacts.py`
