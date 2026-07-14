@@ -90,6 +90,16 @@ Then inspect only the named files.
 ## Commands (run from repo root)
 
 ```bash
+# Dev server + tunnel for mobile testing (e.g. barcode scanner #154)
+# Requires cloudflared (brew install cloudflared) or falls back to Docker
+./scripts/serve_site.sh --live --tunnel
+
+# Portable Docker-only equivalent:
+docker compose up site -d                           # serve dist/ on port 4173
+docker compose up tunnel -d                          # cloudflared tunnel to localhost
+docker compose logs tunnel | grep trycloudflare      # get public URL
+docker compose run --rm qr "<url>" /app/dist/qr.png  # generate QR code (saves to ./dist/qr.png)
+
 # Prefer Docker for Python 3.12 runs. Use local Python only as a fallback if Docker is unavailable.
 
 # Run package tests in the Python 3.12 container
