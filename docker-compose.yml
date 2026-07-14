@@ -47,3 +47,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+
+  qr:
+    build: .
+    image: personal-trainer:latest
+    container_name: personal-trainer-qr
+    profiles:
+      - dev
+    volumes:
+      - ./dist:/app/dist
+    entrypoint: ["python3", "scripts/generate_qr.py"]
+    command: ["http://localhost:4173", "/app/dist/qr.png"]
