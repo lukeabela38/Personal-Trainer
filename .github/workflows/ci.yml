@@ -68,6 +68,7 @@ jobs:
       - name: Install git-crypt
         run: sudo apt-get update && sudo apt-get install -y git-crypt
       - name: Unlock git-crypt
+        if: github.actor != 'dependabot[bot]'
         env:
           GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
         run: |
@@ -76,6 +77,7 @@ jobs:
           printf '%s' "$GIT_CRYPT_KEY" | base64 --decode > "$key_file"
           git-crypt unlock "$key_file"
       - name: Audit git-crypt coverage
+        if: github.actor != 'dependabot[bot]'
         run: python3 scripts/audit_git_crypt.py
       - uses: actions/setup-python@v6
         with:
