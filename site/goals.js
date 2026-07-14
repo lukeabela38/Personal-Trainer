@@ -73,14 +73,14 @@ export function updateGoalCurrent(goals, snapshot) {
         (b) => b.exercise_template_id === g.exerciseId,
       );
       next.current = best
-        ? (best.estimated_one_rm_kg ?? best.weight_kg ?? null)
+        ? best.estimated_one_rm_kg ?? best.weight_kg ?? null
         : null;
     }
     if (g.type === "speed" && g.recordType) {
       const best = snapshot.garmin?.recent_bests?.find(
         (b) => b.record_type === g.recordType,
       );
-      next.current = best ? (best.value ?? null) : null;
+      next.current = best ? best.value ?? null : null;
     }
     return next;
   });
@@ -163,18 +163,24 @@ export function renderSparkline(values, width = 160, height = 40, opts = {}) {
   if (labelMin) {
     const y0 = pad + h;
     labels.push(
-      `<text x="${pad}" y="${y0 + 12}" fill="var(--muted)" font-size="8">${escapeXml(labelMin)}</text>`,
+      `<text x="${pad}" y="${
+        y0 + 12
+      }" fill="var(--muted)" font-size="8">${escapeXml(labelMin)}</text>`,
     );
   }
   if (labelMax) {
     const y0 = pad;
     labels.push(
-      `<text x="${pad}" y="${y0 - 4}" fill="var(--muted)" font-size="8">${escapeXml(labelMax)}</text>`,
+      `<text x="${pad}" y="${
+        y0 - 4
+      }" fill="var(--muted)" font-size="8">${escapeXml(labelMax)}</text>`,
     );
   }
 
   return `
-    <svg width="${width}" height="${height + 16}" viewBox="0 0 ${width} ${height + 16}" style="display:block">
+    <svg width="${width}" height="${height + 16}" viewBox="0 0 ${width} ${
+      height + 16
+    }" style="display:block">
       <polyline points="${pts
         .map((v, i) => {
           const x = pad + (i / step) * w;
@@ -184,7 +190,9 @@ export function renderSparkline(values, width = 160, height = 40, opts = {}) {
         .join(
           " ",
         )}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <line x1="${pad}" y1="${pad + h}" x2="${pad + w}" y2="${pad + h}" stroke="var(--border)" stroke-width="0.5"/>
+      <line x1="${pad}" y1="${pad + h}" x2="${pad + w}" y2="${
+        pad + h
+      }" stroke="var(--border)" stroke-width="0.5"/>
       ${dots.join("")}
       ${labels.join("")}
     </svg>

@@ -199,7 +199,9 @@ function renderLiveHistorySummary(summary) {
           <span class="stat-item-value">${summary.vo2 ?? "—"}</span>
         </div>
       </div>
-      <p class="muted" style="margin:10px 0 0">Latest live date: ${escapeHtml(summary.latestDate ?? "unknown")}</p>
+      <p class="muted" style="margin:10px 0 0">Latest live date: ${escapeHtml(
+        summary.latestDate ?? "unknown",
+      )}</p>
     </div>
   `;
 }
@@ -236,14 +238,18 @@ function renderLiveRangeSummary(summary) {
           <span class="stat-item-value">${summary.vo2 ?? "—"}</span>
         </div>
       </div>
-      <p class="muted" style="margin:10px 0 0">Range: ${escapeHtml(summary.startDate)} → ${escapeHtml(summary.endDate)}</p>
+      <p class="muted" style="margin:10px 0 0">Range: ${escapeHtml(
+        summary.startDate,
+      )} → ${escapeHtml(summary.endDate)}</p>
     </div>
   `;
 }
 
 function renderProgress(snapshot) {
   const previous = state.previous;
-  sourceLabel.textContent = `${snapshot.source ?? "Snapshot"} · ${snapshot.snapshot_date ?? "unknown date"}`;
+  sourceLabel.textContent = `${snapshot.source ?? "Snapshot"} · ${
+    snapshot.snapshot_date ?? "unknown date"
+  }`;
   sourceLabel.classList.remove("skeleton");
   statusBanner.classList.remove("skeleton");
 
@@ -296,7 +302,9 @@ function renderProgress(snapshot) {
           (row) => `
       <article class="item">
         <span>${escapeHtml(row.label)}</span>
-        <strong class="${row.deltaClass}" title="${row.tooltip ?? ""}">${escapeHtml(row.value)}</strong>
+        <strong class="${row.deltaClass}" title="${
+          row.tooltip ?? ""
+        }">${escapeHtml(row.value)}</strong>
       </article>
     `,
         )
@@ -318,7 +326,9 @@ export function deltaRow(label, previous, current) {
     deltaClass = isUp ? "delta-up" : "delta-down";
     const direction = isUp ? "increased" : "decreased";
     const goodBad = isUp ? "improvement" : "decline";
-    tooltip = `${label} ${direction} from ${formatValue(previous)} to ${formatValue(current)} — ${goodBad}`;
+    tooltip = `${label} ${direction} from ${formatValue(
+      previous,
+    )} to ${formatValue(current)} — ${goodBad}`;
   } else {
     tooltip = `${label}: ${formatValue(previous)} → ${formatValue(current)}`;
   }
@@ -342,7 +352,9 @@ function renderSummaryStrip(tiles) {
         <div class="summary-tile">
           <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
           <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
-          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(
+            tile.subvalue,
+          )}</span>
         </div>
       `,
     )

@@ -141,10 +141,7 @@ def fetch() -> dict:
 
 
 def _summarize_workout(w: dict) -> dict:
-    exercises = [
-        _summarize_exercise(ex)
-        for ex in (w.get("exercises") if isinstance(w.get("exercises"), list) else [])
-    ]
+    exercises = [_summarize_exercise(ex) for ex in (w.get("exercises") if isinstance(w.get("exercises"), list) else [])]
     return {
         "title": w.get("title") or w.get("name") or "",
         "start_time": w.get("start_time") or w.get("start_time") or "",

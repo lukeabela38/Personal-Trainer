@@ -148,12 +148,7 @@ def build_catalog(raw: Any) -> dict[str, Any]:
         template_id = str(
             row.get("exerciseTemplateId") or row.get("exercise_template_id") or row.get("template_id") or ""
         ).strip()
-        name = str(
-            row.get("exerciseName")
-            or row.get("exercise_name")
-            or row.get("_exercise_name")
-            or ""
-        ).strip()
+        name = str(row.get("exerciseName") or row.get("exercise_name") or row.get("_exercise_name") or "").strip()
         if not template_id or not name:
             continue
         exercises[template_id] = {

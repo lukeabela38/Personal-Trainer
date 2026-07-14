@@ -3126,4 +3126,4 @@ function renderTrendModal(name, history) {
 }
 
 window.toggleView = toggleView;
-export { escapeHtml, fmtNum as formatNum };
+export { escapeHtml, fmtNum as formatNum, makeWarmupSets, makeRestLabel };

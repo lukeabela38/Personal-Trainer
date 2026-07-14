@@ -695,6 +695,27 @@ test("strength helpers format numbers and resolve templates", () => {
   assert.equal(strength.escapeHtml(`<&>"'`), "&lt;&amp;&gt;&quot;&#39;");
 });
 
+test("makeWarmupSets returns ramp from bar to working weight", () => {
+  const sets = strength.makeWarmupSets(100);
+  assert.ok(sets.length >= 4);
+  assert.equal(sets[0].label, "Bar");
+  assert.equal(sets[0].reps, 10);
+  const last = sets[sets.length - 1];
+  assert.match(last.label, /90/);
+  assert.equal(last.reps, 1);
+});
+
+test("makeWarmupSets is a function", () => {
+  assert.equal(typeof strength.makeWarmupSets, "function");
+});
+
+test("makeRestLabel returns correct ranges per goal", () => {
+  assert.match(strength.makeRestLabel("Strength"), /3-5 min/);
+  assert.match(strength.makeRestLabel("Hypertrophy"), /60-90 sec/);
+  assert.match(strength.makeRestLabel("Endurance"), /30-60 sec/);
+  assert.equal(strength.makeRestLabel("Unknown Goal"), null);
+});
+
 test("app helpers format guidance and session labels", () => {
   assert.equal(app.formatMacroTarget(2400, "kcal"), "2400 kcal");
   assert.equal(app.formatMacroCurrent(120, "g"), "120 g logged");

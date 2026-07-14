@@ -76,7 +76,9 @@ function renderFoodShell() {
     ? `${todayEntries.length} logged today`
     : "0 entries today";
   const help = latest
-    ? `Latest: ${latest.item} · ${formatFoodTimingLabel(latest.timing)} · ${formatFoodTimeLabel(latest.time)}`
+    ? `Latest: ${latest.item} · ${formatFoodTimingLabel(
+        latest.timing,
+      )} · ${formatFoodTimeLabel(latest.time)}`
     : "Log meals and snacks as you go. Add a time and timing tag so the app can later reason about fuel before, during, or after training.";
 
   if (foodSummary)
@@ -84,7 +86,9 @@ function renderFoodShell() {
   if (foodHelp) foodHelp.textContent = help;
   if (foodStatus) foodStatus.textContent = summary;
   if (foodDayCount)
-    foodDayCount.textContent = `${todayEntries.length} entr${todayEntries.length === 1 ? "y" : "ies"}`;
+    foodDayCount.textContent = `${todayEntries.length} entr${
+      todayEntries.length === 1 ? "y" : "ies"
+    }`;
   if (foodList) foodList.innerHTML = renderFoodList(todayEntries);
 
   if (foodTime && !foodTime.value) {
@@ -266,14 +270,20 @@ function renderScanPreview(product) {
   el.innerHTML = `
     <div class="food-scan-header">
       <strong>${escapeHtml(product.name)}</strong>
-      ${subtitle ? `<span class="food-scan-sub">${escapeHtml(subtitle)}</span>` : ""}
+      ${
+        subtitle
+          ? `<span class="food-scan-sub">${escapeHtml(subtitle)}</span>`
+          : ""
+      }
     </div>
     ${
       hasNutrition
         ? `<div class="food-scan-grid">${rows
             .map(
               (r) =>
-                `<span class="food-scan-stat">${escapeHtml(r)}<span class="food-scan-unit">/100g</span></span>`,
+                `<span class="food-scan-stat">${escapeHtml(
+                  r,
+                )}<span class="food-scan-unit">/100g</span></span>`,
             )
             .join("")}</div>`
         : '<p class="food-scan-missing muted">Nutrition data not available for this product in the database.</p>'
@@ -303,7 +313,11 @@ function renderFoodList(entries) {
           </div>
           <div class="food-entry-meta">
             <span>${escapeHtml(formatFoodTimeLabel(entry.time))}</span>
-            ${entry.barcode ? `<span>Barcode: ${escapeHtml(entry.barcode)}</span>` : ""}
+            ${
+              entry.barcode
+                ? `<span>Barcode: ${escapeHtml(entry.barcode)}</span>`
+                : ""
+            }
           </div>
         </div>
       `,
@@ -332,7 +346,9 @@ function formatFoodTimeLabel(value) {
 function formatDateTimeLocal(date) {
   const pad = (value) => String(value).padStart(2, "0");
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
+  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(
+    local.getDate(),
+  )}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
 }
 
 function defaultFoodEntryTime(date = new Date()) {
