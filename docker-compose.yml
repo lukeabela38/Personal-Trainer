@@ -39,3 +39,11 @@ services:
       - ./dist:/app/dist
       - ./personal_trainer/examples:/app/personal_trainer/examples
     command: python3 scripts/generate_history.py
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: personal-trainer-tunnel
+    command: tunnel --url http://host.docker.internal:4173
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
