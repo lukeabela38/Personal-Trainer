@@ -204,6 +204,225 @@ test("strength history renders nested workout contents", async ({ page }) => {
   await expect(page.locator("#history-panel")).toContainText("RPE 8");
 });
 
+test("workout exercise opens detail modal from history", async ({ page }) => {
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Hevy exercise history",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Strength history ready",
+          detail: "Hevy data is available and current.",
+        },
+        entries: [
+          {
+            templateId: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            category: "Push",
+            best_set: {
+              weight_kg: 70,
+              reps: 4,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: 79.3,
+            workout_title: "Upper Body",
+          },
+        ],
+        recent_workouts: [
+          {
+            title: "Upper Body",
+            start_time: "2026-07-13T07:00:00Z",
+            end_time: "2026-07-13T08:00:00Z",
+            exercises: [
+              {
+                exercise_template_id: "79D0BB3A",
+                name: "Bench Press (Barbell)",
+                sets: [
+                  { weight_kg: 70, reps: 4, rpe: 8 },
+                  { weight_kg: 65, reps: 6 },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  });
+  await page.route("**/history/exercises/79D0BB3A.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([
+        {
+          date: "2026-07-13",
+          weight_kg: 70,
+          reps: 4,
+          estimated_one_rm_kg: 79.3,
+          workout_start_time: "2026-07-13T07:00:00Z",
+          workout_title: "Upper Body",
+        },
+      ]),
+    });
+  });
+
+  await page.goto("/strength.html");
+  await page.locator('button[data-tab="history"]').click();
+  await page.locator(".workout-exercise").click();
+
+  const modal = page.locator(".modal-overlay");
+  await expect(modal).toBeVisible();
+  await expect(modal).toContainText("Bench Press (Barbell)");
+  await expect(modal).toContainText("Upper Body");
+  await expect(modal).toContainText("Total reps");
+  await expect(modal).toContainText("Best volume set");
+  await expect(modal).toContainText("70 kg × 4");
+  await expect(modal).toContainText("280 kg total");
+});
+
+test("strength page renders live progression state and goal controls", async ({
+  page,
+}) => {
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Hevy exercise history",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Strength history ready",
+          detail: "Hevy data is available and current.",
+        },
+        entries: [
+          {
+            templateId: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            category: "Push",
+            best_set: {
+              weight_kg: 100,
+              reps: 5,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: 116.7,
+            workout_title: "Upper Body",
+          },
+        ],
+        recent_workouts: [],
+      }),
+    });
+  });
+  await page.route("**/history/exercises/_gains.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        "79D0BB3A": {
+          start: 95,
+          current: 100,
+          peak: 100,
+          gain_pct: 5.3,
+          stalled: false,
+        },
+      }),
+    });
+  });
+
+  await page.goto("/strength.html");
+  await expect(page.locator("#strength-controls")).toBeVisible();
+  await expect(page.locator('button[data-goal="strength"]')).toBeVisible();
+  await page.locator('button[data-tab="exercises"]').click();
+  await expect(page.locator("#strength-grid")).toContainText("Ready to progress");
+  await expect(page.locator("#strength-grid")).toContainText("Next 102.5 kg");
+
+  await page.locator('button[data-goal="hypertrophy"]').click();
+  await expect(page.locator('button[data-goal="hypertrophy"]')).toHaveClass(
+    /is-active/,
+  );
+  await expect(page.locator("#strength-grid")).toContainText("Hypertrophy");
+});
+
+test("bodyweight exercises render a clean history modal", async ({ page }) => {
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Hevy exercise history",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Strength history ready",
+          detail: "Hevy data is available and current.",
+        },
+        entries: [
+          {
+            templateId: "29083183",
+            name: "Chin Up",
+            category: "Pull",
+            best_set: {
+              weight_kg: null,
+              reps: 6,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: null,
+            workout_title: "Upper Body",
+          },
+        ],
+        recent_workouts: [
+          {
+            title: "Upper Body",
+            start_time: "2026-07-13T07:00:00Z",
+            end_time: "2026-07-13T08:00:00Z",
+            exercises: [
+              {
+                exercise_template_id: "29083183",
+                name: "Chin Up",
+                sets: [{ weight_kg: null, reps: 6 }],
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  });
+  await page.route("**/history/exercises/29083183.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([
+        {
+          date: "2026-07-13",
+          weight_kg: null,
+          reps: 6,
+          estimated_one_rm_kg: null,
+          workout_start_time: "2026-07-13T07:00:00Z",
+          workout_title: "Upper Body",
+        },
+        {
+          date: "2026-07-10",
+          weight_kg: null,
+          reps: 5,
+          estimated_one_rm_kg: null,
+          workout_start_time: "2026-07-10T07:00:00Z",
+          workout_title: "Upper Body",
+        },
+      ]),
+    });
+  });
+
+  await page.goto("/strength.html");
+  await page.locator('button[data-tab="exercises"]').click();
+  await page.locator(".exercise-card").click();
+
+  const modal = page.locator(".modal-overlay");
+  await expect(modal).toBeVisible();
+  await expect(modal).toContainText("Chin Up");
+  await expect(modal).toContainText("No estimated 1RM trend yet");
+  await expect(modal).toContainText("Best volume set");
+  await expect(modal).toContainText("Bodyweight · 6 reps");
+  await expect(modal).toContainText("6 reps total");
+  await expect(modal).not.toContainText("undefined");
+  await expect(modal).not.toContainText("Infinity");
+});
+
 test("favicon is served", async ({ request }) => {
   const response = await request.get("/favicon.png");
   expect(response.ok()).toBe(true);

@@ -10,6 +10,7 @@ import {
   saveStoredHevyApiKey,
   saveStoredHevyWorkoutWindow,
 } from "./hevy-live.js";
+import { buildProgressionState } from "./progression.js";
 
 const strengthUrl = new URL("./strength.json", import.meta.url);
 const grid = document.getElementById("strength-grid");
@@ -29,6 +30,7 @@ const hevyWindowInput = document.getElementById("hevy-workout-window");
 const hevyRefreshStatus = document.getElementById("hevy-refresh-status");
 const hevyWindowStatus = document.getElementById("hevy-window-status");
 const filterPills = document.getElementById("filter-pills");
+const progressionGoalPills = document.getElementById("progression-goals");
 const sortButtons = document.querySelectorAll(".sort-btn");
 const searchInput = document.getElementById("strength-search");
 const tabButtons = document.querySelectorAll(".strength-tab");
@@ -50,8 +52,9 @@ let gainsCache = null;
 let exerciseIdByName = new Map();
 let exerciseCatalogLoaded = false;
 let tabsBound = false;
+let activeProgressionGoal = readStoredProgressionGoal();
 
-await loadExerciseCatalog();
+loadExerciseCatalog();
 loadStrength();
 
 hevyRefreshButton?.addEventListener("click", handleHevyRefresh);
@@ -60,6 +63,17 @@ hevyWindowInput?.addEventListener("change", handleHevyWindowChange);
 historySearchInput?.addEventListener("input", () => {
   historyQuery = historySearchInput.value.toLowerCase().trim();
   renderHistory();
+});
+historyContent?.addEventListener("click", (event) => {
+  const button = event.target.closest(".workout-exercise");
+  if (!button) return;
+  const payload = button.dataset.workoutExercise;
+  if (!payload) return;
+  try {
+    renderWorkoutExerciseModal(JSON.parse(payload));
+  } catch {
+    // ignore malformed payloads
+  }
 });
 grid?.addEventListener("click", async (event) => {
   const card = event.target.closest(".exercise-card");
@@ -86,10 +100,7 @@ grid?.addEventListener("click", async (event) => {
 
 async function loadStrength() {
   try {
-    const [response] = await Promise.all([
-      fetch(`${strengthUrl.pathname}?v=${Date.now()}`),
-      loadExerciseCatalog(),
-    ]);
+    const response = await fetch(`${strengthUrl.pathname}?v=${Date.now()}`);
     const basePayload = await response.json();
     const payload = mergeHevyStrengthView(
       basePayload,
@@ -127,6 +138,12 @@ async function loadStrength() {
     renderTabs();
     renderCurrentTab();
     controls.removeAttribute("hidden");
+    loadExerciseCatalog().then(() => {
+      renderSummary();
+      renderHighlights();
+      renderCoachNote();
+      renderCurrentTab();
+    });
     loadGains().then(() => {
       renderSummary();
       renderHighlights();
@@ -212,6 +229,7 @@ async function loadExerciseCatalog() {
 }
 
 function renderControls() {
+  renderProgressionGoalControls();
   const counts = {};
   entries.forEach((entry) => {
     const category = normalizeCategory(entry.category);
@@ -262,11 +280,33 @@ function renderControls() {
     renderCurrentTab();
   });
 
+  progressionGoalPills?.addEventListener("click", (event) => {
+    const btn = event.target.closest(".progression-goal-btn");
+    if (!btn) return;
+    activeProgressionGoal = normalizeProgressionGoal(btn.dataset.goal);
+    saveStoredProgressionGoal(activeProgressionGoal);
+    renderProgressionGoalControls();
+    renderCurrentTab();
+    renderCoachNote();
+  });
+
   tabButtons.forEach((button) => {
     button.addEventListener("click", () => {
       setActiveTab(button.dataset.tab ?? "history");
     });
   });
+}
+
+function renderProgressionGoalControls() {
+  if (!progressionGoalPills) return;
+
+  const goals = ["strength", "hypertrophy", "endurance"];
+  progressionGoalPills.innerHTML = goals
+    .map((goal) => {
+      const isActive = goal === activeProgressionGoal;
+      return `<button class="pill progression-goal-btn${isActive ? " is-active" : ""}" data-goal="${escapeHtml(goal)}" type="button">${escapeHtml(progressionGoalLabel(goal))}</button>`;
+    })
+    .join("");
 }
 
 function renderSummary() {
@@ -424,10 +464,13 @@ function renderCoachNote() {
     );
   }
 
-  heroNote.textContent =
+  const goalLabel = progressionGoalLabel(activeProgressionGoal);
+  heroNote.textContent = [
+    `${goalLabel} goal active`,
     fragments.length > 0
       ? fragments.join(" · ")
-      : "Sync Hevy to turn this into a live coaching view.";
+      : "Sync Hevy to turn this into a live coaching view.",
+  ].join(" · ");
   heroNote.classList.remove("skeleton");
 }
 
@@ -548,21 +591,33 @@ function renderWorkoutCard(workout, index) {
         </div>
       </summary>
       <div class="workout-body">
-        ${exercises.map((exercise) => renderWorkoutExercise(exercise, date)).join("")}
+        ${exercises.map((exercise) => renderWorkoutExercise(exercise, date, title)).join("")}
       </div>
     </details>
   `;
 }
 
-function renderWorkoutExercise(exercise, workoutDate) {
+function renderWorkoutExercise(exercise, workoutDate, workoutTitle) {
   if (!exercise || typeof exercise !== "object") return "";
   const name = String(exercise.name ?? exercise.title ?? "Exercise");
   const templateId = normalizeTemplateId(exercise.exercise_template_id);
   const sets = Array.isArray(exercise.sets)
     ? exercise.sets.filter(isObject)
     : [];
+  const payload = {
+    name,
+    templateId,
+    workoutDate,
+    workoutTitle,
+    sets,
+  };
   return `
-    <div class="workout-exercise" data-template-id="${escapeHtml(templateId)}">
+    <button
+      class="workout-exercise"
+      type="button"
+      data-template-id="${escapeHtml(templateId)}"
+      data-workout-exercise="${escapeHtml(JSON.stringify(payload))}"
+    >
       <div class="workout-exercise-head">
         <span class="workout-exercise-name">${escapeHtml(name)}</span>
         <span class="workout-exercise-count">${sets.length ? `${sets.length} sets` : "No sets"}</span>
@@ -578,7 +633,7 @@ function renderWorkoutExercise(exercise, workoutDate) {
         <span>${escapeHtml(workoutDate)}</span>
         ${templateId ? `<span>${escapeHtml(templateId)}</span>` : ""}
       </div>
-    </div>
+    </button>
   `;
 }
 
@@ -738,8 +793,15 @@ function renderExerciseCard(entry, session) {
       ? `Est. 1RM ${fmtNum(entry.estimated_one_rm_kg)} kg`
       : "No 1RM estimate";
   const gain = gainsCache?.[templateId];
-  const recommendation = buildProgressionRecommendation(entry, session, gain);
-  const progressText = buildProgressionText(entry, gain);
+  const progression = buildProgressionState(
+    {
+      ...entry,
+      last_set: lastSet,
+    },
+    gain,
+    activeProgressionGoal,
+  );
+  const progressionStateClass = progressionStateClassName(progression.state);
 
   return `
     <article class="exercise-card card" data-template-id="${escapeHtml(templateId)}" data-exercise-name="${escapeHtml(entry.name)}">
@@ -760,47 +822,20 @@ function renderExerciseCard(entry, session) {
         </div>
       </div>
       <div class="exercise-footer">
-        <span class="exercise-recommendation">${escapeHtml(recommendation)}</span>
-        <span class="exercise-progress">${escapeHtml(progressText)}</span>
+        <div class="exercise-progression">
+          <span class="exercise-progression-goal">${escapeHtml(progression.goal_label)}</span>
+          <span class="exercise-progression-badge ${progressionStateClass}">${escapeHtml(progression.state_label)}</span>
+          <span class="exercise-recommendation">${escapeHtml(progression.summary)}</span>
+          <span class="exercise-progress">${escapeHtml(progression.detail)}</span>
+        </div>
+        ${
+          progression.next_weight_kg != null
+            ? `<span class="exercise-next-weight">Next ${escapeHtml(fmtNum(progression.next_weight_kg))} kg</span>`
+            : ""
+        }
       </div>
     </article>
   `;
-}
-
-function buildProgressionRecommendation(entry, session, gain) {
-  const lastSet = session?.sets?.length
-    ? session.sets[session.sets.length - 1]
-    : null;
-  const currentWeight =
-    parseFloatNumber(lastSet?.weight_kg) ??
-    parseFloatNumber(entry.best_set?.weight_kg) ??
-    parseFloatNumber(gain?.current) ??
-    null;
-  const reps =
-    parseInteger(lastSet?.reps) ?? parseInteger(entry.best_set?.reps);
-
-  if (currentWeight != null) {
-    const nextWeight = roundToIncrement(currentWeight + 2.5, 2.5);
-    return `Try ${fmtNum(nextWeight)} kg next`;
-  }
-  if (reps != null) {
-    return `Aim for ${reps + 1} reps next`;
-  }
-  return "Keep it moving forward";
-}
-
-function buildProgressionText(entry, gain) {
-  const parts = [];
-  if (gain?.gain_pct != null) {
-    parts.push(`+${fmtNum(gain.gain_pct)}% vs start`);
-  }
-  if (gain?.peak != null) {
-    parts.push(`Peak ${fmtNum(gain.peak)} kg`);
-  }
-  if (!parts.length && entry.estimated_one_rm_kg != null) {
-    parts.push(`Est. ${fmtNum(entry.estimated_one_rm_kg)} kg 1RM`);
-  }
-  return parts.length ? parts.join(" · ") : "No progression history yet";
 }
 
 function renderInsights() {
@@ -923,6 +958,50 @@ function renderInsights() {
 
   el.innerHTML = parts.join("");
   el.hidden = false;
+}
+
+function progressionGoalLabel(goal) {
+  return {
+    strength: "Strength",
+    hypertrophy: "Hypertrophy",
+    endurance: "Endurance",
+  }[normalizeProgressionGoal(goal)];
+}
+
+function normalizeProgressionGoal(goal) {
+  const normalized = String(goal ?? "strength").toLowerCase();
+  return ["strength", "hypertrophy", "endurance"].includes(normalized)
+    ? normalized
+    : "strength";
+}
+
+function readStoredProgressionGoal() {
+  try {
+    const raw = localStorage.getItem("personal-trainer:strength-goal");
+    return normalizeProgressionGoal(raw);
+  } catch {
+    return "strength";
+  }
+}
+
+function saveStoredProgressionGoal(goal) {
+  try {
+    localStorage.setItem(
+      "personal-trainer:strength-goal",
+      normalizeProgressionGoal(goal),
+    );
+  } catch {}
+}
+
+function progressionStateClassName(state) {
+  return {
+    baseline: "is-baseline",
+    accumulate: "is-accumulate",
+    ready_to_progress: "is-ready",
+    stalled: "is-stalled",
+    deload: "is-deload",
+    constrained: "is-constrained",
+  }[state] ?? "is-accumulate";
 }
 
 function buildLastSessionLookup() {
@@ -1164,23 +1243,61 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function renderTrendModal(name, history) {
-  const oneRms = history
-    .map((item) => item.estimated_one_rm_kg)
-    .filter((value) => value != null);
-  const weights = history
-    .map((item) => item.weight_kg)
-    .filter((value) => value != null);
-  const latest = history[history.length - 1];
-  const firstOneRm = oneRms[0];
-  const lastOneRm = oneRms[oneRms.length - 1];
-  const oneRmChange = lastOneRm - firstOneRm;
-  const oneRmPct = firstOneRm
-    ? Math.round((oneRmChange / firstOneRm) * 100)
-    : 0;
-  const peak = Math.max(...oneRms);
-  const trendUp = oneRmChange >= 0;
-  const recent = history.slice(-10).reverse();
+function formatHistorySetLabel(set) {
+  if (!set || typeof set !== "object") return "—";
+  const weight = parseFloatNumber(set.weight_kg);
+  const reps = parseInteger(set.reps);
+  if (weight == null && reps == null) return "—";
+  if (weight == null) {
+    return reps != null ? `Bodyweight · ${reps} reps` : "Bodyweight";
+  }
+  if (reps == null) return `${fmtNum(weight)} kg`;
+  return `${fmtNum(weight)} kg × ${reps}`;
+}
+
+function formatVolumeLabel(set) {
+  if (!set || typeof set !== "object") return "—";
+  const weight = parseFloatNumber(set.weight_kg);
+  const reps = parseInteger(set.reps);
+  if (reps == null) return "—";
+  const volume = weight != null ? weight * reps : reps;
+  return weight != null
+    ? `${fmtNum(volume)} kg total`
+    : `${fmtNum(volume)} reps total`;
+}
+
+function getBestVolumeSet(history) {
+  let best = null;
+  let bestScore = -Infinity;
+  for (const item of history) {
+    if (!item || typeof item !== "object") continue;
+    const weight = parseFloatNumber(item.weight_kg);
+    const reps = parseInteger(item.reps);
+    if (reps == null) continue;
+    const score = weight != null ? weight * reps : reps;
+    if (score > bestScore) {
+      bestScore = score;
+      best = item;
+    }
+  }
+  return best;
+}
+
+function fmtModalNumber(value) {
+  return Number.isInteger(value)
+    ? String(value)
+    : String(Math.round(value * 10) / 10);
+}
+
+function renderWorkoutExerciseModal(payload) {
+  if (!payload || typeof payload !== "object") return;
+  const name = String(payload.name ?? "Exercise");
+  const workoutTitle = String(payload.workoutTitle ?? "Workout");
+  const workoutDate = String(payload.workoutDate ?? "Unknown date");
+  const templateId = String(payload.templateId ?? "");
+  const sets = Array.isArray(payload.sets) ? payload.sets.filter(isObject) : [];
+  const stats = getWorkoutExerciseStats(sets);
+  const recentSets = sets.slice(-8).reverse();
 
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
@@ -1191,29 +1308,169 @@ function renderTrendModal(name, history) {
         <button class="modal-close" type="button">&times;</button>
       </div>
       <div class="modal-progression">
-        <span class="modal-progression-value ${trendUp ? "delta-up" : "delta-down"}">
-          ${firstOneRm} kg → ${lastOneRm} kg
-        </span>
-        <span class="modal-progression-pct ${trendUp ? "delta-up" : "delta-down"}">
-          ${trendUp ? "+" : ""}${oneRmPct}% over ${history.length} days
-        </span>
+        <span class="modal-progression-value">${escapeHtml(workoutTitle)}</span>
+        <span class="modal-progression-pct">${escapeHtml(workoutDate)}${templateId ? ` · ${escapeHtml(templateId)}` : ""}</span>
+      </div>
+      <div class="modal-stats">
+        <div class="stat-item">
+          <span class="stat-item-label">Sets</span>
+          <span class="stat-item-value">${stats.totalSets}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Total reps</span>
+          <span class="stat-item-value">${stats.totalReps}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Total volume</span>
+          <span class="stat-item-value">${escapeHtml(stats.totalVolumeLabel)}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Best volume set</span>
+          <span class="stat-item-value">${escapeHtml(stats.bestVolumeSetLabel)}</span>
+          <span class="stat-item-subvalue">${escapeHtml(stats.bestVolumeTotalLabel)}</span>
+        </div>
+      </div>
+      <details class="modal-history" open>
+        <summary><span class="label">Sets</span></summary>
+        <div class="modal-history-list">
+          ${recentSets
+            .map(
+              (set, index) => `
+            <div class="modal-history-row">
+              <span class="modal-history-date">#${recentSets.length - index}</span>
+              <span>${escapeHtml(formatHistorySetLabel(set))}</span>
+              <span class="modal-history-1rm">${escapeHtml(formatVolumeLabel(set))}</span>
+            </div>
+          `,
+            )
+            .join("")}
+        </div>
+      </details>
+    </div>
+  `;
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest(".modal-close")) {
+      modal.remove();
+      document.body.focus();
+    }
+  });
+
+  document.body.appendChild(modal);
+
+  const focusable = modal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  );
+  if (focusable.length) {
+    const first = focusable[0];
+    setTimeout(() => first.focus(), 50);
+  }
+
+  document.addEventListener("keydown", function trap(event) {
+    if (!document.querySelector(".modal-overlay")) {
+      document.removeEventListener("keydown", trap);
+      return;
+    }
+    if (event.key === "Escape") {
+      modal.remove();
+    }
+  });
+}
+
+function getWorkoutExerciseStats(sets) {
+  let totalSets = 0;
+  let totalReps = 0;
+  let totalVolume = 0;
+  let bestVolumeSet = null;
+  let bestVolume = -Infinity;
+
+  for (const set of sets) {
+    const reps = parseInteger(set.reps);
+    if (reps == null) continue;
+    totalSets += 1;
+    totalReps += reps;
+    const weight = parseFloatNumber(set.weight_kg);
+    const volume = weight != null ? weight * reps : reps;
+    totalVolume += volume;
+    if (volume > bestVolume) {
+      bestVolume = volume;
+      bestVolumeSet = set;
+    }
+  }
+
+  return {
+    totalSets,
+    totalReps,
+    totalVolumeLabel: totalSets
+      ? `${fmtNum(totalVolume)} ${bestVolumeSet?.weight_kg != null ? "kg total" : "reps total"}`
+      : "—",
+    bestVolumeSetLabel: bestVolumeSet ? formatHistorySetLabel(bestVolumeSet) : "—",
+    bestVolumeTotalLabel: bestVolumeSet ? formatVolumeLabel(bestVolumeSet) : "—",
+  };
+}
+
+function renderTrendModal(name, history) {
+  const oneRms = history
+    .map((item) => item.estimated_one_rm_kg)
+    .filter((value) => value != null);
+  const weights = history
+    .map((item) => item.weight_kg)
+    .filter((value) => value != null);
+  const reps = history
+    .map((item) => item.reps)
+    .filter((value) => value != null);
+  const latest = history[history.length - 1];
+  const bestVolumeSet = getBestVolumeSet(history);
+  const hasOneRmTrend = oneRms.length > 0;
+  const firstOneRm = hasOneRmTrend ? oneRms[0] : null;
+  const lastOneRm = hasOneRmTrend ? oneRms[oneRms.length - 1] : null;
+  const oneRmChange =
+    firstOneRm != null && lastOneRm != null ? lastOneRm - firstOneRm : null;
+  const oneRmPct =
+    firstOneRm != null && firstOneRm > 0 && oneRmChange != null
+      ? Math.round((oneRmChange / firstOneRm) * 100)
+      : null;
+  const peak = hasOneRmTrend ? Math.max(...oneRms) : null;
+  const trendUp = oneRmChange == null ? true : oneRmChange >= 0;
+  const trendSeries = weights.length > 1 ? weights : reps.length > 1 ? reps : [];
+  const trendLabel = weights.length > 1 ? "Working weight trend" : "Rep trend";
+  const recent = history.slice(-10).reverse();
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h2>${escapeHtml(name)}</h2>
+        <button class="modal-close" type="button">&times;</button>
       </div>
       ${
-        oneRms.length > 1
+        hasOneRmTrend && firstOneRm != null && lastOneRm != null
           ? `
-        <div class="modal-section">
-          <p class="label">Estimated 1RM trend</p>
-          ${renderSparkline(oneRms, 300, 72, { dots: true, labels: true, color: "var(--accent)" })}
+        <div class="modal-progression">
+          <span class="modal-progression-value ${trendUp ? "delta-up" : "delta-down"}">
+            ${fmtModalNumber(firstOneRm)} kg → ${fmtModalNumber(lastOneRm)} kg
+          </span>
+          ${
+            oneRmPct != null
+              ? `<span class="modal-progression-pct ${trendUp ? "delta-up" : "delta-down"}">${oneRmPct >= 0 ? "+" : ""}${oneRmPct}% over ${history.length} days</span>`
+              : `<span class="modal-progression-pct">No comparable 1RM trend yet</span>`
+          }
         </div>
       `
-          : ""
+          : `
+        <div class="modal-progression">
+          <span class="modal-progression-value">No estimated 1RM trend yet</span>
+          <span class="modal-progression-pct">This exercise is tracked as a rep-based movement.</span>
+        </div>
+      `
       }
       ${
-        weights.length > 1
+        trendSeries.length > 1
           ? `
         <div class="modal-section">
-          <p class="label">Working weight trend</p>
-          ${renderSparkline(weights, 300, 56, { dots: true, color: "var(--accent-2)" })}
+          <p class="label">${trendLabel}</p>
+          ${renderSparkline(trendSeries, 300, 72, { dots: true, labels: true, color: weights.length > 1 ? "var(--accent)" : "var(--accent-2)" })}
         </div>
       `
           : ""
@@ -1221,19 +1478,24 @@ function renderTrendModal(name, history) {
       <div class="modal-stats">
         <div class="stat-item">
           <span class="stat-item-label">Current 1RM</span>
-          <span class="stat-item-value">${lastOneRm} kg</span>
+          <span class="stat-item-value">${lastOneRm != null ? `${fmtModalNumber(lastOneRm)} kg` : "—"}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label" title="Highest estimated 1RM ever recorded for this exercise">Peak 1RM</span>
-          <span class="stat-item-value">${peak} kg</span>
+          <span class="stat-item-value">${peak != null ? `${fmtModalNumber(peak)} kg` : "—"}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Start 1RM</span>
-          <span class="stat-item-value">${firstOneRm} kg</span>
+          <span class="stat-item-value">${firstOneRm != null ? `${fmtModalNumber(firstOneRm)} kg` : "—"}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Latest set</span>
-          <span class="stat-item-value">${latest?.weight_kg ?? "—"} kg × ${latest?.reps ?? "—"}</span>
+          <span class="stat-item-value">${escapeHtml(formatHistorySetLabel(latest))}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Best volume set</span>
+          <span class="stat-item-value">${escapeHtml(bestVolumeSet ? formatHistorySetLabel(bestVolumeSet) : "—")}</span>
+          <span class="stat-item-subvalue">${escapeHtml(bestVolumeSet ? formatVolumeLabel(bestVolumeSet) : "—")}</span>
         </div>
       </div>
       <details class="modal-history">
@@ -1244,7 +1506,7 @@ function renderTrendModal(name, history) {
               (item) => `
             <div class="modal-history-row">
               <span class="modal-history-date">${escapeHtml(String(item.date).slice(5))}</span>
-              <span>${item.weight_kg != null ? `${item.weight_kg} kg × ${item.reps}` : `${item.reps} reps`}</span>
+              <span>${escapeHtml(formatHistorySetLabel(item))}</span>
               <span class="modal-history-1rm">${item.estimated_one_rm_kg != null ? `${item.estimated_one_rm_kg} kg` : "—"}</span>
             </div>
           `,

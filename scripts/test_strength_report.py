@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from strength_report import build_catalog, build_report
+from strength_report import build_catalog, build_gains, build_histories, build_report
 
 
 class StrengthReportTests(unittest.TestCase):
@@ -75,6 +75,33 @@ class StrengthReportTests(unittest.TestCase):
         entry = next(item for item in catalog["exercises"] if item["exercise_template_id"] == "ABCD1234")
         self.assertEqual(entry["name"], "Incline Dumbbell Curl")
         self.assertEqual(entry["category"], "Accessory")
+
+    def test_build_histories_and_gains_capture_trend_files(self) -> None:
+        raw = [
+            {
+                "exerciseTemplateId": "79D0BB3A",
+                "exerciseName": "Bench Press (Barbell)",
+                "workoutTitle": "A",
+                "weight": 60,
+                "reps": 8,
+                "workoutStartTime": "2026-01-01T00:00:00Z",
+            },
+            {
+                "exerciseTemplateId": "79D0BB3A",
+                "exerciseName": "Bench Press (Barbell)",
+                "workoutTitle": "B",
+                "weight": 70,
+                "reps": 4,
+                "workoutStartTime": "2026-01-02T00:00:00Z",
+            },
+        ]
+
+        histories = build_histories(raw)
+        gains = build_gains(raw)
+
+        self.assertEqual([row["weight_kg"] for row in histories["79D0BB3A"]], [60.0, 70.0])
+        self.assertEqual(gains["79D0BB3A"]["current"], 79.3)
+        self.assertEqual(gains["79D0BB3A"]["stalled"], False)
 
 
 if __name__ == "__main__":

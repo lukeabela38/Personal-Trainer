@@ -28,6 +28,7 @@ class BuildSiteArtifactsTest(TestCase):
             "strength.html",
             "strength.css",
             "strength.js",
+            "progression.js",
             "hevy-live.js",
             "strength/index.html",
             "speed.html",
