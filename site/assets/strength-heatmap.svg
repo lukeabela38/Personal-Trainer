@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Front and back body strength heatmap">
+  <style>
+    .muscle {
+      fill: #d8d8d8;
+      stroke: #777;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      transition: fill 160ms ease, opacity 160ms ease;
+      cursor: pointer;
+    }
+
+    .body-neutral {
+      fill: #eeeeee;
+      stroke: #777;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+  </style>
+
+  <g id="front-figure" transform="translate(90 20)">
+    <g id="front-head">
+      <ellipse class="body-neutral" cx="140" cy="60" rx="35" ry="44"/>
+    </g>
+
+    <g id="front-neck">
+      <path class="body-neutral" d="M119 98 C123 112 122 125 114 140 L166 140 C158 125 157 112 161 98 Z"/>
+    </g>
+
+    <g id="front-delts">
+      <path id="front-delt-left" class="muscle" d="M114 137 C92 136 73 145 62 165 C56 177 57 194 66 205 C76 191 91 184 107 185 C109 168 111 151 114 137 Z"/>
+      <path id="front-delt-right" class="muscle" d="M166 137 C188 136 207 145 218 165 C224 177 223 194 214 205 C204 191 189 184 173 185 C171 168 169 151 166 137 Z"/>
+    </g>
+
+    <g id="front-chest">
+      <path id="front-chest-left" class="muscle" d="M115 144 C121 139 130 137 139 138 L139 247 C125 244 111 237 101 226 C96 207 98 184 105 162 Z"/>
+      <path id="front-chest-right" class="muscle" d="M165 144 C159 139 150 137 141 138 L141 247 C155 244 169 237 179 226 C184 207 182 184 175 162 Z"/>
+    </g>
+
+    <g id="front-biceps">
+      <path id="front-biceps-left" class="muscle" d="M64 202 C74 191 88 186 103 188 C101 224 95 264 86 303 C80 319 67 319 59 305 C55 273 57 234 64 202 Z"/>
+      <path id="front-biceps-right" class="muscle" d="M216 202 C206 191 192 186 177 188 C179 224 185 264 194 303 C200 319 213 319 221 305 C225 273 223 234 216 202 Z"/>
+    </g>
+
+    <g id="front-forearms">
+      <path id="front-forearm-left" class="body-neutral" d="M58 309 C66 319 76 322 85 308 C82 345 76 390 67 442 C64 459 54 466 46 456 C43 420 47 357 58 309 Z"/>
+      <path id="front-forearm-right" class="body-neutral" d="M222 309 C214 319 204 322 195 308 C198 345 204 390 213 442 C216 459 226 466 234 456 C237 420 233 357 222 309 Z"/>
+    </g>
+
+    <g id="front-hands">
+      <path id="front-hand-left" class="body-neutral" d="M46 454 C53 462 61 461 67 447 L65 493 C62 515 52 529 43 517 C37 497 39 474 46 454 Z"/>
+      <path id="front-hand-right" class="body-neutral" d="M234 454 C227 462 219 461 213 447 L215 493 C218 515 228 529 237 517 C243 497 241 474 234 454 Z"/>
+    </g>
+
+    <g id="front-core">
+      <path id="front-core-center" class="muscle" d="M107 233 C117 243 128 248 139 250 L139 459 C127 458 116 455 106 449 C100 402 99 348 102 294 Z"/>
+      <path id="front-core-center-right" class="muscle" d="M173 233 C163 243 152 248 141 250 L141 459 C153 458 164 455 174 449 C180 402 181 348 178 294 Z"/>
+      <path id="front-core-left" class="muscle" d="M101 231 C109 243 112 260 107 285 C101 333 101 395 106 449 L91 468 C83 423 84 353 89 286 C91 262 95 243 101 231 Z"/>
+      <path id="front-core-right" class="muscle" d="M179 231 C171 243 168 260 173 285 C179 333 179 395 174 449 L189 468 C197 423 196 353 191 286 C189 262 185 243 179 231 Z"/>
+    </g>
+
+    <g id="front-pelvis">
+      <path class="body-neutral" d="M91 455 C108 463 123 466 140 466 C157 466 172 463 189 455 L195 499 C178 516 160 524 140 524 C120 524 102 516 85 499 Z"/>
+    </g>
+
+    <g id="front-quads">
+      <path id="front-quad-left" class="muscle" d="M86 494 C101 512 119 521 137 524 L131 687 C128 714 110 722 96 704 C86 654 80 590 79 527 Z"/>
+      <path id="front-quad-right" class="muscle" d="M194 494 C179 512 161 521 143 524 L149 687 C152 714 170 722 184 704 C194 654 200 590 201 527 Z"/>
+    </g>
+
+    <g id="front-knees">
+      <path id="front-knee-left" class="body-neutral" d="M96 704 C107 714 120 716 131 687 L130 730 C123 749 106 751 98 735 Z"/>
+      <path id="front-knee-right" class="body-neutral" d="M184 704 C173 714 160 716 149 687 L150 730 C157 749 174 751 182 735 Z"/>
+    </g>
+
+    <g id="front-calves">
+      <path id="front-calf-left" class="muscle" d="M98 735 C107 748 120 748 130 730 C132 776 128 827 121 874 C117 894 103 896 96 878 C90 829 91 778 98 735 Z"/>
+      <path id="front-calf-right" class="muscle" d="M182 735 C173 748 160 748 150 730 C148 776 152 827 159 874 C163 894 177 896 184 878 C190 829 189 778 182 735 Z"/>
+    </g>
+
+    <g id="front-feet">
+      <path id="front-foot-left" class="body-neutral" d="M96 878 C102 895 115 897 121 874 L122 907 C113 920 94 921 81 914 C80 902 86 889 96 878 Z"/>
+      <path id="front-foot-right" class="body-neutral" d="M184 878 C178 895 165 897 159 874 L158 907 C167 920 186 921 199 914 C200 902 194 889 184 878 Z"/>
+    </g>
+  </g>
+
+  <g id="back-figure" transform="translate(430 20)">
+    <g id="back-head">
+      <ellipse class="body-neutral" cx="140" cy="60" rx="35" ry="44"/>
+    </g>
+
+    <g id="back-neck">
+      <path class="body-neutral" d="M119 98 C123 112 122 125 114 140 L166 140 C158 125 157 112 161 98 Z"/>
+    </g>
+
+    <g id="back-rear-delts">
+      <path id="back-rear-delt-left" class="muscle" d="M114 137 C92 136 73 145 62 165 C56 177 57 194 66 205 C77 191 91 184 107 185 C109 168 111 151 114 137 Z"/>
+      <path id="back-rear-delt-right" class="muscle" d="M166 137 C188 136 207 145 218 165 C224 177 223 194 214 205 C203 191 189 184 173 185 C171 168 169 151 166 137 Z"/>
+    </g>
+
+    <g id="back-traps">
+      <path id="back-traps-upper" class="muscle" d="M116 137 C127 129 132 117 140 106 C148 117 153 129 164 137 L179 210 C164 227 153 235 140 239 C127 235 116 227 101 210 Z"/>
+      <path id="back-traps-lower" class="muscle" d="M105 207 C117 221 128 231 140 238 C152 231 163 221 175 207 L168 320 C158 335 149 346 140 354 C131 346 122 335 112 320 Z"/>
+    </g>
+
+    <g id="back-lats">
+      <path id="back-lat-left" class="muscle" d="M101 201 C112 224 114 264 112 319 C107 366 101 411 92 458 L78 441 C81 388 84 329 85 272 C84 242 90 217 101 201 Z"/>
+      <path id="back-lat-right" class="muscle" d="M179 201 C168 224 166 264 168 319 C173 366 179 411 188 458 L202 441 C199 388 196 329 195 272 C196 242 190 217 179 201 Z"/>
+    </g>
+
+    <g id="back-triceps">
+      <path id="back-triceps-left" class="muscle" d="M64 202 C74 191 88 186 103 188 C101 224 95 264 86 303 C80 319 67 319 59 305 C55 273 57 234 64 202 Z"/>
+      <path id="back-triceps-right" class="muscle" d="M216 202 C206 191 192 186 177 188 C179 224 185 264 194 303 C200 319 213 319 221 305 C225 273 223 234 216 202 Z"/>
+    </g>
+
+    <g id="back-forearms">
+      <path id="back-forearm-left" class="body-neutral" d="M58 309 C66 319 76 322 85 308 C82 345 76 390 67 442 C64 459 54 466 46 456 C43 420 47 357 58 309 Z"/>
+      <path id="back-forearm-right" class="body-neutral" d="M222 309 C214 319 204 322 195 308 C198 345 204 390 213 442 C216 459 226 466 234 456 C237 420 233 357 222 309 Z"/>
+    </g>
+
+    <g id="back-hands">
+      <path id="back-hand-left" class="body-neutral" d="M46 454 C53 462 61 461 67 447 L65 493 C62 515 52 529 43 517 C37 497 39 474 46 454 Z"/>
+      <path id="back-hand-right" class="body-neutral" d="M234 454 C227 462 219 461 213 447 L215 493 C218 515 228 529 237 517 C243 497 241 474 234 454 Z"/>
+    </g>
+
+    <g id="back-lower-torso">
+      <path class="body-neutral" d="M112 316 C121 335 130 347 140 355 C150 347 159 335 168 316 L188 457 C174 469 158 475 140 475 C122 475 106 469 92 457 Z"/>
+    </g>
+
+    <g id="back-glutes">
+      <path id="back-glute-left" class="muscle" d="M92 449 C107 462 123 469 139 472 L139 540 C124 551 103 547 85 526 C82 499 84 473 92 449 Z"/>
+      <path id="back-glute-right" class="muscle" d="M188 449 C173 462 157 469 141 472 L141 540 C156 551 177 547 195 526 C198 499 196 473 188 449 Z"/>
+    </g>
+
+    <g id="back-hamstrings">
+      <path id="back-hamstring-left" class="muscle" d="M85 526 C103 547 123 551 139 540 L131 687 C128 714 110 722 96 704 C86 654 80 590 79 527 Z"/>
+      <path id="back-hamstring-right" class="muscle" d="M195 526 C177 547 157 551 141 540 L149 687 C152 714 170 722 184 704 C194 654 200 590 201 527 Z"/>
+    </g>
+
+    <g id="back-knees">
+      <path id="back-knee-left" class="body-neutral" d="M96 704 C107 714 120 716 131 687 L130 730 C123 749 106 751 98 735 Z"/>
+      <path id="back-knee-right" class="body-neutral" d="M184 704 C173 714 160 716 149 687 L150 730 C157 749 174 751 182 735 Z"/>
+    </g>
+
+    <g id="back-calves">
+      <path id="back-calf-left" class="muscle" d="M98 735 C107 748 120 748 130 730 C132 776 128 827 121 874 C117 894 103 896 96 878 C90 829 91 778 98 735 Z"/>
+      <path id="back-calf-right" class="muscle" d="M182 735 C173 748 160 748 150 730 C148 776 152 827 159 874 C163 894 177 896 184 878 C190 829 189 778 182 735 Z"/>
+    </g>
+
+    <g id="back-feet">
+      <path id="back-foot-left" class="body-neutral" d="M96 878 C102 895 115 897 121 874 L122 907 C113 920 94 921 81 914 C80 902 86 889 96 878 Z"/>
+      <path id="back-foot-right" class="body-neutral" d="M184 878 C178 895 165 897 159 874 L158 907 C167 920 186 921 199 914 C200 902 194 889 184 878 Z"/>
+    </g>
+  </g>
+</svg>
