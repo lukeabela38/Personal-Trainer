@@ -48,7 +48,11 @@
   border-radius: 24px;
   border: 1px solid rgba(127, 209, 185, 0.14);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.018)
+    ),
     rgba(255, 255, 255, 0.012);
   box-shadow:
     0 12px 28px rgba(4, 10, 20, 0.16),
@@ -218,7 +222,11 @@
   border-radius: 18px;
   border: 1px solid rgba(127, 209, 185, 0.12);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.02)
+    ),
     rgba(255, 255, 255, 0.015);
   box-shadow:
     0 10px 22px rgba(4, 10, 20, 0.12),
@@ -274,7 +282,11 @@
   border: 1px solid rgba(127, 209, 185, 0.1);
   border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.018)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(255, 255, 255, 0.018)
+    ),
     rgba(255, 255, 255, 0.014);
   box-shadow:
     0 10px 18px rgba(4, 10, 20, 0.08),
@@ -406,7 +418,11 @@
   border-radius: 24px;
   border: 1px solid rgba(127, 209, 185, 0.12);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.018)
+    ),
     rgba(255, 255, 255, 0.015);
   box-shadow:
     0 12px 28px rgba(4, 10, 20, 0.16),
@@ -473,7 +489,11 @@
   padding: 12px 14px;
   border-radius: 16px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.02)
+    ),
     rgba(255, 255, 255, 0.015);
   color: inherit;
   cursor: pointer;
@@ -499,7 +519,11 @@
 
 .heatmap-activity-toggle[aria-expanded="true"] {
   background:
-    linear-gradient(135deg, rgba(127, 209, 185, 0.1), rgba(255, 255, 255, 0.02)),
+    linear-gradient(
+      135deg,
+      rgba(127, 209, 185, 0.1),
+      rgba(255, 255, 255, 0.02)
+    ),
     rgba(255, 255, 255, 0.018);
 }
 

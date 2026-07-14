@@ -31,7 +31,9 @@ const heatmapPanel = document.getElementById("heatmap-panel");
 const heatmapSummary = document.getElementById("heatmap-summary");
 const heatmapFigure = document.getElementById("heatmap-figure");
 const heatmapDetail = document.getElementById("heatmap-detail");
-const heatmapWindowControls = document.getElementById("heatmap-window-controls");
+const heatmapWindowControls = document.getElementById(
+  "heatmap-window-controls",
+);
 const hevyRefreshButton = document.getElementById("refresh-hevy");
 const hevySetKeyButton = document.getElementById("set-hevy-key");
 const hevyWindowInput = document.getElementById("hevy-workout-window");
@@ -50,7 +52,8 @@ const exerciseCatalogUrl = new URL(
 const heatmapSvgUrl = new URL("./assets/strength-heatmap.svg", import.meta.url);
 const activeTabStorageKey = "personal-trainer:strength-active-tab";
 const activeHeatmapZoneStorageKey = "personal-trainer:strength-heatmap-zone";
-const analyticsVisibilityStorageKey = "personal-trainer:strength-show-analytics";
+const analyticsVisibilityStorageKey =
+  "personal-trainer:strength-show-analytics";
 
 let entries = [];
 let recentWorkouts = [];
@@ -835,7 +838,10 @@ function renderHeatmap() {
     return;
   }
 
-  if (!activeHeatmapZone || !data.zones.some((zone) => zone.id === activeHeatmapZone)) {
+  if (
+    !activeHeatmapZone ||
+    !data.zones.some((zone) => zone.id === activeHeatmapZone)
+  ) {
     activeHeatmapZone = data.topZone?.id ?? data.zones[0]?.id ?? null;
     if (activeHeatmapZone) {
       saveStoredHeatmapZone(activeHeatmapZone);
@@ -917,8 +923,13 @@ function renderHeatmapContent(data) {
       data.zones[0] ??
       null;
     if (selected) {
-      const sessionKeys = new Set((selected.sessions ?? []).map((session) => session.key));
-      if (!activeHeatmapSessionKey || !sessionKeys.has(activeHeatmapSessionKey)) {
+      const sessionKeys = new Set(
+        (selected.sessions ?? []).map((session) => session.key),
+      );
+      if (
+        !activeHeatmapSessionKey ||
+        !sessionKeys.has(activeHeatmapSessionKey)
+      ) {
         activeHeatmapSessionKey = selected.sessions?.[0]?.key ?? null;
       }
     } else {
@@ -1118,7 +1129,13 @@ function renderHeatmapSessionDetail(session, zone) {
       ${
         exercises.length
           ? exercises
-              .map((exercise) => renderWorkoutExercise(exercise, session.date || "Unknown date", session.title || "Workout"))
+              .map((exercise) =>
+                renderWorkoutExercise(
+                  exercise,
+                  session.date || "Unknown date",
+                  session.title || "Workout",
+                ),
+              )
               .join("")
           : `
             <div class="heatmap-session-empty">
@@ -1131,7 +1148,9 @@ function renderHeatmapSessionDetail(session, zone) {
 }
 
 function filterHeatmapSessionExercises(session, zone) {
-  const exercises = Array.isArray(session?.exercises) ? session.exercises.filter(isObject) : [];
+  const exercises = Array.isArray(session?.exercises)
+    ? session.exercises.filter(isObject)
+    : [];
   if (!zone) return exercises;
   return exercises.filter((exercise) => {
     const targets = resolveHeatmapTargets(exercise);
@@ -1141,12 +1160,14 @@ function filterHeatmapSessionExercises(session, zone) {
 
 function renderHeatmapWindowControls() {
   if (!heatmapWindowControls) return;
-  heatmapWindowControls.querySelectorAll("[data-heatmap-window]").forEach((button) => {
-    const isActive = button.dataset.heatmapWindow === activeHeatmapWindow;
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-selected", isActive ? "true" : "false");
-    button.setAttribute("tabindex", isActive ? "0" : "-1");
-  });
+  heatmapWindowControls
+    .querySelectorAll("[data-heatmap-window]")
+    .forEach((button) => {
+      const isActive = button.dataset.heatmapWindow === activeHeatmapWindow;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", isActive ? "true" : "false");
+      button.setAttribute("tabindex", isActive ? "0" : "-1");
+    });
 }
 
 async function ensureHeatmapSvg() {
@@ -1180,7 +1201,8 @@ async function ensureHeatmapSvg() {
 }
 
 function decorateHeatmapSvg(svg, data) {
-  const selectedZone = data.zones.find((zone) => zone.id === activeHeatmapZone) ?? null;
+  const selectedZone =
+    data.zones.find((zone) => zone.id === activeHeatmapZone) ?? null;
   const selectedZoneId = selectedZone?.id ?? null;
 
   for (const zone of data.zones) {
@@ -1198,10 +1220,7 @@ function decorateHeatmapSvg(svg, data) {
       region.classList.toggle("is-empty", zone.volume <= 0);
       region.setAttribute("role", "button");
       region.setAttribute("tabindex", "0");
-      region.setAttribute(
-        "aria-pressed",
-        isSelected ? "true" : "false",
-      );
+      region.setAttribute("aria-pressed", isSelected ? "true" : "false");
       region.setAttribute(
         "aria-label",
         `${zone.label}, ${formatVolume(zone.volume)}, ${pluralize(zone.workoutCount, "session")}`,
@@ -1339,7 +1358,9 @@ async function loadHeatmapSnapshots(windowKey) {
 function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
   const normalized = normalizeHeatmapWindow(windowKey);
   const orderedSnapshots = [...snapshots].sort((a, b) =>
-    String(a?.snapshot_date ?? "").localeCompare(String(b?.snapshot_date ?? "")),
+    String(a?.snapshot_date ?? "").localeCompare(
+      String(b?.snapshot_date ?? ""),
+    ),
   );
   const liveFallbackWeight = orderedSnapshots
     .map((snapshot) => parseFloatNumber(snapshot?.athlete?.body_weight_kg))
@@ -1348,7 +1369,8 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
   const workouts = new Map();
 
   for (const snapshot of orderedSnapshots) {
-    const snapshotWeight = parseFloatNumber(snapshot?.athlete?.body_weight_kg) ?? liveFallbackWeight;
+    const snapshotWeight =
+      parseFloatNumber(snapshot?.athlete?.body_weight_kg) ?? liveFallbackWeight;
     const sourceWorkouts = Array.isArray(snapshot?.hevy?.recent_workouts)
       ? snapshot.hevy.recent_workouts
       : [];
@@ -1357,7 +1379,8 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
       if (!key) continue;
       workouts.set(key, {
         workout,
-        workoutDate: workoutDateFromWorkout(workout) ?? snapshot?.snapshot_date ?? "",
+        workoutDate:
+          workoutDateFromWorkout(workout) ?? snapshot?.snapshot_date ?? "",
         bodyWeightKg: snapshotWeight,
       });
     }
@@ -1376,14 +1399,16 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
     });
   }
 
-  const windowEnd = [...orderedSnapshots, ...liveWorkouts]
-    .map((item) =>
-      workoutDateFromWorkout(item) || String(item?.snapshot_date ?? "").trim(),
-    )
-    .filter(Boolean)
-    .sort()
-    .at(-1)
-    ?? null;
+  const windowEnd =
+    [...orderedSnapshots, ...liveWorkouts]
+      .map(
+        (item) =>
+          workoutDateFromWorkout(item) ||
+          String(item?.snapshot_date ?? "").trim(),
+      )
+      .filter(Boolean)
+      .sort()
+      .at(-1) ?? null;
   const windowStart = windowStartDate(normalized, windowEnd);
   const zoneStats = new Map(
     HEATMAP_ZONES.map((zone) => [
@@ -1420,7 +1445,9 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
     for (const exercise of workoutExercises) {
       const targets = resolveHeatmapTargets(exercise);
       if (!targets.length) continue;
-      const sets = Array.isArray(exercise.sets) ? exercise.sets.filter(isObject) : [];
+      const sets = Array.isArray(exercise.sets)
+        ? exercise.sets.filter(isObject)
+        : [];
       if (!sets.length) continue;
 
       exerciseCount += 1;
@@ -1430,7 +1457,8 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
       const exerciseKey = normalizeNameKey(
         `${exercise.exercise_template_id ?? ""}:${exercise.name ?? exercise.title ?? ""}`,
       );
-      const targetTotal = targets.reduce((sum, target) => sum + target.share, 0) || 1;
+      const targetTotal =
+        targets.reduce((sum, target) => sum + target.share, 0) || 1;
 
       for (const target of targets) {
         const zone = zoneStats.get(target.id);
@@ -1452,10 +1480,15 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
           session.volume += zoneVolume;
           zone.sessions.set(workoutId, session);
         }
-        if (workoutDate && (!zone.lastTrained || workoutDate > zone.lastTrained)) {
+        if (
+          workoutDate &&
+          (!zone.lastTrained || workoutDate > zone.lastTrained)
+        ) {
           zone.lastTrained = workoutDate;
         }
-        const exerciseName = String(exercise.name ?? exercise.title ?? "Exercise");
+        const exerciseName = String(
+          exercise.name ?? exercise.title ?? "Exercise",
+        );
         zone.exerciseTotals.set(
           exerciseName,
           (zone.exerciseTotals.get(exerciseName) ?? 0) + zoneVolume,
@@ -1479,9 +1512,10 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
       share,
       workoutCount: zone.workoutKeys.size,
       exerciseCount: zone.exerciseKeys.size,
-      sessions: [...zone.sessions.values()].sort((a, b) =>
-        String(b.date ?? "").localeCompare(String(a.date ?? "")) ||
-        String(b.key ?? "").localeCompare(String(a.key ?? "")),
+      sessions: [...zone.sessions.values()].sort(
+        (a, b) =>
+          String(b.date ?? "").localeCompare(String(a.date ?? "")) ||
+          String(b.key ?? "").localeCompare(String(a.key ?? "")),
       ),
       topExercises: [...zone.exerciseTotals.entries()]
         .map(([name, volume]) => ({ name, volume }))
@@ -1564,7 +1598,9 @@ function windowStartDate(windowKey, endDate) {
 
 function workoutKey(workout) {
   if (!isObject(workout)) return "";
-  const startTime = String(workout.start_time ?? workout.startTime ?? "").trim();
+  const startTime = String(
+    workout.start_time ?? workout.startTime ?? "",
+  ).trim();
   const title = String(workout.title ?? workout.name ?? "").trim();
   return `${startTime}|${title}`.trim();
 }
@@ -1579,7 +1615,9 @@ function workoutDateFromWorkout(workout) {
 }
 
 function computeExerciseVolume(exercise, bodyWeightKg) {
-  const sets = Array.isArray(exercise?.sets) ? exercise.sets.filter(isObject) : [];
+  const sets = Array.isArray(exercise?.sets)
+    ? exercise.sets.filter(isObject)
+    : [];
   const bodyweightExercise = isBodyweightExercise(exercise);
   let volume = 0;
   let repsOnly = 0;
@@ -1626,9 +1664,12 @@ function resolveHeatmapTargets(exercise) {
   const templateId = normalizeTemplateId(exercise?.exercise_template_id);
   const name = normalizeNameKey(exercise?.name ?? exercise?.title ?? "");
   const catalogCategory =
-    exerciseCategoryByName.get(String(exercise?.name ?? exercise?.title ?? "")) ??
-    "";
-  const category = normalizeCategory(exercise?.category ?? catalogCategory ?? "");
+    exerciseCategoryByName.get(
+      String(exercise?.name ?? exercise?.title ?? ""),
+    ) ?? "";
+  const category = normalizeCategory(
+    exercise?.category ?? catalogCategory ?? "",
+  );
 
   if (
     templateId === "D04AC939" ||
@@ -1642,7 +1683,10 @@ function resolveHeatmapTargets(exercise) {
     ];
   }
 
-  if (templateId === "79D0BB3A" || /bench press|chest press|push up/.test(name)) {
+  if (
+    templateId === "79D0BB3A" ||
+    /bench press|chest press|push up/.test(name)
+  ) {
     return [
       { id: "front-chest", share: 0.54 },
       { id: "front-shoulders", share: 0.24 },

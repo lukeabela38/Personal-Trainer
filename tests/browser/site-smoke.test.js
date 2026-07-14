@@ -680,7 +680,7 @@ test("strength heatmap aggregates volume across windows", async ({ page }) => {
           gain_pct: 5.3,
           stalled: false,
         },
-        "29083183": {
+        29083183: {
           start: null,
           current: null,
           peak: null,
@@ -719,17 +719,28 @@ test("strength heatmap aggregates volume across windows", async ({ page }) => {
   await page.locator('[data-heatmap-activity-toggle="true"]').click();
   await expect(page.locator("#heatmap-detail")).toContainText("2026-07-13");
   await expect(page.locator("#heatmap-detail")).toContainText("2026-07-05");
-  await page.locator('[data-heatmap-session]').filter({ hasText: "2026-07-05" }).click();
-  await expect(page.locator("#heatmap-detail")).toContainText("Bench Press (Barbell)");
+  await page
+    .locator("[data-heatmap-session]")
+    .filter({ hasText: "2026-07-05" })
+    .click();
+  await expect(page.locator("#heatmap-detail")).not.toContainText(
+    "Bench Press (Barbell)",
+  );
   await expect(page.locator("#heatmap-detail")).toContainText("Chin Up");
-  await expect(page.locator("#heatmap-detail")).not.toContainText("Triceps Dip");
+  await expect(page.locator("#heatmap-detail")).not.toContainText(
+    "Triceps Dip",
+  );
   await expect(page.locator("#heatmap-detail")).not.toContainText("undefined");
-  await page.locator('#heatmap-detail .workout-exercise', { hasText: 'Chin Up' }).click();
+  await page
+    .locator("#heatmap-detail .workout-exercise", { hasText: "Chin Up" })
+    .click();
   await expect(page.locator(".modal-content")).toContainText("Chin Up");
   await expect(page.locator(".modal-content")).toContainText("Best volume set");
 
   await page.reload();
-  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(/is-active/);
+  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(
+    /is-active/,
+  );
   await expect(page.locator("#heatmap-detail")).toContainText("Lats");
   await expect(page.locator("#heatmap-detail")).toContainText("Activity");
 });
@@ -798,12 +809,16 @@ test("strength heatmap shows a helpful hint when no load exists", async ({
 test("strength heatmap tab survives a refresh", async ({ page }) => {
   await page.goto("/strength.html");
   await page.locator('button[data-tab="heatmap"]').click();
-  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(/is-active/);
+  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(
+    /is-active/,
+  );
   await expect(page.locator("#heatmap-panel")).toBeVisible();
 
   await page.reload();
 
-  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(/is-active/);
+  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(
+    /is-active/,
+  );
   await expect(page.locator("#heatmap-panel")).toBeVisible();
 });
 

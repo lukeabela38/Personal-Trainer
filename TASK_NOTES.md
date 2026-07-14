@@ -38,6 +38,11 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The live panel now leads with today's consumed macros, with targets shown underneath for context.
 - `food.js` cache-bust version was bumped so the browser doesn’t reuse the previous module after the panel change.
 
+Follow-up for the strength UI polish branch:
+
+- The CI `browser-smoke` failure was a stale expectation in `tests/browser/site-smoke.test.js`; the heatmap drill-down now correctly asserts that filtered session details exclude unrelated exercises like Bench Press (Barbell).
+- `npm run format:js:check` and `npx playwright test tests/browser/site-smoke.test.js` both pass after the fix.
+
 ## 2026-07-13 Hevy Browser Window
 
 - `site/hevy-live.js` now persists a browser-only recent-workout window in `localStorage` and passes it into the Hevy refresh path.
