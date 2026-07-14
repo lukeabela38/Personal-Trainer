@@ -2767,12 +2767,15 @@ function renderTrendModal(name, history) {
     .map((item) => item.reps)
     .filter((value) => value != null);
   const latest = history[history.length - 1];
+  const isBodyweight = /chin.?up|pull.?up|push.?up|dip|trx/i.test(name);
   const modalWarmup =
-    latest?.weight_kg != null ? makeWarmupSets(latest.weight_kg) : null;
+    !isBodyweight && latest?.weight_kg != null
+      ? makeWarmupSets(latest.weight_kg)
+      : null;
   const avgRep =
     reps.length > 0 ? reps.reduce((a, b) => a + b, 0) / reps.length : null;
   const modalRest =
-    avgRep != null
+    !isBodyweight && avgRep != null
       ? avgRep <= 5
         ? "Rest: 3-5 min"
         : avgRep <= 12

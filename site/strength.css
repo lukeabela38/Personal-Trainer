@@ -1709,12 +1709,6 @@
   align-items: center;
 }
 
-.modal-rest-label {
-  margin: 8px 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
 .modal-history-date {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
