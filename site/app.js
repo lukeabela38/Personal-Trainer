@@ -323,12 +323,6 @@ function resetFoodForm(clearTiming = true) {
 }
 
 async function handleScanBarcode() {
-  if (!("BarcodeDetector" in window) && foodHelp) {
-    foodHelp.textContent =
-      "Barcode scanning requires Chrome or iOS Safari 16.4+. Type the barcode number manually.";
-    foodBarcode?.focus();
-    return;
-  }
   if (foodBarcode) foodBarcode.value = "Scanning…";
   const result = await scanBarcode();
   if (result) {
