@@ -1422,3 +1422,8 @@ input[type="file"] {
   font-size: 0.75rem;
   color: var(--muted);
 }
+
+.food-scan-missing {
+  margin: 0;
+  font-size: 0.85rem;
+}

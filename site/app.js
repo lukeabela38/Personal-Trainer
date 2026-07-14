@@ -366,19 +366,22 @@ function renderScanPreview(product) {
   const subtitle = [product.brand, product.servingSize]
     .filter(Boolean)
     .join(" · ");
+  const hasNutrition = rows.length > 0;
   el.innerHTML = `
     <div class="food-scan-header">
       <strong>${escapeHtml(product.name)}</strong>
       ${subtitle ? `<span class="food-scan-sub">${escapeHtml(subtitle)}</span>` : ""}
     </div>
-    <div class="food-scan-grid">
-      ${rows
-        .map(
-          (r) =>
-            `<span class="food-scan-stat">${escapeHtml(r)}<span class="food-scan-unit">/100g</span></span>`,
-        )
-        .join("")}
-    </div>
+    ${
+      hasNutrition
+        ? `<div class="food-scan-grid">${rows
+            .map(
+              (r) =>
+                `<span class="food-scan-stat">${escapeHtml(r)}<span class="food-scan-unit">/100g</span></span>`,
+            )
+            .join("")}</div>`
+        : '<p class="food-scan-missing muted">Nutrition data not available for this product in the database.</p>'
+    }
   `;
 }
 
