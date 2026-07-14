@@ -1709,47 +1709,8 @@
   align-items: center;
 }
 
-.modal-warmup {
-  margin: 8px 0 0;
-  font-size: 0.82rem;
-}
-
-.modal-warmup summary {
-  cursor: pointer;
-  color: var(--muted);
-  user-select: none;
-  list-style: none;
-}
-
-.modal-warmup summary::-webkit-details-marker {
-  display: none;
-}
-
-.modal-warmup summary::before {
-  content: "▶ ";
-  display: inline-block;
-  font-size: 0.65rem;
-  transition: transform 0.15s;
-  color: var(--muted);
-}
-
-.modal-warmup[open] summary::before {
-  transform: rotate(90deg);
-}
-
 .modal-warmup-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 6px 0 2px;
-}
-
-.modal-warmup-list span {
-  padding: 3px 8px;
-  background: var(--panel-strong);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: var(--muted);
+  padding: 2px 0;
 }
 
 .modal-rest-label {

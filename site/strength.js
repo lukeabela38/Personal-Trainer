@@ -2734,9 +2734,7 @@ function getWorkoutExerciseStats(sets) {
 
 function makeWarmupSets(workingKg) {
   const roundPlate = (w) => Math.round(w / 2.5) * 2.5;
-  const bar = 20;
   const steps = [
-    { pct: 0, reps: 10, label: "Bar" },
     { pct: 0.4, reps: 8 },
     { pct: 0.6, reps: 5 },
     { pct: 0.8, reps: 3 },
@@ -2744,9 +2742,8 @@ function makeWarmupSets(workingKg) {
   ];
   return steps
     .map((s) => {
-      if (s.pct === 0) return { weight: bar, reps: s.reps, label: s.label };
       const w = roundPlate(workingKg * s.pct);
-      if (w <= bar) return null;
+      if (w <= 0) return null;
       return { weight: w, reps: s.reps, label: `${fmtWarmupWeight(w)} kg` };
     })
     .filter(Boolean);
@@ -2831,20 +2828,18 @@ function renderTrendModal(name, history) {
       ${
         modalWarmup
           ? `
-        <details class="modal-warmup">
-          <summary>Warm-up — ${escapeHtml(fmtWarmupWeight(latest?.weight_kg))} kg</summary>
+        <details class="modal-history">
+          <summary><span class="label">Warm-up — ${escapeHtml(fmtWarmupWeight(latest?.weight_kg))} kg</span></summary>
           <div class="modal-warmup-list">
             ${modalWarmup
-              .map((s) => `<span>${escapeHtml(s.label)} × ${s.reps}</span>`)
+              .map(
+                (s) =>
+                  `<div class="modal-history-row"><span>${escapeHtml(s.label)} × ${s.reps}</span></div>`,
+              )
               .join("")}
           </div>
         </details>
       `
-          : ""
-      }
-      ${
-        modalRest
-          ? `<p class="modal-rest-label">${escapeHtml(modalRest)}</p>`
           : ""
       }
       ${
@@ -2855,6 +2850,11 @@ function renderTrendModal(name, history) {
           ${renderSparkline(trendSeries, 300, 72, { dots: true, labels: true, color: weights.length > 1 ? "var(--accent)" : "var(--accent-2)" })}
         </div>
       `
+          : ""
+      }
+      ${
+        modalRest
+          ? `<p class="modal-rest-label">${escapeHtml(modalRest)}</p>`
           : ""
       }
       <div class="modal-stats">
