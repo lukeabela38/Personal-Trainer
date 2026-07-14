@@ -1,0 +1,157 @@
+const OPEN_FOOD_FACTS_API = "https://world.openfoodfacts.org/api/v2/product";
+const ZBAR_CDN =
+  "https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/main.mjs";
+
+let scannerModal = null;
+let scannerVideo = null;
+let scannerStatus = null;
+let mediaStream = null;
+let scanCanvas = null;
+let scanContext = null;
+
+export async function scanBarcode() {
+  ensureModal();
+  const code = await startScanning();
+  cleanupScanner();
+
+  if (scannerModal?.open) {
+    scannerModal.close();
+  }
+
+  if (code) {
+    return lookupProduct(code);
+  }
+  return null;
+}
+
+function ensureModal() {
+  if (scannerModal) return;
+  scannerModal = document.createElement("dialog");
+  scannerModal.className = "scanner-modal";
+  scannerModal.innerHTML = `
+    <div class="scanner-viewport">
+      <video id="scanner-video" autoplay playsinline></video>
+      <div class="scanner-status-bar">
+        <span id="scanner-status">Point camera at a barcode</span>
+        <button id="scanner-cancel" class="button secondary" type="button">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(scannerModal);
+  scannerVideo = scannerModal.querySelector("#scanner-video");
+  scannerStatus = scannerModal.querySelector("#scanner-status");
+  scannerModal
+    .querySelector("#scanner-cancel")
+    .addEventListener("click", () => {
+      cleanupScanner();
+      scannerModal.close();
+    });
+  scanCanvas = document.createElement("canvas");
+  scanCanvas.width = 640;
+  scanCanvas.height = 480;
+  scanContext = scanCanvas.getContext("2d");
+}
+
+async function startScanning() {
+  try {
+    scannerModal.showModal();
+    scannerStatus.textContent = "Requesting camera…";
+
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
+    });
+    scannerVideo.srcObject = mediaStream;
+    await scannerVideo.play();
+
+    scannerStatus.textContent = "Loading barcode detector…";
+    const { scanImageData } = await import(ZBAR_CDN);
+
+    scannerStatus.textContent = "Point camera at a barcode";
+
+    const timeout = setTimeout(() => {
+      cleanupScanner();
+      scannerModal.close();
+    }, 30000);
+
+    while (mediaStream) {
+      scanContext.drawImage(scannerVideo, 0, 0, 640, 480);
+      const imageData = scanContext.getImageData(0, 0, 640, 480);
+      const symbols = await scanImageData(imageData);
+      if (symbols.length > 0) {
+        clearTimeout(timeout);
+        return symbols[0].decode();
+      }
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    clearTimeout(timeout);
+    return null;
+  } catch (err) {
+    if (err.name === "NotAllowedError") {
+      scannerStatus.textContent = "Camera permission denied";
+    } else if (err.name === "NotFoundError") {
+      scannerStatus.textContent = "No camera found";
+    } else {
+      scannerStatus.textContent = `Scanner error: ${err.message}`;
+    }
+    await new Promise((r) => setTimeout(r, 1500));
+    scannerModal.close();
+    return null;
+  }
+}
+
+function cleanupScanner() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((t) => t.stop());
+    mediaStream = null;
+  }
+  if (scannerVideo) {
+    scannerVideo.srcObject = null;
+  }
+}
+
+export async function lookupProduct(barcode) {
+  try {
+    const response = await fetch(`${OPEN_FOOD_FACTS_API}/${barcode}.json`);
+    const data = await response.json();
+    if (data.status === 1 && data.product) {
+      const p = data.product;
+      const n = p.nutriments ?? {};
+      const name = p.product_name || p.product_name_en || "";
+      const brand = p.brands || "";
+      const servingSize = p.serving_size || "";
+      const kcal = n["energy-kcal_100g"];
+      const protein = n.proteins_100g;
+      const carbs = n.carbohydrates_100g;
+      const fat = n.fat_100g;
+      const satFat = n["saturated-fat_100g"];
+      const fiber = n.fiber_100g;
+      const sugars = n.sugars_100g;
+      const sodium = n.sodium_100g;
+      let detail = "";
+      if (kcal != null) detail += `${Math.round(kcal)} kcal/100g`;
+      if (protein != null) detail += ` · ${protein}g protein`;
+      return {
+        barcode,
+        name,
+        brand,
+        servingSize,
+        kcal_per_100g: kcal != null ? Math.round(kcal) : null,
+        protein_per_100g: protein != null ? parseFloat(protein) : null,
+        carbs_per_100g: carbs != null ? parseFloat(carbs) : null,
+        fat_per_100g: fat != null ? parseFloat(fat) : null,
+        sat_fat_per_100g: satFat != null ? parseFloat(satFat) : null,
+        fiber_per_100g: fiber != null ? parseFloat(fiber) : null,
+        sugars_per_100g: sugars != null ? parseFloat(sugars) : null,
+        sodium_per_100g: sodium != null ? parseFloat(sodium) : null,
+        detail,
+      };
+    }
+    return { barcode, name: null, brand: "", servingSize: "", detail: null };
+  } catch {
+    return { barcode, name: null, brand: "", servingSize: "", detail: null };
+  }
+}

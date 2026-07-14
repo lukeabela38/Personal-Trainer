@@ -1,3 +1,4 @@
+import { scanBarcode } from "./barcode-scanner.js";
 import {
   escapeHtml,
   formatDisplayValue,
@@ -35,7 +36,7 @@ document
   ?.addEventListener("click", resetFoodForm);
 document
   .getElementById("scan-barcode")
-  ?.addEventListener("click", focusBarcodeInput);
+  ?.addEventListener("click", handleScanBarcode);
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-food-timing]");
@@ -213,12 +214,71 @@ function resetFoodForm(clearTiming = true) {
     state.foodTiming = "flexible";
     persistFoodTiming(state.foodTiming);
   }
+  const preview = document.getElementById("food-scan-preview");
+  if (preview) preview.classList.add("hidden");
   renderFoodShell();
   foodItem?.focus();
 }
 
-function focusBarcodeInput() {
-  foodBarcode?.focus();
+async function handleScanBarcode() {
+  if (foodBarcode) foodBarcode.value = "Scanning…";
+  const result = await scanBarcode();
+  if (result) {
+    if (foodBarcode) foodBarcode.value = result.barcode;
+    if (result.name && foodItem) {
+      foodItem.value = result.name;
+    }
+    if (result.detail && foodHelp) {
+      foodHelp.textContent = `Found: ${result.name} · ${result.detail}`;
+    } else if (!result.name && foodHelp) {
+      foodHelp.textContent = `Barcode ${result.barcode} not found in database. Type the product name manually.`;
+    }
+    renderScanPreview(result);
+    foodItem?.focus();
+  } else {
+    if (foodBarcode) foodBarcode.value = "";
+    foodBarcode?.focus();
+  }
+}
+
+function renderScanPreview(product) {
+  const el = document.getElementById("food-scan-preview");
+  if (!el) return;
+  if (!product?.name) {
+    el.classList.add("hidden");
+    return;
+  }
+  el.classList.remove("hidden");
+  const rows = [
+    product.kcal_per_100g != null && `${product.kcal_per_100g} kcal`,
+    product.protein_per_100g != null && `${product.protein_per_100g}g protein`,
+    product.carbs_per_100g != null && `${product.carbs_per_100g}g carbs`,
+    product.fat_per_100g != null && `${product.fat_per_100g}g fat`,
+    product.fiber_per_100g != null && `${product.fiber_per_100g}g fiber`,
+    product.sugars_per_100g != null && `${product.sugars_per_100g}g sugars`,
+    product.sat_fat_per_100g != null && `${product.sat_fat_per_100g}g sat. fat`,
+    product.sodium_per_100g != null && `${product.sodium_per_100g}g sodium`,
+  ].filter(Boolean);
+  const subtitle = [product.brand, product.servingSize]
+    .filter(Boolean)
+    .join(" · ");
+  const hasNutrition = rows.length > 0;
+  el.innerHTML = `
+    <div class="food-scan-header">
+      <strong>${escapeHtml(product.name)}</strong>
+      ${subtitle ? `<span class="food-scan-sub">${escapeHtml(subtitle)}</span>` : ""}
+    </div>
+    ${
+      hasNutrition
+        ? `<div class="food-scan-grid">${rows
+            .map(
+              (r) =>
+                `<span class="food-scan-stat">${escapeHtml(r)}<span class="food-scan-unit">/100g</span></span>`,
+            )
+            .join("")}</div>`
+        : '<p class="food-scan-missing muted">Nutrition data not available for this product in the database.</p>'
+    }
+  `;
 }
 
 function renderFoodList(entries) {
