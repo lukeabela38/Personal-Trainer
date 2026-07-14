@@ -994,14 +994,16 @@ function saveStoredProgressionGoal(goal) {
 }
 
 function progressionStateClassName(state) {
-  return {
-    baseline: "is-baseline",
-    accumulate: "is-accumulate",
-    ready_to_progress: "is-ready",
-    stalled: "is-stalled",
-    deload: "is-deload",
-    constrained: "is-constrained",
-  }[state] ?? "is-accumulate";
+  return (
+    {
+      baseline: "is-baseline",
+      accumulate: "is-accumulate",
+      ready_to_progress: "is-ready",
+      stalled: "is-stalled",
+      deload: "is-deload",
+      constrained: "is-constrained",
+    }[state] ?? "is-accumulate"
+  );
 }
 
 function buildLastSessionLookup() {
@@ -1404,8 +1406,12 @@ function getWorkoutExerciseStats(sets) {
     totalVolumeLabel: totalSets
       ? `${fmtNum(totalVolume)} ${bestVolumeSet?.weight_kg != null ? "kg total" : "reps total"}`
       : "—",
-    bestVolumeSetLabel: bestVolumeSet ? formatHistorySetLabel(bestVolumeSet) : "—",
-    bestVolumeTotalLabel: bestVolumeSet ? formatVolumeLabel(bestVolumeSet) : "—",
+    bestVolumeSetLabel: bestVolumeSet
+      ? formatHistorySetLabel(bestVolumeSet)
+      : "—",
+    bestVolumeTotalLabel: bestVolumeSet
+      ? formatVolumeLabel(bestVolumeSet)
+      : "—",
   };
 }
 
@@ -1432,7 +1438,8 @@ function renderTrendModal(name, history) {
       : null;
   const peak = hasOneRmTrend ? Math.max(...oneRms) : null;
   const trendUp = oneRmChange == null ? true : oneRmChange >= 0;
-  const trendSeries = weights.length > 1 ? weights : reps.length > 1 ? reps : [];
+  const trendSeries =
+    weights.length > 1 ? weights : reps.length > 1 ? reps : [];
   const trendLabel = weights.length > 1 ? "Working weight trend" : "Rep trend";
   const recent = history.slice(-10).reverse();
 

@@ -4,7 +4,12 @@ const GOAL_RULES = {
   endurance: { targetReps: 15, incrementKg: 1.0, label: "Endurance" },
 };
 
-export function buildProgressionState(entry, gain = null, goal = "strength", equipment = null) {
+export function buildProgressionState(
+  entry,
+  gain = null,
+  goal = "strength",
+  equipment = null,
+) {
   const rule = GOAL_RULES[normalizeGoal(goal)] ?? GOAL_RULES.strength;
   const bestSet = isObject(entry?.best_set) ? entry.best_set : {};
   const sourceSet = isObject(entry?.last_set)
@@ -15,7 +20,7 @@ export function buildProgressionState(entry, gain = null, goal = "strength", equ
   const weightKg = toFloat(sourceSet.weight_kg);
   const reps = toInt(sourceSet.reps);
   const current = isObject(gain) ? toFloat(gain.current) : null;
-  const peak = isObject(gain) ? toFloat(gain.peak) ?? current : current;
+  const peak = isObject(gain) ? (toFloat(gain.peak) ?? current) : current;
   const stalled = Boolean(isObject(gain) && gain.stalled);
   const equipmentLimited = isEquipmentLimited(entry, bestSet, equipment);
   const incrementKg = resolveIncrement(goal, weightKg, equipment);
@@ -37,7 +42,8 @@ export function buildProgressionState(entry, gain = null, goal = "strength", equ
   } else if (declinePct != null && declinePct >= 10) {
     state = "deload";
     summary = `Deload: ${declinePct.toFixed(0)}% below peak`;
-    detail = "Performance has moved materially off peak, so back the load off and rebuild.";
+    detail =
+      "Performance has moved materially off peak, so back the load off and rebuild.";
     reasons.push(`Current 1RM is ${declinePct.toFixed(1)}% below peak`);
     if (peak != null && current != null) {
       reasons.push(`Peak ${fmtNum(peak)} kg vs current ${fmtNum(current)} kg`);
@@ -50,14 +56,17 @@ export function buildProgressionState(entry, gain = null, goal = "strength", equ
   } else if (equipmentLimited) {
     state = "constrained";
     summary = `${goalLabel}: progress with reps or tempo`;
-    detail = "The load is capped, so the next gain has to come from volume, tempo, or range of motion.";
+    detail =
+      "The load is capped, so the next gain has to come from volume, tempo, or range of motion.";
     reasons.push("Equipment or movement pattern limits additional load");
   } else if (reps != null && reps >= targetReps && weightKg != null) {
     state = "ready_to_progress";
     nextWeightKg = roundToIncrement(weightKg + incrementKg, incrementKg);
     summary = `Ready: add ${formatIncrement(incrementKg)} kg next`;
     detail = `${reps} reps clear the ${goalLabel.toLowerCase()} target, so step the load up.`;
-    reasons.push(`${reps} reps meets the ${goalLabel.toLowerCase()} threshold of ${targetReps}`);
+    reasons.push(
+      `${reps} reps meets the ${goalLabel.toLowerCase()} threshold of ${targetReps}`,
+    );
     reasons.push(`Increase the load by ${formatIncrement(incrementKg)} kg`);
   } else if (reps == null) {
     state = "baseline";
@@ -73,7 +82,8 @@ export function buildProgressionState(entry, gain = null, goal = "strength", equ
   } else {
     state = "accumulate";
     summary = `${goalLabel}: hold load and keep volume steady`;
-    detail = "The lift is not stalled, but the set does not yet justify a load increase.";
+    detail =
+      "The lift is not stalled, but the set does not yet justify a load increase.";
     reasons.push("Reps are on target but the set is not ready to progress yet");
   }
 
@@ -172,9 +182,13 @@ function isObject(value) {
 }
 
 function fmtNum(value) {
-  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+  return Number.isInteger(value)
+    ? String(value)
+    : String(Math.round(value * 10) / 10);
 }
 
 function formatIncrement(value) {
-  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+  return Number.isInteger(value)
+    ? String(value)
+    : String(Math.round(value * 10) / 10);
 }

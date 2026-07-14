@@ -331,7 +331,9 @@ test("strength page renders live progression state and goal controls", async ({
   await expect(page.locator("#strength-controls")).toBeVisible();
   await expect(page.locator('button[data-goal="strength"]')).toBeVisible();
   await page.locator('button[data-tab="exercises"]').click();
-  await expect(page.locator("#strength-grid")).toContainText("Ready to progress");
+  await expect(page.locator("#strength-grid")).toContainText(
+    "Ready to progress",
+  );
   await expect(page.locator("#strength-grid")).toContainText("Next 102.5 kg");
 
   await page.locator('button[data-goal="hypertrophy"]').click();
