@@ -1317,11 +1317,10 @@ details.exercise-warmup[open] .exercise-warmup-toggle::before {
   color: var(--muted);
 }
 
-.exercise-rest-badge {
-  align-self: center;
-  font-size: 0.78rem;
+.modal-rest-label {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
   color: var(--muted);
-  white-space: nowrap;
 }
 
 .workout-stack {

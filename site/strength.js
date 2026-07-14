@@ -266,7 +266,7 @@ grid?.addEventListener("click", async (event) => {
   if (!card) return;
   if (
     event.target.closest(
-      ".pill, .sort-btn, .search-input, .filter-pills, .strength-tab, .exercise-warmup, .exercise-rest-badge",
+      ".pill, .sort-btn, .search-input, .filter-pills, .strength-tab",
     )
   ) {
     return;
@@ -2174,14 +2174,6 @@ function renderExerciseCard(entry, session) {
   );
   const progressionStateClass = progressionStateClassName(progression.state);
 
-  const workingKg =
-    progression.next_weight_kg ??
-    progression.current_weight_kg ??
-    lastSet?.weight_kg ??
-    best?.weight_kg;
-  const warmup = workingKg != null ? makeWarmupSets(workingKg) : null;
-  const rest = makeRestLabel(progression.goal_label);
-
   return `
     <article class="exercise-card card" data-template-id="${escapeHtml(
       templateId,
@@ -2206,7 +2198,6 @@ function renderExerciseCard(entry, session) {
           <span class="exercise-metric-subvalue">${escapeHtml(bestMeta)}</span>
         </div>
       </div>
-      ${warmup ? renderWarmupHtml(warmup, workingKg) : ""}
       <div class="exercise-footer">
         <div class="exercise-progression">
           <span class="exercise-progression-goal">${escapeHtml(
@@ -2227,11 +2218,6 @@ function renderExerciseCard(entry, session) {
             ? `<span class="exercise-next-weight">Next ${escapeHtml(
                 fmtNum(progression.next_weight_kg),
               )} kg</span>`
-            : ""
-        }
-        ${
-          rest
-            ? `<span class="exercise-rest-badge">${escapeHtml(rest)}</span>`
             : ""
         }
       </div>
@@ -2996,6 +2982,19 @@ function renderTrendModal(name, history) {
     weights.length > 1 ? weights : reps.length > 1 ? reps : [];
   const trendLabel = weights.length > 1 ? "Working weight trend" : "Rep trend";
   const recent = history.slice(-10).reverse();
+  const latestWeight = latest?.weight_kg;
+  const modalWarmup =
+    latestWeight != null ? makeWarmupSets(latestWeight) : null;
+  const avgRep =
+    reps.length > 0 ? reps.reduce((a, b) => a + b, 0) / reps.length : null;
+  const modalRest =
+    avgRep != null
+      ? avgRep <= 5
+        ? "Rest: 3-5 min"
+        : avgRep <= 12
+          ? "Rest: 60-90 sec"
+          : "Rest: 30-60 sec"
+      : null;
 
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
@@ -3031,6 +3030,12 @@ function renderTrendModal(name, history) {
           <span class="modal-progression-pct">This exercise is tracked as a rep-based movement.</span>
         </div>
       `
+      }
+      ${modalWarmup ? renderWarmupHtml(modalWarmup, latestWeight) : ""}
+      ${
+        modalRest
+          ? `<p class="modal-rest-label">${escapeHtml(modalRest)}</p>`
+          : ""
       }
       ${
         trendSeries.length > 1
