@@ -14,6 +14,10 @@ export async function scanBarcode() {
   const code = await startScanning();
   cleanupScanner();
 
+  if (scannerModal?.open) {
+    scannerModal.close();
+  }
+
   if (code) {
     return lookupProduct(code);
   }
