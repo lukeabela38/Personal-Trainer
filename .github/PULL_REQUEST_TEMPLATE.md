@@ -4,7 +4,8 @@
 
 ## Related card / issue
 
-<!-- Link to the project board card or issue: #NN -->
+<!-- Use "Closes #NN" to auto-close the issue when this PR merges -->
+<!-- Example: Closes #123 -->
 
 ## Type of change
 

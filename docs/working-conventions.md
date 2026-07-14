@@ -18,8 +18,9 @@ Keep the wording short and concrete. The goal is clarity, not ceremony.
 - Keep cards narrow enough that one contributor can finish them independently.
 - Add a short acceptance note to the issue.
 - Open a PR for reviewable work instead of committing directly to `main`.
-- Link the PR back to the issue it resolves.
+- Link the PR back to the issue it resolves using `Closes #NN` in the PR body to auto-close when merged.
 - Prefer a PR that changes one behavior, one page, or one contract at a time.
+- Branch protection is enabled on `main`: requires PR review, passing CI checks, and linear history.
 - Use a branch name that matches `agent/`, `feature/`, `fix/`, `chore/`, `docs/`, `ci/`, or `dependabot/`.
 
 GitHub templates should be used to keep issue and PR descriptions consistent.
