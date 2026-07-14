@@ -17,6 +17,7 @@ class BuildSiteArtifactsTest(TestCase):
             "index.html",
             "styles.css",
             "app.js",
+            "barcode-scanner.js",
             "manifest.webmanifest",
             "food.html",
             "food.js",
