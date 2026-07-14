@@ -119,26 +119,39 @@ export async function lookupProduct(barcode) {
     const data = await response.json();
     if (data.status === 1 && data.product) {
       const p = data.product;
+      const n = p.nutriments ?? {};
       const name = p.product_name || p.product_name_en || "";
-      const kcal = p.nutriments?.["energy-kcal_100g"];
-      const protein = p.nutriments?.proteins_100g;
-      const carbs = p.nutriments?.carbohydrates_100g;
-      const fat = p.nutriments?.fat_100g;
+      const brand = p.brands || "";
+      const servingSize = p.serving_size || "";
+      const kcal = n["energy-kcal_100g"];
+      const protein = n.proteins_100g;
+      const carbs = n.carbohydrates_100g;
+      const fat = n.fat_100g;
+      const satFat = n["saturated-fat_100g"];
+      const fiber = n.fiber_100g;
+      const sugars = n.sugars_100g;
+      const sodium = n.sodium_100g;
       let detail = "";
       if (kcal != null) detail += `${Math.round(kcal)} kcal/100g`;
       if (protein != null) detail += ` · ${protein}g protein`;
       return {
         barcode,
         name,
+        brand,
+        servingSize,
         kcal_per_100g: kcal != null ? Math.round(kcal) : null,
         protein_per_100g: protein != null ? parseFloat(protein) : null,
         carbs_per_100g: carbs != null ? parseFloat(carbs) : null,
         fat_per_100g: fat != null ? parseFloat(fat) : null,
+        sat_fat_per_100g: satFat != null ? parseFloat(satFat) : null,
+        fiber_per_100g: fiber != null ? parseFloat(fiber) : null,
+        sugars_per_100g: sugars != null ? parseFloat(sugars) : null,
+        sodium_per_100g: sodium != null ? parseFloat(sodium) : null,
         detail,
       };
     }
-    return { barcode, name: null, detail: null };
+    return { barcode, name: null, brand: "", servingSize: "", detail: null };
   } catch {
-    return { barcode, name: null, detail: null };
+    return { barcode, name: null, brand: "", servingSize: "", detail: null };
   }
 }

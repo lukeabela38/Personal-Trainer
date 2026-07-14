@@ -318,6 +318,8 @@ function resetFoodForm(clearTiming = true) {
     state.foodTiming = "flexible";
     persistFoodTiming(state.foodTiming);
   }
+  const preview = document.getElementById("food-scan-preview");
+  if (preview) preview.classList.add("hidden");
   renderFoodShell();
   foodItem?.focus();
 }
@@ -335,11 +337,49 @@ async function handleScanBarcode() {
     } else if (!result.name && foodHelp) {
       foodHelp.textContent = `Barcode ${result.barcode} not found in database. Type the product name manually.`;
     }
+    renderScanPreview(result);
     foodItem?.focus();
   } else {
     if (foodBarcode) foodBarcode.value = "";
     foodBarcode?.focus();
   }
+}
+
+function renderScanPreview(product) {
+  const el = document.getElementById("food-scan-preview");
+  if (!el) return;
+  if (!product?.name) {
+    el.classList.add("hidden");
+    return;
+  }
+  el.classList.remove("hidden");
+  const rows = [
+    product.kcal_per_100g != null && `${product.kcal_per_100g} kcal`,
+    product.protein_per_100g != null && `${product.protein_per_100g}g protein`,
+    product.carbs_per_100g != null && `${product.carbs_per_100g}g carbs`,
+    product.fat_per_100g != null && `${product.fat_per_100g}g fat`,
+    product.fiber_per_100g != null && `${product.fiber_per_100g}g fiber`,
+    product.sugars_per_100g != null && `${product.sugars_per_100g}g sugars`,
+    product.sat_fat_per_100g != null && `${product.sat_fat_per_100g}g sat. fat`,
+    product.sodium_per_100g != null && `${product.sodium_per_100g}g sodium`,
+  ].filter(Boolean);
+  const subtitle = [product.brand, product.servingSize]
+    .filter(Boolean)
+    .join(" · ");
+  el.innerHTML = `
+    <div class="food-scan-header">
+      <strong>${escapeHtml(product.name)}</strong>
+      ${subtitle ? `<span class="food-scan-sub">${escapeHtml(subtitle)}</span>` : ""}
+    </div>
+    <div class="food-scan-grid">
+      ${rows
+        .map(
+          (r) =>
+            `<span class="food-scan-stat">${escapeHtml(r)}<span class="food-scan-unit">/100g</span></span>`,
+        )
+        .join("")}
+    </div>
+  `;
 }
 
 function renderSessionShell() {

@@ -1377,3 +1377,48 @@ input[type="file"] {
 .scanner-status-bar .button {
   flex-shrink: 0;
 }
+
+.food-scan-preview {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.food-scan-header {
+  margin-bottom: 12px;
+}
+
+.food-scan-header strong {
+  display: block;
+  font-size: 1.05rem;
+  color: var(--accent);
+}
+
+.food-scan-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.food-scan-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.food-scan-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--panel-strong);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.food-scan-unit {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
