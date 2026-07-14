@@ -1210,10 +1210,6 @@ function renderHistoryOrExercises() {
   }
 }
 
-function roundToIncrement(value, increment) {
-  return Math.round(value / increment) * increment;
-}
-
 function parseFloatNumber(value) {
   if (value == null || value === "") return null;
   const parsed = typeof value === "number" ? value : Number(value);
