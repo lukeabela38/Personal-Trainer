@@ -266,7 +266,7 @@ grid?.addEventListener("click", async (event) => {
   if (!card) return;
   if (
     event.target.closest(
-      ".pill, .sort-btn, .search-input, .filter-pills, .strength-tab",
+      ".pill, .sort-btn, .search-input, .filter-pills, .strength-tab, .exercise-warmup, .exercise-rest-badge",
     )
   ) {
     return;
