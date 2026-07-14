@@ -1268,61 +1268,6 @@
   white-space: nowrap;
 }
 
-.exercise-warmup {
-  margin-top: -4px;
-  font-size: 0.82rem;
-}
-
-.exercise-warmup-toggle {
-  cursor: pointer;
-  color: var(--muted);
-  padding: 4px 0;
-  user-select: none;
-  list-style: none;
-}
-
-.exercise-warmup-toggle::-webkit-details-marker {
-  display: none;
-}
-
-.exercise-warmup-toggle::before {
-  content: "▶ ";
-  display: inline-block;
-  font-size: 0.65rem;
-  transition: transform 0.15s;
-  color: var(--muted);
-}
-
-details.exercise-warmup[open] .exercise-warmup-toggle::before {
-  transform: rotate(90deg);
-}
-
-.exercise-warmup-toggle:hover {
-  color: var(--text);
-  text-decoration: underline;
-}
-
-.exercise-warmup-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 6px 0 2px;
-}
-
-.exercise-warmup-set {
-  padding: 3px 8px;
-  background: var(--panel-strong);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.modal-rest-label {
-  margin: 8px 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
 .workout-stack {
   display: grid;
   gap: 12px;
@@ -1762,6 +1707,55 @@ details.exercise-warmup[open] .exercise-warmup-toggle::before {
   background: rgba(255, 255, 255, 0.03);
   font-size: 0.8rem;
   align-items: center;
+}
+
+.modal-warmup {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+}
+
+.modal-warmup summary {
+  cursor: pointer;
+  color: var(--muted);
+  user-select: none;
+  list-style: none;
+}
+
+.modal-warmup summary::-webkit-details-marker {
+  display: none;
+}
+
+.modal-warmup summary::before {
+  content: "▶ ";
+  display: inline-block;
+  font-size: 0.65rem;
+  transition: transform 0.15s;
+  color: var(--muted);
+}
+
+.modal-warmup[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.modal-warmup-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0 2px;
+}
+
+.modal-warmup-list span {
+  padding: 3px 8px;
+  background: var(--panel-strong);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.modal-rest-label {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .modal-history-date {

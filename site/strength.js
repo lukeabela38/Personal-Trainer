@@ -277,18 +277,10 @@ grid?.addEventListener("click", async (event) => {
     const response = await fetch(
       `./history/exercises/${templateId}.json?v=${Date.now()}`,
     );
-    if (!response.ok) {
-      renderEmptyModal(card.dataset.exerciseName ?? templateId);
-      return;
-    }
     const history = await response.json();
-    if (!Array.isArray(history) || history.length === 0) {
-      renderEmptyModal(card.dataset.exerciseName ?? templateId);
-      return;
-    }
     renderTrendModal(card.dataset.exerciseName ?? templateId, history);
   } catch {
-    renderEmptyModal(card.dataset.exerciseName ?? templateId);
+    // no history available
   }
 });
 
@@ -312,13 +304,9 @@ async function loadStrength() {
       return;
     }
 
-    sourceLabel.textContent = `${payload.source ?? "Hevy"} · ${
-      payload.snapshot_date ?? "unknown date"
-    }`;
+    sourceLabel.textContent = `${payload.source ?? "Hevy"} · ${payload.snapshot_date ?? "unknown date"}`;
     sourceLabel.classList.remove("skeleton");
-    statusBanner.textContent = `${
-      (payload.entries ?? []).length
-    } lifts · ${formatHevyRefreshLabel(payload)}`;
+    statusBanner.textContent = `${(payload.entries ?? []).length} lifts · ${formatHevyRefreshLabel(payload)}`;
     statusBanner.classList.remove("skeleton");
     syncHevyWindowUI(
       payload.refresh_window ?? readStoredHevyWorkoutWindow(),
@@ -460,11 +448,7 @@ function renderControls() {
       .map((category) => {
         const count =
           category === "All" ? entries.length : (counts[category] ?? 0);
-        return `<button class="pill${
-          category === activeCategory ? " is-active" : ""
-        }" data-category="${escapeHtml(category)}" type="button">${escapeHtml(
-          category,
-        )} (${count})</button>`;
+        return `<button class="pill${category === activeCategory ? " is-active" : ""}" data-category="${escapeHtml(category)}" type="button">${escapeHtml(category)} (${count})</button>`;
       })
       .join("");
   }
@@ -521,11 +505,7 @@ function renderProgressionGoalControls() {
   progressionGoalPills.innerHTML = goals
     .map((goal) => {
       const isActive = goal === activeProgressionGoal;
-      return `<button class="pill progression-goal-btn${
-        isActive ? " is-active" : ""
-      }" data-goal="${escapeHtml(goal)}" type="button">${escapeHtml(
-        progressionGoalLabel(goal),
-      )}</button>`;
+      return `<button class="pill progression-goal-btn${isActive ? " is-active" : ""}" data-goal="${escapeHtml(goal)}" type="button">${escapeHtml(progressionGoalLabel(goal))}</button>`;
     })
     .join("");
 }
@@ -580,9 +560,7 @@ function renderSummary() {
     },
     {
       label: "Top 1RM",
-      value: `${fmtNum(
-        topEntry?.estimated_one_rm_kg ?? topEntry?.best_set?.weight_kg ?? 0,
-      )} kg`,
+      value: `${fmtNum(topEntry?.estimated_one_rm_kg ?? topEntry?.best_set?.weight_kg ?? 0)} kg`,
       subvalue: topEntry?.name ?? "Highest current estimate",
     },
     {
@@ -596,9 +574,7 @@ function renderSummary() {
         <div class="summary-tile${tile.className ? ` ${tile.className}` : ""}">
           <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
           <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
-          <span class="summary-tile-subvalue">${escapeHtml(
-            tile.subvalue,
-          )}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
         </div>
       `,
     )
@@ -620,9 +596,7 @@ function renderHighlights() {
         topMover.gain.gain_pct != null
           ? `+${fmtNum(topMover.gain.gain_pct)}%`
           : "Rising",
-      subvalue: `${topMover.entry.name} · ${fmtNum(
-        topMover.gain.current ?? 0,
-      )} kg now`,
+      subvalue: `${topMover.entry.name} · ${fmtNum(topMover.gain.current ?? 0)} kg now`,
     });
   }
 
@@ -630,9 +604,7 @@ function renderHighlights() {
     tiles.push({
       label: "Most recent",
       value: workoutDate(latestWorkout),
-      subvalue: `${workoutTitle(latestWorkout)} · ${workoutSummaryExerciseCount(
-        latestWorkout,
-      )} exercises`,
+      subvalue: `${workoutTitle(latestWorkout)} · ${workoutSummaryExerciseCount(latestWorkout)} exercises`,
     });
   }
 
@@ -656,15 +628,9 @@ function renderHighlights() {
     .map(
       (tile) => `
         <article class="strength-highlight">
-          <span class="strength-highlight-label">${escapeHtml(
-            tile.label,
-          )}</span>
-          <strong class="strength-highlight-value">${escapeHtml(
-            tile.value,
-          )}</strong>
-          <span class="strength-highlight-subvalue">${escapeHtml(
-            tile.subvalue,
-          )}</span>
+          <span class="strength-highlight-label">${escapeHtml(tile.label)}</span>
+          <strong class="strength-highlight-value">${escapeHtml(tile.value)}</strong>
+          <span class="strength-highlight-subvalue">${escapeHtml(tile.subvalue)}</span>
         </article>
       `,
     )
@@ -682,26 +648,20 @@ function renderCoachNote() {
 
   if (topMover?.gain?.gain_pct != null) {
     fragments.push(
-      `${topMover.entry.name} is leading the field at +${fmtNum(
-        topMover.gain.gain_pct,
-      )}%`,
+      `${topMover.entry.name} is leading the field at +${fmtNum(topMover.gain.gain_pct)}%`,
     );
   }
 
   if (stalledLift?.gain?.current != null && stalledLift?.gain?.peak != null) {
     const gap = Math.max(0, stalledLift.gain.peak - stalledLift.gain.current);
     fragments.push(
-      `${stalledLift.entry.name} is ${
-        gap ? `${fmtNum(gap)} kg off peak` : "back at peak"
-      }`,
+      `${stalledLift.entry.name} is ${gap ? `${fmtNum(gap)} kg off peak` : "back at peak"}`,
     );
   }
 
   if (latestWorkout) {
     fragments.push(
-      `latest session: ${workoutTitle(latestWorkout)} on ${workoutDate(
-        latestWorkout,
-      )}`,
+      `latest session: ${workoutTitle(latestWorkout)} on ${workoutDate(latestWorkout)}`,
     );
   }
 
@@ -920,9 +880,7 @@ function renderHeatmapEmpty(data) {
     heatmapSummary.innerHTML = `
       <div class="heatmap-summary-card">
         <span class="heatmap-summary-label">Window</span>
-        <span class="heatmap-summary-value">${escapeHtml(
-          heatmapWindowLabel(activeHeatmapWindow),
-        )}</span>
+        <span class="heatmap-summary-value">${escapeHtml(heatmapWindowLabel(activeHeatmapWindow))}</span>
         <span class="heatmap-summary-subvalue">No workouts found in the selected window</span>
       </div>
       <div class="heatmap-summary-card">
@@ -1036,9 +994,7 @@ function renderHeatmapLegend(data) {
       ${HEATMAP_SCALE_STEPS.map(
         (step) => `
           <div class="heatmap-legend-item">
-            <span class="heatmap-legend-swatch ${
-              step.tone
-            }" aria-hidden="true"></span>
+            <span class="heatmap-legend-swatch ${step.tone}" aria-hidden="true"></span>
             <span class="heatmap-legend-label">${escapeHtml(step.label)}</span>
           </div>
         `,
@@ -1052,21 +1008,13 @@ function renderHeatmapSummary(data) {
   heatmapSummary.innerHTML = `
     <div class="heatmap-summary-card">
       <span class="heatmap-summary-label">Window</span>
-      <span class="heatmap-summary-value">${escapeHtml(
-        heatmapWindowLabel(data.window),
-      )}</span>
-      <span class="heatmap-summary-subvalue">${escapeHtml(
-        pluralize(data.workoutCount, "workout"),
-      )} · ${escapeHtml(pluralize(data.exerciseCount, "exercise"))}</span>
+      <span class="heatmap-summary-value">${escapeHtml(heatmapWindowLabel(data.window))}</span>
+      <span class="heatmap-summary-subvalue">${escapeHtml(pluralize(data.workoutCount, "workout"))} · ${escapeHtml(pluralize(data.exerciseCount, "exercise"))}</span>
     </div>
     <div class="heatmap-summary-card">
       <span class="heatmap-summary-label">Load</span>
-      <span class="heatmap-summary-value">${escapeHtml(
-        formatVolume(data.totalVolume),
-      )}</span>
-      <span class="heatmap-summary-subvalue">${escapeHtml(
-        pluralize(data.setCount, "set"),
-      )} weighted by load</span>
+      <span class="heatmap-summary-value">${escapeHtml(formatVolume(data.totalVolume))}</span>
+      <span class="heatmap-summary-subvalue">${escapeHtml(pluralize(data.setCount, "set"))} weighted by load</span>
     </div>
   `;
 }
@@ -1079,17 +1027,11 @@ function renderHeatmapDetail(zone) {
     null;
   return `
     <div class="heatmap-detail-head">
-      <span class="heatmap-summary-label">${escapeHtml(
-        zone.side === "front" ? "Front" : "Back",
-      )} region</span>
+      <span class="heatmap-summary-label">${escapeHtml(zone.side === "front" ? "Front" : "Back")} region</span>
       <span class="heatmap-detail-region-pill">${escapeHtml(zone.label)}</span>
       <div class="heatmap-detail-title">${escapeHtml(zone.label)}</div>
       <p class="heatmap-detail-copy">
-        ${escapeHtml(
-          zone.volume > 0
-            ? "Load accumulated in the selected window."
-            : "No work landed here in the selected window yet.",
-        )}
+        ${escapeHtml(zone.volume > 0 ? "Load accumulated in the selected window." : "No work landed here in the selected window yet.")}
       </p>
     </div>
     ${
@@ -1104,15 +1046,11 @@ function renderHeatmapDetail(zone) {
     <div class="heatmap-detail-grid">
       <div class="heatmap-detail-stat">
         <span class="heatmap-detail-stat-label">Weighted volume</span>
-        <span class="heatmap-detail-stat-value">${escapeHtml(
-          formatVolume(zone.volume),
-        )}</span>
+        <span class="heatmap-detail-stat-value">${escapeHtml(formatVolume(zone.volume))}</span>
       </div>
       <div class="heatmap-detail-stat">
         <span class="heatmap-detail-stat-label">Share of total load</span>
-        <span class="heatmap-detail-stat-value">${escapeHtml(
-          formatPct(zone.share),
-        )}</span>
+        <span class="heatmap-detail-stat-value">${escapeHtml(formatPct(zone.share))}</span>
       </div>
     </div>
     ${renderHeatmapActivity(zone, sessions, selectedSession)}
@@ -1123,10 +1061,7 @@ function renderHeatmapActivity(zone, sessions, selectedSession) {
   const sessionCount = sessions.length;
   const sessionSummary =
     sessionCount > 0
-      ? `${pluralize(sessionCount, "session")} · ${pluralize(
-          zone.exerciseCount,
-          "exercise",
-        )}`
+      ? `${pluralize(sessionCount, "session")} · ${pluralize(zone.exerciseCount, "exercise")}`
       : "No sessions in this window";
   const isOpen = activeHeatmapActivityOpen && sessionCount > 0;
   return `
@@ -1147,11 +1082,7 @@ function renderHeatmapActivity(zone, sessions, selectedSession) {
           ${sessions
             .map(
               (session) => `
-                ${renderHeatmapSessionButton(
-                  session,
-                  zone,
-                  session.key === selectedSession?.key,
-                )}
+                ${renderHeatmapSessionButton(session, zone, session.key === selectedSession?.key)}
               `,
             )
             .join("")}
@@ -1176,15 +1107,9 @@ function renderHeatmapSessionButton(session, zone, isActive) {
                   type="button"
                   data-heatmap-session="${escapeHtml(session.key)}"
                 >
-                  <span class="heatmap-session-date">${escapeHtml(
-                    session.date || "Unknown date",
-                  )}</span>
-                  <span class="heatmap-session-title">${escapeHtml(
-                    session.title || "Workout",
-                  )}</span>
-                  <span class="heatmap-session-meta">${escapeHtml(
-                    pluralize(exercises.length, "exercise"),
-                  )}</span>
+                  <span class="heatmap-session-date">${escapeHtml(session.date || "Unknown date")}</span>
+                  <span class="heatmap-session-title">${escapeHtml(session.title || "Workout")}</span>
+                  <span class="heatmap-session-meta">${escapeHtml(pluralize(exercises.length, "exercise"))}</span>
                 </button>
       ${isActive ? renderHeatmapSessionDetail(session, zone) : ""}
     </div>
@@ -1197,9 +1122,7 @@ function renderHeatmapSessionDetail(session, zone) {
     <div class="heatmap-session-detail-head">
       <span class="heatmap-session-detail-label">Selected session</span>
       <strong>${escapeHtml(session.title || "Workout")}</strong>
-      <span class="heatmap-session-detail-meta">${escapeHtml(
-        session.date || "Unknown date",
-      )}</span>
+      <span class="heatmap-session-detail-meta">${escapeHtml(session.date || "Unknown date")}</span>
     </div>
     <div class="heatmap-session-exercises">
       ${
@@ -1299,10 +1222,7 @@ function decorateHeatmapSvg(svg, data) {
       region.setAttribute("aria-pressed", isSelected ? "true" : "false");
       region.setAttribute(
         "aria-label",
-        `${zone.label}, ${formatVolume(zone.volume)}, ${pluralize(
-          zone.workoutCount,
-          "session",
-        )}`,
+        `${zone.label}, ${formatVolume(zone.volume)}, ${pluralize(zone.workoutCount, "session")}`,
       );
 
       region.querySelectorAll(".muscle").forEach((path) => {
@@ -1534,9 +1454,7 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
       totalVolume += exerciseVolume;
       totalSets += sets.length;
       const exerciseKey = normalizeNameKey(
-        `${exercise.exercise_template_id ?? ""}:${
-          exercise.name ?? exercise.title ?? ""
-        }`,
+        `${exercise.exercise_template_id ?? ""}:${exercise.name ?? exercise.title ?? ""}`,
       );
       const targetTotal =
         targets.reduce((sum, target) => sum + target.share, 0) || 1;
@@ -1935,32 +1853,16 @@ function renderWorkoutCard(workout, index) {
         <div class="workout-summary-main">
           <span class="workout-summary-date">${escapeHtml(date)}</span>
           <span class="workout-summary-title">${escapeHtml(title)}</span>
-          <span class="workout-summary-meta">${escapeHtml(
-            `${exercises.length} exercises${range ? ` · ${range}` : ""}`,
-          )}</span>
+          <span class="workout-summary-meta">${escapeHtml(`${exercises.length} exercises${range ? ` · ${range}` : ""}`)}</span>
         </div>
         <div class="workout-summary-badges">
-          <span class="workout-summary-chip">${escapeHtml(
-            `${exercises.length} exercises`,
-          )}</span>
-          ${
-            range
-              ? `<span class="workout-summary-chip is-soft">${escapeHtml(
-                  range,
-                )}</span>`
-              : ""
-          }
-          ${
-            index === 0
-              ? `<span class="workout-summary-chip is-accent">Latest</span>`
-              : ""
-          }
+          <span class="workout-summary-chip">${escapeHtml(`${exercises.length} exercises`)}</span>
+          ${range ? `<span class="workout-summary-chip is-soft">${escapeHtml(range)}</span>` : ""}
+          ${index === 0 ? `<span class="workout-summary-chip is-accent">Latest</span>` : ""}
         </div>
       </summary>
       <div class="workout-body">
-        ${exercises
-          .map((exercise) => renderWorkoutExercise(exercise, date, title))
-          .join("")}
+        ${exercises.map((exercise) => renderWorkoutExercise(exercise, date, title)).join("")}
       </div>
     </details>
   `;
@@ -1989,9 +1891,7 @@ function renderWorkoutExercise(exercise, workoutDate, workoutTitle) {
     >
       <div class="workout-exercise-head">
         <span class="workout-exercise-name">${escapeHtml(name)}</span>
-        <span class="workout-exercise-count">${
-          sets.length ? `${sets.length} sets` : "No sets"
-        }</span>
+        <span class="workout-exercise-count">${sets.length ? `${sets.length} sets` : "No sets"}</span>
       </div>
       <div class="workout-set-list">
         ${
@@ -2175,22 +2075,16 @@ function renderExerciseCard(entry, session) {
   const progressionStateClass = progressionStateClassName(progression.state);
 
   return `
-    <article class="exercise-card card" data-template-id="${escapeHtml(
-      templateId,
-    )}" data-exercise-name="${escapeHtml(entry.name)}">
+    <article class="exercise-card card" data-template-id="${escapeHtml(templateId)}" data-exercise-name="${escapeHtml(entry.name)}">
       <div class="exercise-head">
         <div class="exercise-name">${escapeHtml(entry.name)}</div>
-        <span class="exercise-category ${categoryClass}">${escapeHtml(
-          category,
-        )}</span>
+        <span class="exercise-category ${categoryClass}">${escapeHtml(category)}</span>
       </div>
       <div class="exercise-metrics">
         <div class="exercise-metric exercise-metric--lead">
           <span class="exercise-metric-label">Last session</span>
           <span class="exercise-metric-value">${escapeHtml(lastLine)}</span>
-          <span class="exercise-metric-subvalue">${escapeHtml(
-            lastSessionMeta,
-          )}</span>
+          <span class="exercise-metric-subvalue">${escapeHtml(lastSessionMeta)}</span>
         </div>
         <div class="exercise-metric exercise-metric--secondary">
           <span class="exercise-metric-label">Best ever</span>
@@ -2200,79 +2094,19 @@ function renderExerciseCard(entry, session) {
       </div>
       <div class="exercise-footer">
         <div class="exercise-progression">
-          <span class="exercise-progression-goal">${escapeHtml(
-            progression.goal_label,
-          )}</span>
-          <span class="exercise-progression-badge ${progressionStateClass}">${escapeHtml(
-            progression.state_label,
-          )}</span>
-          <span class="exercise-recommendation">${escapeHtml(
-            progression.summary,
-          )}</span>
-          <span class="exercise-progress">${escapeHtml(
-            progression.detail,
-          )}</span>
+          <span class="exercise-progression-goal">${escapeHtml(progression.goal_label)}</span>
+          <span class="exercise-progression-badge ${progressionStateClass}">${escapeHtml(progression.state_label)}</span>
+          <span class="exercise-recommendation">${escapeHtml(progression.summary)}</span>
+          <span class="exercise-progress">${escapeHtml(progression.detail)}</span>
         </div>
         ${
           progression.next_weight_kg != null
-            ? `<span class="exercise-next-weight">Next ${escapeHtml(
-                fmtNum(progression.next_weight_kg),
-              )} kg</span>`
+            ? `<span class="exercise-next-weight">Next ${escapeHtml(fmtNum(progression.next_weight_kg))} kg</span>`
             : ""
         }
       </div>
     </article>
   `;
-}
-
-function makeWarmupSets(workingKg) {
-  const roundPlate = (w) => Math.round(w / 2.5) * 2.5;
-  const bar = 20;
-  const steps = [
-    { pct: 0, reps: 10, label: "Bar" },
-    { pct: 0.4, reps: 8 },
-    { pct: 0.6, reps: 5 },
-    { pct: 0.8, reps: 3 },
-    { pct: 0.9, reps: 1 },
-  ];
-  return steps
-    .map((s) => {
-      if (s.pct === 0) return { weight: bar, reps: s.reps, label: s.label };
-      const w = roundPlate(workingKg * s.pct);
-      if (w <= bar) return null;
-      return { weight: w, reps: s.reps, label: `${fmtNum(w)} kg` };
-    })
-    .filter(Boolean);
-}
-
-function renderWarmupHtml(sets, workingKg) {
-  return `
-    <details class="exercise-warmup">
-      <summary class="exercise-warmup-toggle">Warm-up — ${escapeHtml(
-        fmtNum(workingKg),
-      )} kg</summary>
-      <div class="exercise-warmup-list">
-        ${sets
-          .map(
-            (s) =>
-              `<span class="exercise-warmup-set">${escapeHtml(s.label)} × ${
-                s.reps
-              }</span>`,
-          )
-          .join("")}
-      </div>
-    </details>
-  `;
-}
-
-function makeRestLabel(goal) {
-  const map = {
-    Strength: "Rest: 3-5 min",
-    Hypertrophy: "Rest: 60-90 sec",
-    Endurance: "Rest: 30-60 sec",
-    "Power / athleticism": "Rest: 3-5 min",
-  };
-  return map[goal] ?? null;
 }
 
 function renderInsights() {
@@ -2331,14 +2165,10 @@ function renderInsights() {
             <div class="macro-row">
               <div class="macro-row-header">
                 <span class="macro-row-label">${escapeHtml(c.cat)}</span>
-                <span class="macro-row-numbers">avg ${c.pct}% of peak · +${
-                  c.gain
-                }% gain</span>
+                <span class="macro-row-numbers">avg ${c.pct}% of peak · +${c.gain}% gain</span>
               </div>
               <div class="macro-track">
-                <div class="macro-fill macro-fill-${
-                  c.pct >= 80 ? "high" : c.pct >= 60 ? "medium" : "low"
-                }" style="width:${c.pct}%"></div>
+                <div class="macro-fill macro-fill-${c.pct >= 80 ? "high" : c.pct >= 60 ? "medium" : "low"}" style="width:${c.pct}%"></div>
               </div>
             </div>
           `,
@@ -2360,11 +2190,7 @@ function renderInsights() {
               (stall) => `
             <div class="item">
               <span>${escapeHtml(stall.name)}</span>
-              <strong class="delta-down">${fmtNum(
-                stall.current,
-              )} kg · ${Math.round(
-                (stall.current / stall.peak) * 100,
-              )}% of peak</strong>
+              <strong class="delta-down">${fmtNum(stall.current)} kg · ${Math.round((stall.current / stall.peak) * 100)}% of peak</strong>
             </div>
           `,
             )
@@ -2382,9 +2208,7 @@ function renderInsights() {
         <div class="stat-group-grid">
           <div class="stat-item">
             <span class="stat-item-label">Exercise</span>
-            <span class="stat-item-value">${escapeHtml(
-              biggestGap.entry.name,
-            )}</span>
+            <span class="stat-item-value">${escapeHtml(biggestGap.entry.name)}</span>
           </div>
           <div class="stat-item">
             <span class="stat-item-label">Current 1RM</span>
@@ -2396,9 +2220,7 @@ function renderInsights() {
           </div>
           <div class="stat-item">
             <span class="stat-item-label">Gap</span>
-            <span class="stat-item-value delta-down">-${fmtNum(
-              bg.peak - bg.current,
-            )} kg</span>
+            <span class="stat-item-value delta-down">-${fmtNum(bg.peak - bg.current)} kg</span>
           </div>
         </div>
       </div>
@@ -2598,9 +2420,7 @@ async function refreshHevy() {
   if (hevyRefreshButton) hevyRefreshButton.disabled = true;
   const workoutWindow = readStoredHevyWorkoutWindow();
   if (hevyRefreshStatus) {
-    hevyRefreshStatus.textContent = `Refreshing Hevy... · ${formatHevyWorkoutWindowLabel(
-      workoutWindow,
-    )}`;
+    hevyRefreshStatus.textContent = `Refreshing Hevy... · ${formatHevyWorkoutWindowLabel(workoutWindow)}`;
   }
   try {
     const livePayload = await refreshHevyStrength(undefined, {
@@ -2622,12 +2442,8 @@ async function refreshHevy() {
       ? livePayload.recent_workouts
       : [];
     resetHeatmapCache();
-    sourceLabel.textContent = `${livePayload.source ?? "Hevy"} · ${
-      livePayload.snapshot_date ?? "unknown date"
-    }`;
-    statusBanner.textContent = `${
-      entries.length
-    } lifts · ${formatHevyRefreshLabel(livePayload)}`;
+    sourceLabel.textContent = `${livePayload.source ?? "Hevy"} · ${livePayload.snapshot_date ?? "unknown date"}`;
+    statusBanner.textContent = `${entries.length} lifts · ${formatHevyRefreshLabel(livePayload)}`;
     syncHevyWindowUI(livePayload.refresh_window ?? workoutWindow, livePayload);
     controls?.removeAttribute("hidden");
     renderControls();
@@ -2679,9 +2495,7 @@ function syncHevyWindowUI(windowValue, payload) {
       : `Window ${normalizedWindow}`;
   }
   if (hevyRefreshStatus && payload) {
-    hevyRefreshStatus.textContent = `${formatHevyRefreshLabel(
-      payload,
-    )} · ${normalizedWindow}`;
+    hevyRefreshStatus.textContent = `${formatHevyRefreshLabel(payload)} · ${normalizedWindow}`;
   } else if (hevyRefreshStatus && !payload) {
     hevyRefreshStatus.textContent = `Window ${normalizedWindow}`;
   }
@@ -2814,9 +2628,7 @@ function renderWorkoutExerciseModal(payload) {
       </div>
       <div class="modal-progression">
         <span class="modal-progression-value">${escapeHtml(workoutTitle)}</span>
-        <span class="modal-progression-pct">${escapeHtml(workoutDate)}${
-          templateId ? ` · ${escapeHtml(templateId)}` : ""
-        }</span>
+        <span class="modal-progression-pct">${escapeHtml(workoutDate)}${templateId ? ` · ${escapeHtml(templateId)}` : ""}</span>
       </div>
       <div class="modal-stats">
         <div class="stat-item">
@@ -2829,18 +2641,12 @@ function renderWorkoutExerciseModal(payload) {
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Total volume</span>
-          <span class="stat-item-value">${escapeHtml(
-            stats.totalVolumeLabel,
-          )}</span>
+          <span class="stat-item-value">${escapeHtml(stats.totalVolumeLabel)}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Best volume set</span>
-          <span class="stat-item-value">${escapeHtml(
-            stats.bestVolumeSetLabel,
-          )}</span>
-          <span class="stat-item-subvalue">${escapeHtml(
-            stats.bestVolumeTotalLabel,
-          )}</span>
+          <span class="stat-item-value">${escapeHtml(stats.bestVolumeSetLabel)}</span>
+          <span class="stat-item-subvalue">${escapeHtml(stats.bestVolumeTotalLabel)}</span>
         </div>
       </div>
       <details class="modal-history" open>
@@ -2850,13 +2656,9 @@ function renderWorkoutExerciseModal(payload) {
             .map(
               (set, index) => `
             <div class="modal-history-row">
-              <span class="modal-history-date">#${
-                recentSets.length - index
-              }</span>
+              <span class="modal-history-date">#${recentSets.length - index}</span>
               <span>${escapeHtml(formatHistorySetLabel(set))}</span>
-              <span class="modal-history-1rm">${escapeHtml(
-                formatVolumeLabel(set),
-              )}</span>
+              <span class="modal-history-1rm">${escapeHtml(formatVolumeLabel(set))}</span>
             </div>
           `,
             )
@@ -2919,9 +2721,7 @@ function getWorkoutExerciseStats(sets) {
     totalSets,
     totalReps,
     totalVolumeLabel: totalSets
-      ? `${fmtNum(totalVolume)} ${
-          bestVolumeSet?.weight_kg != null ? "kg total" : "reps total"
-        }`
+      ? `${fmtNum(totalVolume)} ${bestVolumeSet?.weight_kg != null ? "kg total" : "reps total"}`
       : "—",
     bestVolumeSetLabel: bestVolumeSet
       ? formatHistorySetLabel(bestVolumeSet)
@@ -2932,27 +2732,31 @@ function getWorkoutExerciseStats(sets) {
   };
 }
 
-function renderEmptyModal(name) {
-  const modal = document.createElement("div");
-  modal.className = "modal-overlay";
-  modal.innerHTML = `
-    <div class="modal-content card">
-      <div class="modal-header">
-        <h2>${escapeHtml(name)}</h2>
-        <button class="modal-close" type="button">&times;</button>
-      </div>
-      <div class="modal-progression">
-        <span class="modal-progression-value">No history yet</span>
-        <span class="modal-progression-pct">Log this exercise in Hevy to see trend data here.</span>
-      </div>
-    </div>
-  `;
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal || event.target.closest(".modal-close")) {
-      modal.remove();
-    }
-  });
-  document.body.appendChild(modal);
+function makeWarmupSets(workingKg) {
+  const roundPlate = (w) => Math.round(w / 2.5) * 2.5;
+  const bar = 20;
+  const steps = [
+    { pct: 0, reps: 10, label: "Bar" },
+    { pct: 0.4, reps: 8 },
+    { pct: 0.6, reps: 5 },
+    { pct: 0.8, reps: 3 },
+    { pct: 0.9, reps: 1 },
+  ];
+  return steps
+    .map((s) => {
+      if (s.pct === 0) return { weight: bar, reps: s.reps, label: s.label };
+      const w = roundPlate(workingKg * s.pct);
+      if (w <= bar) return null;
+      return { weight: w, reps: s.reps, label: `${fmtWarmupWeight(w)} kg` };
+    })
+    .filter(Boolean);
+}
+
+function fmtWarmupWeight(value) {
+  if (value == null) return "";
+  const n = Number(value);
+  if (Number.isNaN(n)) return "";
+  return n % 1 === 0 ? String(n) : n.toFixed(1);
 }
 
 function renderTrendModal(name, history) {
@@ -2966,6 +2770,18 @@ function renderTrendModal(name, history) {
     .map((item) => item.reps)
     .filter((value) => value != null);
   const latest = history[history.length - 1];
+  const modalWarmup =
+    latest?.weight_kg != null ? makeWarmupSets(latest.weight_kg) : null;
+  const avgRep =
+    reps.length > 0 ? reps.reduce((a, b) => a + b, 0) / reps.length : null;
+  const modalRest =
+    avgRep != null
+      ? avgRep <= 5
+        ? "Rest: 3-5 min"
+        : avgRep <= 12
+          ? "Rest: 60-90 sec"
+          : "Rest: 30-60 sec"
+      : null;
   const bestVolumeSet = getBestVolumeSet(history);
   const hasOneRmTrend = oneRms.length > 0;
   const firstOneRm = hasOneRmTrend ? oneRms[0] : null;
@@ -2982,19 +2798,6 @@ function renderTrendModal(name, history) {
     weights.length > 1 ? weights : reps.length > 1 ? reps : [];
   const trendLabel = weights.length > 1 ? "Working weight trend" : "Rep trend";
   const recent = history.slice(-10).reverse();
-  const latestWeight = latest?.weight_kg;
-  const modalWarmup =
-    latestWeight != null ? makeWarmupSets(latestWeight) : null;
-  const avgRep =
-    reps.length > 0 ? reps.reduce((a, b) => a + b, 0) / reps.length : null;
-  const modalRest =
-    avgRep != null
-      ? avgRep <= 5
-        ? "Rest: 3-5 min"
-        : avgRep <= 12
-          ? "Rest: 60-90 sec"
-          : "Rest: 30-60 sec"
-      : null;
 
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
@@ -3008,18 +2811,12 @@ function renderTrendModal(name, history) {
         hasOneRmTrend && firstOneRm != null && lastOneRm != null
           ? `
         <div class="modal-progression">
-          <span class="modal-progression-value ${
-            trendUp ? "delta-up" : "delta-down"
-          }">
+          <span class="modal-progression-value ${trendUp ? "delta-up" : "delta-down"}">
             ${fmtModalNumber(firstOneRm)} kg → ${fmtModalNumber(lastOneRm)} kg
           </span>
           ${
             oneRmPct != null
-              ? `<span class="modal-progression-pct ${
-                  trendUp ? "delta-up" : "delta-down"
-                }">${oneRmPct >= 0 ? "+" : ""}${oneRmPct}% over ${
-                  history.length
-                } days</span>`
+              ? `<span class="modal-progression-pct ${trendUp ? "delta-up" : "delta-down"}">${oneRmPct >= 0 ? "+" : ""}${oneRmPct}% over ${history.length} days</span>`
               : `<span class="modal-progression-pct">No comparable 1RM trend yet</span>`
           }
         </div>
@@ -3031,7 +2828,20 @@ function renderTrendModal(name, history) {
         </div>
       `
       }
-      ${modalWarmup ? renderWarmupHtml(modalWarmup, latestWeight) : ""}
+      ${
+        modalWarmup
+          ? `
+        <details class="modal-warmup">
+          <summary>Warm-up — ${escapeHtml(fmtWarmupWeight(latest?.weight_kg))} kg</summary>
+          <div class="modal-warmup-list">
+            ${modalWarmup
+              .map((s) => `<span>${escapeHtml(s.label)} × ${s.reps}</span>`)
+              .join("")}
+          </div>
+        </details>
+      `
+          : ""
+      }
       ${
         modalRest
           ? `<p class="modal-rest-label">${escapeHtml(modalRest)}</p>`
@@ -3042,11 +2852,7 @@ function renderTrendModal(name, history) {
           ? `
         <div class="modal-section">
           <p class="label">${trendLabel}</p>
-          ${renderSparkline(trendSeries, 300, 72, {
-            dots: true,
-            labels: true,
-            color: weights.length > 1 ? "var(--accent)" : "var(--accent-2)",
-          })}
+          ${renderSparkline(trendSeries, 300, 72, { dots: true, labels: true, color: weights.length > 1 ? "var(--accent)" : "var(--accent-2)" })}
         </div>
       `
           : ""
@@ -3054,56 +2860,36 @@ function renderTrendModal(name, history) {
       <div class="modal-stats">
         <div class="stat-item">
           <span class="stat-item-label">Current 1RM</span>
-          <span class="stat-item-value">${
-            lastOneRm != null ? `${fmtModalNumber(lastOneRm)} kg` : "—"
-          }</span>
+          <span class="stat-item-value">${lastOneRm != null ? `${fmtModalNumber(lastOneRm)} kg` : "—"}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label" title="Highest estimated 1RM ever recorded for this exercise">Peak 1RM</span>
-          <span class="stat-item-value">${
-            peak != null ? `${fmtModalNumber(peak)} kg` : "—"
-          }</span>
+          <span class="stat-item-value">${peak != null ? `${fmtModalNumber(peak)} kg` : "—"}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Start 1RM</span>
-          <span class="stat-item-value">${
-            firstOneRm != null ? `${fmtModalNumber(firstOneRm)} kg` : "—"
-          }</span>
+          <span class="stat-item-value">${firstOneRm != null ? `${fmtModalNumber(firstOneRm)} kg` : "—"}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Latest set</span>
-          <span class="stat-item-value">${escapeHtml(
-            formatHistorySetLabel(latest),
-          )}</span>
+          <span class="stat-item-value">${escapeHtml(formatHistorySetLabel(latest))}</span>
         </div>
         <div class="stat-item">
           <span class="stat-item-label">Best volume set</span>
-          <span class="stat-item-value">${escapeHtml(
-            bestVolumeSet ? formatHistorySetLabel(bestVolumeSet) : "—",
-          )}</span>
-          <span class="stat-item-subvalue">${escapeHtml(
-            bestVolumeSet ? formatVolumeLabel(bestVolumeSet) : "—",
-          )}</span>
+          <span class="stat-item-value">${escapeHtml(bestVolumeSet ? formatHistorySetLabel(bestVolumeSet) : "—")}</span>
+          <span class="stat-item-subvalue">${escapeHtml(bestVolumeSet ? formatVolumeLabel(bestVolumeSet) : "—")}</span>
         </div>
       </div>
       <details class="modal-history">
-        <summary><span class="label">Recent history (last ${
-          recent.length
-        })</span></summary>
+        <summary><span class="label">Recent history (last ${recent.length})</span></summary>
         <div class="modal-history-list">
           ${recent
             .map(
               (item) => `
             <div class="modal-history-row">
-              <span class="modal-history-date">${escapeHtml(
-                String(item.date).slice(5),
-              )}</span>
+              <span class="modal-history-date">${escapeHtml(String(item.date).slice(5))}</span>
               <span>${escapeHtml(formatHistorySetLabel(item))}</span>
-              <span class="modal-history-1rm">${
-                item.estimated_one_rm_kg != null
-                  ? `${item.estimated_one_rm_kg} kg`
-                  : "—"
-              }</span>
+              <span class="modal-history-1rm">${item.estimated_one_rm_kg != null ? `${item.estimated_one_rm_kg} kg` : "—"}</span>
             </div>
           `,
             )
@@ -3162,4 +2948,4 @@ function renderTrendModal(name, history) {
 }
 
 window.toggleView = toggleView;
-export { escapeHtml, fmtNum as formatNum, makeWarmupSets, makeRestLabel };
+export { escapeHtml, fmtNum as formatNum };

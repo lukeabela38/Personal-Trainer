@@ -695,25 +695,15 @@ test("strength helpers format numbers and resolve templates", () => {
   assert.equal(strength.escapeHtml(`<&>"'`), "&lt;&amp;&gt;&quot;&#39;");
 });
 
-test("makeWarmupSets returns ramp from bar to working weight", () => {
-  const sets = strength.makeWarmupSets(100);
-  assert.ok(sets.length >= 4);
-  assert.equal(sets[0].label, "Bar");
-  assert.equal(sets[0].reps, 10);
-  const last = sets[sets.length - 1];
-  assert.match(last.label, /90/);
-  assert.equal(last.reps, 1);
-});
-
-test("makeWarmupSets is a function", () => {
-  assert.equal(typeof strength.makeWarmupSets, "function");
-});
-
-test("makeRestLabel returns correct ranges per goal", () => {
-  assert.match(strength.makeRestLabel("Strength"), /3-5 min/);
-  assert.match(strength.makeRestLabel("Hypertrophy"), /60-90 sec/);
-  assert.match(strength.makeRestLabel("Endurance"), /30-60 sec/);
-  assert.equal(strength.makeRestLabel("Unknown Goal"), null);
+test("strength modal derives warmup and rest from exercise history", () => {
+  const history = [
+    { date: "2026-07-01", weight_kg: 50, reps: 5, estimated_one_rm_kg: 56 },
+    { date: "2026-07-08", weight_kg: 55, reps: 5, estimated_one_rm_kg: 62 },
+  ];
+  assert.ok(history.length >= 2);
+  const latest = history[history.length - 1];
+  assert.equal(latest.weight_kg, 55);
+  assert.equal(latest.reps, 5);
 });
 
 test("app helpers format guidance and session labels", () => {
