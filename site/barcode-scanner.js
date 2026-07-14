@@ -36,10 +36,12 @@ function ensureModal() {
   document.body.appendChild(scannerModal);
   scannerVideo = scannerModal.querySelector("#scanner-video");
   scannerStatus = scannerModal.querySelector("#scanner-status");
-  scannerModal.querySelector("#scanner-cancel").addEventListener("click", () => {
-    cleanupScanner();
-    scannerModal.close();
-  });
+  scannerModal
+    .querySelector("#scanner-cancel")
+    .addEventListener("click", () => {
+      cleanupScanner();
+      scannerModal.close();
+    });
 }
 
 async function startScanning() {
@@ -48,7 +50,11 @@ async function startScanning() {
     scannerStatus.textContent = "Requesting camera…";
 
     mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
+      video: {
+        facingMode: "environment",
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
     });
     scannerVideo.srcObject = mediaStream;
     await scannerVideo.play();
@@ -97,7 +103,7 @@ function cleanupScanner() {
   }
 }
 
-async function lookupProduct(barcode) {
+export async function lookupProduct(barcode) {
   try {
     const response = await fetch(`${OPEN_FOOD_FACTS_API}/${barcode}.json`);
     const data = await response.json();
