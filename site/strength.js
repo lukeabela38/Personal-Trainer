@@ -27,7 +27,6 @@ const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
 const summaryEl = document.getElementById("strength-summary");
 const controls = document.getElementById("strength-controls");
-const heatmapPanel = document.getElementById("heatmap-panel");
 const heatmapSummary = document.getElementById("heatmap-summary");
 const heatmapFigure = document.getElementById("heatmap-figure");
 const heatmapDetail = document.getElementById("heatmap-detail");
@@ -937,7 +936,7 @@ function renderHeatmapContent(data) {
       activeHeatmapActivityOpen = false;
     }
     heatmapDetail.innerHTML = selected
-      ? renderHeatmapDetail(selected, data)
+      ? renderHeatmapDetail(selected)
       : `
         <div class="empty-state">
           <span class="empty-state-kicker">Heatmap</span>
@@ -1020,7 +1019,7 @@ function renderHeatmapSummary(data) {
   `;
 }
 
-function renderHeatmapDetail(zone, data) {
+function renderHeatmapDetail(zone) {
   const sessions = Array.isArray(zone.sessions) ? zone.sessions : [];
   const selectedSession =
     sessions.find((session) => session.key === activeHeatmapSessionKey) ??
