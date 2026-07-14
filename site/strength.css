@@ -26,7 +26,8 @@
   width: fit-content;
   padding: 8px 12px;
   border-radius: 999px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       135deg,
       rgba(127, 209, 185, 0.14),
       rgba(157, 140, 255, 0.12)
@@ -46,7 +47,8 @@
   padding: 16px;
   border-radius: 24px;
   border: 1px solid rgba(127, 209, 185, 0.14);
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.045),
       rgba(255, 255, 255, 0.018)
@@ -97,7 +99,8 @@
   margin: 0;
   border: 1px solid rgba(127, 209, 185, 0.14);
   border-radius: 999px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.05),
       rgba(255, 255, 255, 0.025)
@@ -218,7 +221,8 @@
   padding: 14px;
   border-radius: 18px;
   border: 1px solid rgba(127, 209, 185, 0.12);
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.04),
       rgba(255, 255, 255, 0.02)
@@ -277,7 +281,8 @@
   padding: 10px 12px;
   border: 1px solid rgba(127, 209, 185, 0.1);
   border-radius: 18px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.035),
       rgba(255, 255, 255, 0.018)
@@ -412,7 +417,8 @@
   padding: 16px;
   border-radius: 24px;
   border: 1px solid rgba(127, 209, 185, 0.12);
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.045),
       rgba(255, 255, 255, 0.018)
@@ -482,7 +488,8 @@
   text-align: left;
   padding: 12px 14px;
   border-radius: 16px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.04),
       rgba(255, 255, 255, 0.02)
@@ -511,7 +518,8 @@
 }
 
 .heatmap-activity-toggle[aria-expanded="true"] {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       135deg,
       rgba(127, 209, 185, 0.1),
       rgba(255, 255, 255, 0.02)
@@ -633,7 +641,8 @@
   padding: 14px;
   border-radius: 18px;
   border: 1px solid rgba(127, 209, 185, 0.12);
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.045),
       rgba(255, 255, 255, 0.018)
@@ -690,7 +699,8 @@
 }
 
 .strength-tab.is-active {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       135deg,
       rgba(127, 209, 185, 0.28),
       rgba(157, 140, 255, 0.24)
@@ -713,7 +723,8 @@
 }
 
 .summary-tile--lead {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       135deg,
       rgba(127, 209, 185, 0.14),
       rgba(157, 140, 255, 0.1)
@@ -781,7 +792,8 @@
   gap: 8px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       135deg,
       rgba(127, 209, 185, 0.18),
       rgba(157, 140, 255, 0.16)
@@ -968,7 +980,8 @@
   padding: 14px;
   border-radius: 18px;
   border: 1px solid rgba(127, 209, 185, 0.1);
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.04),
       rgba(255, 255, 255, 0.018)
@@ -1044,7 +1057,8 @@
 .exercise-card {
   border-radius: 18px;
   padding: 16px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.035),
       rgba(255, 255, 255, 0.018)
@@ -1126,7 +1140,8 @@
 }
 
 .exercise-metric--lead {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       135deg,
       rgba(127, 209, 185, 0.09),
       rgba(157, 140, 255, 0.06)
@@ -1263,10 +1278,28 @@
   color: var(--muted);
   padding: 4px 0;
   user-select: none;
+  list-style: none;
+}
+
+.exercise-warmup-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.exercise-warmup-toggle::before {
+  content: "▶ ";
+  display: inline-block;
+  font-size: 0.65rem;
+  transition: transform 0.15s;
+  color: var(--muted);
+}
+
+details.exercise-warmup[open] .exercise-warmup-toggle::before {
+  transform: rotate(90deg);
 }
 
 .exercise-warmup-toggle:hover {
   color: var(--text);
+  text-decoration: underline;
 }
 
 .exercise-warmup-list {
