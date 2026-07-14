@@ -1,15 +1,15 @@
 const OPEN_FOOD_FACTS_API = "https://world.openfoodfacts.org/api/v2/product";
+const ZBAR_CDN = "https://cdn.jsdelivr.net/npm/zbar-wasm@2/dist/index.min.mjs";
 
 let scannerModal = null;
 let scannerVideo = null;
 let scannerStatus = null;
 let mediaStream = null;
+let scanCanvas = null;
+let scanContext = null;
+let zbarReady = null;
 
 export async function scanBarcode() {
-  if (!("BarcodeDetector" in window)) {
-    return null;
-  }
-
   ensureModal();
   const code = await startScanning();
   cleanupScanner();
@@ -42,6 +42,21 @@ function ensureModal() {
       cleanupScanner();
       scannerModal.close();
     });
+  scanCanvas = document.createElement("canvas");
+  scanCanvas.width = 640;
+  scanCanvas.height = 480;
+  scanContext = scanCanvas.getContext("2d");
+}
+
+async function ensureZbar() {
+  if (zbarReady) return zbarReady;
+  zbarReady = (async () => {
+    const mod = await import(ZBAR_CDN);
+    const scanner = new mod.Scanner();
+    await scanner.init();
+    return scanner;
+  })();
+  return zbarReady;
 }
 
 async function startScanning() {
@@ -59,10 +74,10 @@ async function startScanning() {
     scannerVideo.srcObject = mediaStream;
     await scannerVideo.play();
 
+    scannerStatus.textContent = "Loading barcode detector…";
+    const scanner = await ensureZbar();
+
     scannerStatus.textContent = "Point camera at a barcode";
-    const detector = new BarcodeDetector({
-      formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39"],
-    });
 
     const timeout = setTimeout(() => {
       cleanupScanner();
@@ -70,10 +85,12 @@ async function startScanning() {
     }, 30000);
 
     while (mediaStream) {
-      const barcodes = await detector.detect(scannerVideo);
-      if (barcodes.length > 0) {
+      scanContext.drawImage(scannerVideo, 0, 0, 640, 480);
+      const imageData = scanContext.getImageData(0, 0, 640, 480);
+      const symbols = scanner.scanImageData(imageData);
+      if (symbols.length > 0) {
         clearTimeout(timeout);
-        return barcodes[0].rawValue;
+        return symbols[0].decode();
       }
       await new Promise((r) => setTimeout(r, 300));
     }
