@@ -37,6 +37,16 @@ class TestingGuardrailsTests(TestCase):
 
         self.assertEqual(violations, ["frontend source changed without matching tests: site/app.js"])
 
+    def test_allows_frontend_changes_when_browser_tests_change(self) -> None:
+        violations = testing_guardrails.evaluate_guardrails(
+            [
+                "site/app.js",
+                "tests/browser/site-smoke.test.js",
+            ]
+        )
+
+        self.assertEqual(violations, [])
+
     def test_ignores_docs_only_changes(self) -> None:
         violations = testing_guardrails.evaluate_guardrails(["docs/working-conventions.md"])
 

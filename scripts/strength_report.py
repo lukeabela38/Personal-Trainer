@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -42,6 +43,12 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Optional path to write a merged Hevy exercise catalog.",
     )
+    parser.add_argument(
+        "--history-output",
+        type=Path,
+        default=None,
+        help="Optional directory to write per-exercise history and gain artifacts.",
+    )
     parser.add_argument("--source", type=Path, default=None)
     args = parser.parse_args(argv)
     try:
@@ -57,6 +64,10 @@ def main(argv: list[str] | None = None) -> int:
                 json.dumps(build_catalog(raw), indent=2),
                 encoding="utf-8",
             )
+        history_output = args.history_output
+        if history_output is None:
+            history_output = args.output.parent / "history" / "exercises"
+        _write_history_artifacts(raw, history_output)
     except Exception as exc:  # noqa: BLE001
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -155,6 +166,70 @@ def build_catalog(raw: Any) -> dict[str, Any]:
     }
 
 
+def build_histories(raw: Any) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in _extract_records(raw):
+        template_id = str(
+            row.get("exerciseTemplateId") or row.get("exercise_template_id") or row.get("template_id") or ""
+        ).strip()
+        name = str(
+            row.get("exerciseName")
+            or row.get("_exercise_name")
+            or row.get("exercise_name")
+            or ALIASES.get(template_id, template_id)
+        ).strip()
+        if not name:
+            continue
+        key = template_id or name
+        workout_start_time = str(
+            row.get("workoutStartTime") or row.get("workout_start_time") or row.get("start_time") or ""
+        )
+        grouped[key].append(
+            {
+                "date": workout_start_time[:10],
+                "weight_kg": _to_float(row.get("weight") or row.get("weight_kg")),
+                "reps": int(row.get("reps") or 0),
+                "estimated_one_rm_kg": _estimate_one_rm(
+                    _to_float(row.get("weight") or row.get("weight_kg")),
+                    int(row.get("reps") or 0),
+                ),
+                "workout_start_time": workout_start_time,
+                "workout_title": str(row.get("workoutTitle") or row.get("workout_title") or "").strip(),
+            }
+        )
+
+    histories: dict[str, list[dict[str, Any]]] = {}
+    for key, rows in grouped.items():
+        rows.sort(key=lambda row: row["workout_start_time"])
+        histories[key] = rows
+    return histories
+
+
+def build_gains(raw: Any) -> dict[str, dict[str, Any]]:
+    gains: dict[str, dict[str, Any]] = {}
+    for key, history in build_histories(raw).items():
+        one_rms = [row["estimated_one_rm_kg"] for row in history if row.get("estimated_one_rm_kg") is not None]
+        if len(one_rms) < 2:
+            gains[key] = {
+                "start": None,
+                "current": one_rms[-1] if one_rms else None,
+                "peak": one_rms[-1] if one_rms else None,
+                "gain_pct": 0,
+                "stalled": False,
+            }
+            continue
+        recent = one_rms[-30:]
+        stalled = len(recent) > 5 and recent[-1] <= recent[0]
+        gains[key] = {
+            "start": one_rms[0],
+            "current": one_rms[-1],
+            "peak": max(one_rms),
+            "gain_pct": round(((one_rms[-1] - one_rms[0]) / one_rms[0]) * 100, 1) if one_rms[0] else 0,
+            "stalled": stalled,
+        }
+    return gains
+
+
 def _extract_records(raw: Any) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     if isinstance(raw, list):
@@ -169,6 +244,15 @@ def _extract_records(raw: Any) -> list[dict[str, Any]]:
                 if isinstance(value, list):
                     rows.extend(row for row in value if isinstance(row, dict))
     return rows
+
+
+def _write_history_artifacts(raw: Any, output_dir: Path) -> None:
+    histories = build_histories(raw)
+    gains = build_gains(raw)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for key, history in histories.items():
+        (output_dir / f"{key}.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
+    (output_dir / "_gains.json").write_text(json.dumps(gains, indent=2), encoding="utf-8")
 
 
 def _best_record(records: Iterable[SetRecord]) -> SetRecord | None:

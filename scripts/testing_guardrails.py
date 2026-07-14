@@ -11,7 +11,7 @@ from dataclasses import dataclass
 class GuardrailRule:
     name: str
     source_prefix: str
-    test_prefix: str
+    test_prefixes: tuple[str, ...]
     source_suffixes: tuple[str, ...]
 
 
@@ -19,19 +19,19 @@ RULES = (
     GuardrailRule(
         name="python",
         source_prefix="personal_trainer/src/personal_trainer/",
-        test_prefix="personal_trainer/tests/",
+        test_prefixes=("personal_trainer/tests/",),
         source_suffixes=(".py",),
     ),
     GuardrailRule(
         name="scripts",
         source_prefix="scripts/",
-        test_prefix="tests/",
+        test_prefixes=("tests/",),
         source_suffixes=(".py",),
     ),
     GuardrailRule(
         name="frontend",
         source_prefix="site/",
-        test_prefix="tests/frontend/",
+        test_prefixes=("tests/browser/", "tests/frontend/"),
         source_suffixes=(".js",),
     ),
 )
@@ -62,8 +62,7 @@ def evaluate_guardrails(changed_files: list[str]) -> list[str]:
         source_files = _matching_paths(changed_files, rule.source_prefix, rule.source_suffixes)
         if not source_files:
             continue
-        test_files = _matching_paths(changed_files, rule.test_prefix, ())
-        if test_files:
+        if any(_matching_paths(changed_files, prefix, ()) for prefix in rule.test_prefixes):
             continue
         violations.append(f"{rule.name} source changed without matching tests: {', '.join(source_files)}")
     return violations

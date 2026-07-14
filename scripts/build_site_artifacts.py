@@ -105,6 +105,7 @@ def _copy_site_shell(site_dir: Path, output_dir: Path) -> None:
         Path("strength.html"),
         Path("strength.css"),
         Path("strength.js"),
+        Path("progression.js"),
         Path("strength/index.html"),
         Path("speed.html"),
         Path("speed.css"),
