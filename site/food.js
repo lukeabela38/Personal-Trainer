@@ -1,3 +1,4 @@
+import { scanBarcode } from "./barcode-scanner.js";
 import {
   escapeHtml,
   formatDisplayValue,
@@ -35,7 +36,7 @@ document
   ?.addEventListener("click", resetFoodForm);
 document
   .getElementById("scan-barcode")
-  ?.addEventListener("click", focusBarcodeInput);
+  ?.addEventListener("click", handleScanBarcode);
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-food-timing]");
@@ -217,8 +218,30 @@ function resetFoodForm(clearTiming = true) {
   foodItem?.focus();
 }
 
-function focusBarcodeInput() {
-  foodBarcode?.focus();
+async function handleScanBarcode() {
+  if (!("BarcodeDetector" in window) && foodHelp) {
+    foodHelp.textContent =
+      "Barcode scanning requires Chrome or iOS Safari 16.4+. Type the barcode number manually.";
+    foodBarcode?.focus();
+    return;
+  }
+  if (foodBarcode) foodBarcode.value = "Scanning…";
+  const result = await scanBarcode();
+  if (result) {
+    if (foodBarcode) foodBarcode.value = result.barcode;
+    if (result.name && foodItem) {
+      foodItem.value = result.name;
+    }
+    if (result.detail && foodHelp) {
+      foodHelp.textContent = `Found: ${result.name} · ${result.detail}`;
+    } else if (!result.name && foodHelp) {
+      foodHelp.textContent = `Barcode ${result.barcode} not found in database. Type the product name manually.`;
+    }
+    foodItem?.focus();
+  } else {
+    if (foodBarcode) foodBarcode.value = "";
+    foodBarcode?.focus();
+  }
 }
 
 function renderFoodList(entries) {
