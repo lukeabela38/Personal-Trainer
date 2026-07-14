@@ -279,8 +279,8 @@ grid?.addEventListener("click", async (event) => {
     );
     const history = await response.json();
     renderTrendModal(card.dataset.exerciseName ?? templateId, history);
-  } catch {
-    // no history available
+  } catch (e) {
+    console.error("Exercise history error:", e);
   }
 });
 
@@ -2833,11 +2833,6 @@ function renderTrendModal(name, history) {
           ${renderSparkline(trendSeries, 300, 72, { dots: true, labels: true, color: weights.length > 1 ? "var(--accent)" : "var(--accent-2)" })}
         </div>
       `
-          : ""
-      }
-      ${
-        modalRest
-          ? `<p class="modal-rest-label">${escapeHtml(modalRest)}</p>`
           : ""
       }
       <div class="modal-stats">
