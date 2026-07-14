@@ -2826,23 +2826,6 @@ function renderTrendModal(name, history) {
       `
       }
       ${
-        modalWarmup
-          ? `
-        <details class="modal-history">
-          <summary><span class="label">Warm-up — ${escapeHtml(fmtWarmupWeight(latest?.weight_kg))} kg</span></summary>
-          <div class="modal-warmup-list">
-            ${modalWarmup
-              .map(
-                (s) =>
-                  `<div class="modal-history-row"><span>${escapeHtml(s.label)} × ${s.reps}</span></div>`,
-              )
-              .join("")}
-          </div>
-        </details>
-      `
-          : ""
-      }
-      ${
         trendSeries.length > 1
           ? `
         <div class="modal-section">
@@ -2879,6 +2862,28 @@ function renderTrendModal(name, history) {
           <span class="stat-item-value">${escapeHtml(bestVolumeSet ? formatHistorySetLabel(bestVolumeSet) : "—")}</span>
           <span class="stat-item-subvalue">${escapeHtml(bestVolumeSet ? formatVolumeLabel(bestVolumeSet) : "—")}</span>
         </div>
+        ${
+          modalRest
+            ? `
+        <div class="stat-item">
+          <span class="stat-item-label">Rest period</span>
+          <span class="stat-item-value">${escapeHtml(modalRest)}</span>
+        </div>`
+            : ""
+        }
+        ${
+          modalWarmup
+            ? `
+        <div class="stat-item">
+          <span class="stat-item-label">Warm-up ramp</span>
+          <span class="stat-item-value">${modalWarmup
+            .map(
+              (s) => `${escapeHtml(fmtWarmupWeight(s.weight))} kg × ${s.reps}`,
+            )
+            .join(" · ")}</span>
+        </div>`
+            : ""
+        }
       </div>
       <details class="modal-history">
         <summary><span class="label">Recent history (last ${recent.length})</span></summary>
