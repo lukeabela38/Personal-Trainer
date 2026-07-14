@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--tunnel",
         action="store_true",
-        help="Start a cloudflared tunnel for mobile testing. Requires cloudflared to be installed.",
+        help="Start a cloudflared tunnel for mobile testing. Falls back to Docker if cloudflared is not installed locally.",
     )
     args = parser.parse_args(argv)
 
@@ -108,15 +108,42 @@ def _serve_directory(site_output: Path, port: int) -> int:
     return 0
 
 
+tunnel_process: subprocess.Popen | None = None
+
+
 def _start_tunnel(port: int) -> None:
     global tunnel_process
     url = f"http://localhost:{port}"
-    tunnel_process = subprocess.Popen(
-        ["cloudflared", "tunnel", "--url", url],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
+
+    if _cloudflared_installed():
+        tunnel_process = subprocess.Popen(
+            ["cloudflared", "tunnel", "--url", url],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    else:
+        print(
+            "cloudflared not found locally, using Docker image (cloudflare/cloudflared)...",
+            file=sys.stderr,
+        )
+        tunnel_process = subprocess.Popen(
+            [
+                "docker",
+                "compose",
+                "run",
+                "--rm",
+                "--service-ports",
+                "--name",
+                "personal-trainer-tunnel",
+                "tunnel",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+
     url_pattern = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
     tunnel_url = None
     if tunnel_process.stdout:
@@ -144,6 +171,14 @@ def _stop_tunnel() -> None:
             tunnel_process.kill()
             tunnel_process.wait()
         tunnel_process = None
+
+
+def _cloudflared_installed() -> bool:
+    try:
+        subprocess.run(["cloudflared", "--version"], capture_output=True, check=False)
+        return True
+    except FileNotFoundError:
+        return False
 
 
 def _container_path(path: Path) -> Path:
