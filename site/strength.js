@@ -10,6 +10,7 @@ import {
   saveStoredHevyApiKey,
   saveStoredHevyWorkoutWindow,
 } from "./hevy-live.js";
+import { loadAll, loadIndex, loadRange } from "./history.js";
 import { buildProgressionState } from "./progression.js";
 
 const strengthUrl = new URL("./strength.json", import.meta.url);
@@ -18,12 +19,20 @@ const historyContent = document.getElementById("history-content");
 const historyWindowChip = document.getElementById("history-window-chip");
 const historyResultsCount = document.getElementById("history-results-count");
 const historySearchInput = document.getElementById("history-search");
+const analyticsPanel = document.getElementById("strength-analytics");
+const analyticsToggle = document.getElementById("strength-analytics-toggle");
 const heroNote = document.getElementById("strength-hero-note");
 const highlightsPanel = document.getElementById("strength-highlights");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
 const summaryEl = document.getElementById("strength-summary");
 const controls = document.getElementById("strength-controls");
+const heatmapSummary = document.getElementById("heatmap-summary");
+const heatmapFigure = document.getElementById("heatmap-figure");
+const heatmapDetail = document.getElementById("heatmap-detail");
+const heatmapWindowControls = document.getElementById(
+  "heatmap-window-controls",
+);
 const hevyRefreshButton = document.getElementById("refresh-hevy");
 const hevySetKeyButton = document.getElementById("set-hevy-key");
 const hevyWindowInput = document.getElementById("hevy-workout-window");
@@ -39,20 +48,185 @@ const exerciseCatalogUrl = new URL(
   "./history/exercises/index.json",
   import.meta.url,
 );
+const heatmapSvgUrl = new URL("./assets/strength-heatmap.svg", import.meta.url);
+const activeTabStorageKey = "personal-trainer:strength-active-tab";
+const activeHeatmapZoneStorageKey = "personal-trainer:strength-heatmap-zone";
+const analyticsVisibilityStorageKey =
+  "personal-trainer:strength-show-analytics";
 
 let entries = [];
 let recentWorkouts = [];
 let activeCategory = "All";
 let activeSort = "date";
-let activeTab = "history";
+let activeTab = readStoredStrengthTab();
 let searchQuery = "";
 let historyQuery = "";
 let compactView = false;
 let gainsCache = null;
 let exerciseIdByName = new Map();
+let exerciseCategoryByName = new Map();
 let exerciseCatalogLoaded = false;
 let tabsBound = false;
 let activeProgressionGoal = readStoredProgressionGoal();
+let activeHeatmapWindow = readStoredHeatmapWindow();
+let heatmapDataCache = new Map();
+let heatmapPending = null;
+let activeHeatmapZone = readStoredHeatmapZone();
+let activeHeatmapSessionKey = null;
+let activeHeatmapActivityOpen = false;
+let heatmapSvgMarkup = null;
+let heatmapSvgPending = null;
+let heatmapSvgLoadState = "idle";
+let showStrengthAnalytics = readStoredStrengthAnalytics();
+
+const HEATMAP_WINDOWS = {
+  "7d": { label: "7d", days: 7 },
+  "30d": { label: "30d", days: 30 },
+  all: { label: "All-time", days: null },
+};
+
+const HEATMAP_SCALE_STEPS = [
+  { label: "Gray", tone: "is-gray" },
+  { label: "Cool", tone: "is-cool" },
+  { label: "Warm", tone: "is-warm" },
+  { label: "Hot", tone: "is-hot" },
+];
+
+const HEATMAP_ZONES = [
+  {
+    id: "front-shoulders",
+    label: "Delts",
+    side: "front",
+    left: "18%",
+    top: "8%",
+    width: "64%",
+    height: "13%",
+  },
+  {
+    id: "front-chest",
+    label: "Chest",
+    side: "front",
+    left: "20%",
+    top: "22%",
+    width: "60%",
+    height: "15%",
+  },
+  {
+    id: "front-arms",
+    label: "Biceps",
+    side: "front",
+    left: "6%",
+    top: "24%",
+    width: "14%",
+    height: "34%",
+  },
+  {
+    id: "front-core",
+    label: "Abs",
+    side: "front",
+    left: "28%",
+    top: "39%",
+    width: "44%",
+    height: "15%",
+  },
+  {
+    id: "front-quads",
+    label: "Quads",
+    side: "front",
+    left: "22%",
+    top: "56%",
+    width: "56%",
+    height: "21%",
+  },
+  {
+    id: "front-calves",
+    label: "Calves",
+    side: "front",
+    left: "28%",
+    top: "79%",
+    width: "44%",
+    height: "12%",
+  },
+  {
+    id: "back-rear-delts",
+    label: "Rear delts",
+    side: "back",
+    left: "18%",
+    top: "8%",
+    width: "64%",
+    height: "13%",
+  },
+  {
+    id: "back-upper-back",
+    label: "Traps",
+    side: "back",
+    left: "18%",
+    top: "22%",
+    width: "64%",
+    height: "15%",
+  },
+  {
+    id: "back-lats",
+    label: "Lats",
+    side: "back",
+    left: "14%",
+    top: "34%",
+    width: "72%",
+    height: "16%",
+  },
+  {
+    id: "back-arms",
+    label: "Triceps",
+    side: "back",
+    left: "6%",
+    top: "24%",
+    width: "14%",
+    height: "34%",
+  },
+  {
+    id: "back-glutes",
+    label: "Glutes",
+    side: "back",
+    left: "26%",
+    top: "53%",
+    width: "48%",
+    height: "15%",
+  },
+  {
+    id: "back-hamstrings",
+    label: "Hamstrings",
+    side: "back",
+    left: "22%",
+    top: "68%",
+    width: "56%",
+    height: "18%",
+  },
+  {
+    id: "back-calves",
+    label: "Calves",
+    side: "back",
+    left: "28%",
+    top: "82%",
+    width: "44%",
+    height: "10%",
+  },
+];
+
+const HEATMAP_REGION_TARGETS = {
+  "front-shoulders": ["front-delts"],
+  "front-chest": ["front-chest"],
+  "front-arms": ["front-biceps"],
+  "front-core": ["front-core"],
+  "front-quads": ["front-quads"],
+  "front-calves": ["front-calves"],
+  "back-rear-delts": ["back-rear-delts"],
+  "back-upper-back": ["back-traps"],
+  "back-lats": ["back-lats"],
+  "back-arms": ["back-triceps"],
+  "back-glutes": ["back-glutes"],
+  "back-hamstrings": ["back-hamstrings"],
+  "back-calves": ["back-calves"],
+};
 
 loadExerciseCatalog();
 loadStrength();
@@ -63,6 +237,9 @@ hevyWindowInput?.addEventListener("change", handleHevyWindowChange);
 historySearchInput?.addEventListener("input", () => {
   historyQuery = historySearchInput.value.toLowerCase().trim();
   renderHistory();
+});
+analyticsToggle?.addEventListener("click", () => {
+  setStrengthAnalyticsVisible(!showStrengthAnalytics);
 });
 historyContent?.addEventListener("click", (event) => {
   const button = event.target.closest(".workout-exercise");
@@ -75,6 +252,15 @@ historyContent?.addEventListener("click", (event) => {
     // ignore malformed payloads
   }
 });
+renderStrengthAnalyticsVisibility();
+heatmapWindowControls?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-heatmap-window]");
+  if (!button) return;
+  setHeatmapWindow(button.dataset.heatmapWindow ?? "30d");
+});
+heatmapDetail?.addEventListener("click", handleHeatmapDetailClick);
+heatmapFigure?.addEventListener("click", handleHeatmapFigureClick);
+heatmapFigure?.addEventListener("keydown", handleHeatmapFigureKeydown);
 grid?.addEventListener("click", async (event) => {
   const card = event.target.closest(".exercise-card");
   if (!card) return;
@@ -130,11 +316,13 @@ async function loadStrength() {
     recentWorkouts = Array.isArray(payload.recent_workouts)
       ? payload.recent_workouts
       : [];
+    resetHeatmapCache();
 
     renderControls();
     renderSummary();
     renderHighlights();
     renderCoachNote();
+    renderStrengthAnalyticsVisibility();
     renderTabs();
     renderCurrentTab();
     controls.removeAttribute("hidden");
@@ -142,12 +330,14 @@ async function loadStrength() {
       renderSummary();
       renderHighlights();
       renderCoachNote();
+      renderStrengthAnalyticsVisibility();
       renderCurrentTab();
     });
     loadGains().then(() => {
       renderSummary();
       renderHighlights();
       renderCoachNote();
+      renderStrengthAnalyticsVisibility();
       renderCurrentTab();
     });
   } catch {
@@ -158,6 +348,7 @@ async function loadStrength() {
 function renderUnavailableStrength(message) {
   entries = [];
   recentWorkouts = [];
+  resetHeatmapCache();
   sourceLabel.textContent = "Unavailable";
   statusBanner.textContent = message;
   controls?.removeAttribute("hidden");
@@ -171,6 +362,7 @@ function renderUnavailableStrength(message) {
     heroNote.textContent = message;
     heroNote.classList.remove("skeleton");
   }
+  renderStrengthAnalyticsVisibility();
   if (historyContent) {
     historyContent.innerHTML = `
       <div class="empty-state">
@@ -220,8 +412,17 @@ async function loadExerciseCatalog() {
           String(exercise.exercise_template_id),
         ]),
     );
+    exerciseCategoryByName = new Map(
+      exercises
+        .filter((exercise) => exercise?.name)
+        .map((exercise) => [
+          String(exercise.name),
+          String(exercise.category ?? ""),
+        ]),
+    );
   } catch {
     exerciseIdByName = new Map();
+    exerciseCategoryByName = new Map();
   } finally {
     exerciseCatalogLoaded = true;
   }
@@ -474,6 +675,27 @@ function renderCoachNote() {
   heroNote.classList.remove("skeleton");
 }
 
+function setStrengthAnalyticsVisible(visible) {
+  showStrengthAnalytics = visible;
+  saveStoredStrengthAnalytics(visible);
+  renderStrengthAnalyticsVisibility();
+}
+
+function renderStrengthAnalyticsVisibility() {
+  if (analyticsPanel) {
+    analyticsPanel.classList.toggle("is-collapsed", !showStrengthAnalytics);
+  }
+  if (analyticsToggle) {
+    analyticsToggle.textContent = showStrengthAnalytics
+      ? "Hide analytics"
+      : "Show analytics";
+    analyticsToggle.setAttribute(
+      "aria-expanded",
+      showStrengthAnalytics ? "true" : "false",
+    );
+  }
+}
+
 function getTopMoverEntry() {
   if (!gainsCache) return null;
   let best = null;
@@ -507,7 +729,10 @@ function getStalledLiftEntry() {
 }
 
 function setActiveTab(tab) {
-  activeTab = tab === "exercises" ? "exercises" : "history";
+  activeTab = ["history", "heatmap", "exercises"].includes(tab)
+    ? tab
+    : "history";
+  saveStoredStrengthTab(activeTab);
   renderTabs();
   renderCurrentTab();
 }
@@ -528,7 +753,13 @@ function renderTabs() {
 }
 
 function renderCurrentTab() {
-  renderHistoryOrExercises();
+  if (activeTab === "history") {
+    renderHistory();
+  } else if (activeTab === "heatmap") {
+    renderHeatmap();
+  } else {
+    renderExercises();
+  }
 }
 
 function renderHistory() {
@@ -569,6 +800,1046 @@ function renderHistory() {
         .join("")}
     </div>
   `;
+}
+
+function renderHeatmap() {
+  if (!heatmapSummary || !heatmapFigure || !heatmapDetail) return;
+  renderHeatmapWindowControls();
+
+  const cached = heatmapDataCache.get(activeHeatmapWindow);
+  if (!cached) {
+    renderHeatmapLoading();
+    if (heatmapPending !== activeHeatmapWindow) {
+      const windowKey = activeHeatmapWindow;
+      heatmapPending = windowKey;
+      loadHeatmapWindow(windowKey)
+        .then((data) => {
+          heatmapDataCache.set(windowKey, data);
+        })
+        .catch(() => {
+          heatmapDataCache.set(windowKey, buildEmptyHeatmapData(windowKey));
+        })
+        .finally(() => {
+          if (heatmapPending === windowKey) {
+            heatmapPending = null;
+          }
+          if (activeTab === "heatmap" && activeHeatmapWindow === windowKey) {
+            renderHeatmap();
+          }
+        });
+    }
+    return;
+  }
+
+  const data = cached;
+  if (!data.zones.length || data.totalVolume <= 0) {
+    renderHeatmapEmpty(data);
+    return;
+  }
+
+  if (
+    !activeHeatmapZone ||
+    !data.zones.some((zone) => zone.id === activeHeatmapZone)
+  ) {
+    activeHeatmapZone = data.topZone?.id ?? data.zones[0]?.id ?? null;
+    if (activeHeatmapZone) {
+      saveStoredHeatmapZone(activeHeatmapZone);
+    }
+  }
+
+  renderHeatmapContent(data);
+}
+
+function renderHeatmapLoading() {
+  void ensureHeatmapSvg();
+  if (heatmapSummary) {
+    heatmapSummary.innerHTML = `
+      <div class="heatmap-summary-card skeleton" style="min-height: 84px"></div>
+      <div class="heatmap-summary-card skeleton" style="min-height: 84px"></div>
+      <div class="heatmap-summary-card skeleton" style="min-height: 84px"></div>
+    `;
+  }
+  if (heatmapFigure) {
+    heatmapFigure.innerHTML = `
+      <div class="skeleton skeleton-card heatmap-figure-skeleton" style="min-height: 640px"></div>
+    `;
+  }
+  if (heatmapDetail) {
+    heatmapDetail.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-kicker">Heatmap</span>
+        <strong>Loading muscle-group volume</strong>
+        <p>Computing the selected window from the historical snapshots.</p>
+      </div>
+    `;
+  }
+}
+
+function renderHeatmapEmpty(data) {
+  if (heatmapSummary) {
+    heatmapSummary.innerHTML = `
+      <div class="heatmap-summary-card">
+        <span class="heatmap-summary-label">Window</span>
+        <span class="heatmap-summary-value">${escapeHtml(heatmapWindowLabel(activeHeatmapWindow))}</span>
+        <span class="heatmap-summary-subvalue">No workouts found in the selected window</span>
+      </div>
+      <div class="heatmap-summary-card">
+        <span class="heatmap-summary-label">Total volume</span>
+        <span class="heatmap-summary-value">0 kg</span>
+        <span class="heatmap-summary-subvalue">Nothing to color yet</span>
+      </div>
+      <div class="heatmap-summary-card">
+        <span class="heatmap-summary-label">Top zone</span>
+        <span class="heatmap-summary-value">None</span>
+        <span class="heatmap-summary-subvalue">Sync more strength sessions</span>
+      </div>
+    `;
+  }
+  if (heatmapFigure) {
+    renderHeatmapFigure(data);
+  }
+  if (heatmapDetail) {
+    heatmapDetail.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-kicker">Heatmap</span>
+        <strong>No volume to display</strong>
+        <p>
+          This window has no recorded load yet, so the map stays gray. Try a
+          wider time window or sync more workouts.
+        </p>
+      </div>
+    `;
+  }
+}
+
+function renderHeatmapContent(data) {
+  renderHeatmapSummary(data);
+  renderHeatmapFigure(data);
+  if (heatmapDetail) {
+    const selected =
+      data.zones.find((zone) => zone.id === activeHeatmapZone) ??
+      data.topZone ??
+      data.zones[0] ??
+      null;
+    if (selected) {
+      const sessionKeys = new Set(
+        (selected.sessions ?? []).map((session) => session.key),
+      );
+      if (
+        !activeHeatmapSessionKey ||
+        !sessionKeys.has(activeHeatmapSessionKey)
+      ) {
+        activeHeatmapSessionKey = selected.sessions?.[0]?.key ?? null;
+      }
+    } else {
+      activeHeatmapSessionKey = null;
+      activeHeatmapActivityOpen = false;
+    }
+    heatmapDetail.innerHTML = selected
+      ? renderHeatmapDetail(selected)
+      : `
+        <div class="empty-state">
+          <span class="empty-state-kicker">Heatmap</span>
+          <strong>Select a body region</strong>
+          <p>Tap a zone to inspect volume and the exercises feeding it.</p>
+        </div>
+      `;
+  }
+}
+
+function renderHeatmapFigure(data) {
+  if (!heatmapFigure) return;
+
+  if (heatmapSvgLoadState === "failed" || !heatmapSvgMarkup) {
+    if (heatmapSvgLoadState === "idle") {
+      void ensureHeatmapSvg().then(() => {
+        if (activeTab === "heatmap" && activeHeatmapWindow === data.window) {
+          renderHeatmapFigure(data);
+        }
+      });
+    }
+
+    heatmapFigure.innerHTML = `
+      <div class="empty-state heatmap-figure-empty">
+        <span class="empty-state-kicker">Heatmap</span>
+        <strong>Loading body map</strong>
+        <p>The SVG asset is still loading.</p>
+      </div>
+    `;
+    return;
+  }
+
+  heatmapFigure.innerHTML = `
+    ${renderHeatmapLegend(data)}
+    ${heatmapSvgMarkup}
+  `;
+  const svg = heatmapFigure.querySelector("svg");
+  if (!svg) return;
+
+  svg.classList.add("strength-heatmap-svg");
+  decorateHeatmapSvg(svg, data);
+}
+
+function renderHeatmapLegend(data) {
+  const note =
+    data.totalVolume > 0
+      ? "Intensity is relative to the strongest region in this window."
+      : "Gray means this window has no recorded load yet.";
+  return `
+    <div id="heatmap-legend" class="heatmap-legend" aria-label="Heatmap color scale">
+      <div class="heatmap-legend-head">
+        <span class="heatmap-legend-label heatmap-legend-kicker">Scale</span>
+        <p class="heatmap-legend-copy">${escapeHtml(note)}</p>
+      </div>
+      ${HEATMAP_SCALE_STEPS.map(
+        (step) => `
+          <div class="heatmap-legend-item">
+            <span class="heatmap-legend-swatch ${step.tone}" aria-hidden="true"></span>
+            <span class="heatmap-legend-label">${escapeHtml(step.label)}</span>
+          </div>
+        `,
+      ).join("")}
+    </div>
+  `;
+}
+
+function renderHeatmapSummary(data) {
+  if (!heatmapSummary) return;
+  heatmapSummary.innerHTML = `
+    <div class="heatmap-summary-card">
+      <span class="heatmap-summary-label">Window</span>
+      <span class="heatmap-summary-value">${escapeHtml(heatmapWindowLabel(data.window))}</span>
+      <span class="heatmap-summary-subvalue">${escapeHtml(pluralize(data.workoutCount, "workout"))} · ${escapeHtml(pluralize(data.exerciseCount, "exercise"))}</span>
+    </div>
+    <div class="heatmap-summary-card">
+      <span class="heatmap-summary-label">Load</span>
+      <span class="heatmap-summary-value">${escapeHtml(formatVolume(data.totalVolume))}</span>
+      <span class="heatmap-summary-subvalue">${escapeHtml(pluralize(data.setCount, "set"))} weighted by load</span>
+    </div>
+  `;
+}
+
+function renderHeatmapDetail(zone) {
+  const sessions = Array.isArray(zone.sessions) ? zone.sessions : [];
+  const selectedSession =
+    sessions.find((session) => session.key === activeHeatmapSessionKey) ??
+    sessions[0] ??
+    null;
+  return `
+    <div class="heatmap-detail-head">
+      <span class="heatmap-summary-label">${escapeHtml(zone.side === "front" ? "Front" : "Back")} region</span>
+      <span class="heatmap-detail-region-pill">${escapeHtml(zone.label)}</span>
+      <div class="heatmap-detail-title">${escapeHtml(zone.label)}</div>
+      <p class="heatmap-detail-copy">
+        ${escapeHtml(zone.volume > 0 ? "Load accumulated in the selected window." : "No work landed here in the selected window yet.")}
+      </p>
+    </div>
+    ${
+      zone.volume <= 0
+        ? `
+      <div class="heatmap-detail-tip">
+        Try 30d or all-time if you want more context.
+      </div>
+    `
+        : ""
+    }
+    <div class="heatmap-detail-grid">
+      <div class="heatmap-detail-stat">
+        <span class="heatmap-detail-stat-label">Weighted volume</span>
+        <span class="heatmap-detail-stat-value">${escapeHtml(formatVolume(zone.volume))}</span>
+      </div>
+      <div class="heatmap-detail-stat">
+        <span class="heatmap-detail-stat-label">Share of total load</span>
+        <span class="heatmap-detail-stat-value">${escapeHtml(formatPct(zone.share))}</span>
+      </div>
+    </div>
+    ${renderHeatmapActivity(zone, sessions, selectedSession)}
+  `;
+}
+
+function renderHeatmapActivity(zone, sessions, selectedSession) {
+  const sessionCount = sessions.length;
+  const sessionSummary =
+    sessionCount > 0
+      ? `${pluralize(sessionCount, "session")} · ${pluralize(zone.exerciseCount, "exercise")}`
+      : "No sessions in this window";
+  const isOpen = activeHeatmapActivityOpen && sessionCount > 0;
+  return `
+    <div class="heatmap-activity">
+      <button
+        class="heatmap-activity-toggle"
+        type="button"
+        data-heatmap-activity-toggle="true"
+        aria-expanded="${isOpen ? "true" : "false"}"
+      >
+        <span class="heatmap-activity-label">Activity</span>
+        <span class="heatmap-activity-copy">${escapeHtml(sessionSummary)}</span>
+      </button>
+      ${
+        isOpen && sessionCount
+          ? `
+        <div class="heatmap-session-list">
+          ${sessions
+            .map(
+              (session) => `
+                ${renderHeatmapSessionButton(session, zone, session.key === selectedSession?.key)}
+              `,
+            )
+            .join("")}
+        </div>
+      `
+          : `
+        <div class="heatmap-activity-hint">
+          Tap Activity to browse sessions for this region.
+        </div>
+      `
+      }
+    </div>
+  `;
+}
+
+function renderHeatmapSessionButton(session, zone, isActive) {
+  const exercises = filterHeatmapSessionExercises(session, zone);
+  return `
+    <div class="heatmap-session-thread">
+                <button
+                  class="heatmap-session-item${isActive ? " is-active" : ""}"
+                  type="button"
+                  data-heatmap-session="${escapeHtml(session.key)}"
+                >
+                  <span class="heatmap-session-date">${escapeHtml(session.date || "Unknown date")}</span>
+                  <span class="heatmap-session-title">${escapeHtml(session.title || "Workout")}</span>
+                  <span class="heatmap-session-meta">${escapeHtml(pluralize(exercises.length, "exercise"))}</span>
+                </button>
+      ${isActive ? renderHeatmapSessionDetail(session, zone) : ""}
+    </div>
+  `;
+}
+
+function renderHeatmapSessionDetail(session, zone) {
+  const exercises = filterHeatmapSessionExercises(session, zone);
+  return `
+    <div class="heatmap-session-detail-head">
+      <span class="heatmap-session-detail-label">Selected session</span>
+      <strong>${escapeHtml(session.title || "Workout")}</strong>
+      <span class="heatmap-session-detail-meta">${escapeHtml(session.date || "Unknown date")}</span>
+    </div>
+    <div class="heatmap-session-exercises">
+      ${
+        exercises.length
+          ? exercises
+              .map((exercise) =>
+                renderWorkoutExercise(
+                  exercise,
+                  session.date || "Unknown date",
+                  session.title || "Workout",
+                ),
+              )
+              .join("")
+          : `
+            <div class="heatmap-session-empty">
+              No exercises recorded for this session.
+            </div>
+          `
+      }
+    </div>
+  `;
+}
+
+function filterHeatmapSessionExercises(session, zone) {
+  const exercises = Array.isArray(session?.exercises)
+    ? session.exercises.filter(isObject)
+    : [];
+  if (!zone) return exercises;
+  return exercises.filter((exercise) => {
+    const targets = resolveHeatmapTargets(exercise);
+    return targets.some((target) => target.id === zone.id);
+  });
+}
+
+function renderHeatmapWindowControls() {
+  if (!heatmapWindowControls) return;
+  heatmapWindowControls
+    .querySelectorAll("[data-heatmap-window]")
+    .forEach((button) => {
+      const isActive = button.dataset.heatmapWindow === activeHeatmapWindow;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", isActive ? "true" : "false");
+      button.setAttribute("tabindex", isActive ? "0" : "-1");
+    });
+}
+
+async function ensureHeatmapSvg() {
+  if (heatmapSvgLoadState === "loaded") return heatmapSvgMarkup;
+  if (heatmapSvgLoadState === "failed") return null;
+  if (heatmapSvgPending) return heatmapSvgPending;
+
+  heatmapSvgLoadState = "loading";
+  heatmapSvgPending = fetch(`${heatmapSvgUrl.href}?v=${Date.now()}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to load heatmap SVG: ${response.status}`);
+      }
+      return response.text();
+    })
+    .then((markup) => {
+      heatmapSvgMarkup = markup;
+      heatmapSvgLoadState = "loaded";
+      return markup;
+    })
+    .catch(() => {
+      heatmapSvgMarkup = null;
+      heatmapSvgLoadState = "failed";
+      return null;
+    })
+    .finally(() => {
+      heatmapSvgPending = null;
+    });
+
+  return heatmapSvgPending;
+}
+
+function decorateHeatmapSvg(svg, data) {
+  const selectedZone =
+    data.zones.find((zone) => zone.id === activeHeatmapZone) ?? null;
+  const selectedZoneId = selectedZone?.id ?? null;
+
+  for (const zone of data.zones) {
+    const targetIds = HEATMAP_REGION_TARGETS[zone.id] ?? [];
+    const fill = getHeatmapFill(zone);
+    const isSelected = zone.id === selectedZoneId;
+
+    for (const targetId of targetIds) {
+      const region = svg.querySelector(`#${targetId}`);
+      if (!region) continue;
+
+      region.setAttribute("data-heatmap-region", zone.id);
+      region.classList.add("heatmap-region");
+      region.classList.toggle("is-selected", isSelected);
+      region.classList.toggle("is-empty", zone.volume <= 0);
+      region.setAttribute("role", "button");
+      region.setAttribute("tabindex", "0");
+      region.setAttribute("aria-pressed", isSelected ? "true" : "false");
+      region.setAttribute(
+        "aria-label",
+        `${zone.label}, ${formatVolume(zone.volume)}, ${pluralize(zone.workoutCount, "session")}`,
+      );
+
+      region.querySelectorAll(".muscle").forEach((path) => {
+        path.style.fill = fill;
+        path.style.fillOpacity = zone.volume > 0 ? "1" : "0.42";
+      });
+    }
+  }
+}
+
+function getHeatmapFill(zone) {
+  const palette = {
+    "is-gray": [136, 145, 165],
+    "is-cool": [84, 197, 212],
+    "is-warm": [255, 177, 76],
+    "is-hot": [255, 107, 97],
+  };
+  const base = palette[zone.intensityClass] ?? palette["is-gray"];
+  const alpha =
+    zone.volume <= 0
+      ? 0.34
+      : Math.min(0.86, 0.28 + Math.max(zone.heatmapStrength ?? 0, 0));
+  return `rgba(${base[0]}, ${base[1]}, ${base[2]}, ${alpha.toFixed(2)})`;
+}
+
+function selectHeatmapRegion(regionId) {
+  if (!regionId) return;
+  activeHeatmapZone = regionId;
+  activeHeatmapSessionKey = null;
+  activeHeatmapActivityOpen = false;
+  saveStoredHeatmapZone(regionId);
+  const data = heatmapDataCache.get(activeHeatmapWindow);
+  if (!data) return;
+  if (data.totalVolume <= 0) {
+    renderHeatmapEmpty(data);
+    return;
+  }
+  renderHeatmapContent(data);
+}
+
+function handleHeatmapFigureClick(event) {
+  const region = event.target.closest?.("[data-heatmap-region]");
+  if (!region) return;
+  selectHeatmapRegion(region.getAttribute("data-heatmap-region"));
+}
+
+function handleHeatmapFigureKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const region = event.target.closest?.("[data-heatmap-region]");
+  if (!region) return;
+  event.preventDefault();
+  selectHeatmapRegion(region.getAttribute("data-heatmap-region"));
+}
+
+function handleHeatmapDetailClick(event) {
+  const exerciseButton = event.target.closest?.(".workout-exercise");
+  if (exerciseButton) {
+    const payload = exerciseButton.dataset.workoutExercise;
+    if (!payload) return;
+    try {
+      renderWorkoutExerciseModal(JSON.parse(payload));
+    } catch {
+      // ignore malformed payloads
+    }
+    return;
+  }
+
+  const toggle = event.target.closest?.("[data-heatmap-activity-toggle]");
+  if (toggle) {
+    activeHeatmapActivityOpen = !activeHeatmapActivityOpen;
+    const data = heatmapDataCache.get(activeHeatmapWindow);
+    if (data) {
+      renderHeatmapContent(data);
+    }
+    return;
+  }
+
+  const sessionButton = event.target.closest?.("[data-heatmap-session]");
+  if (!sessionButton) return;
+  const sessionKey = sessionButton.getAttribute("data-heatmap-session");
+  if (!sessionKey) return;
+  activeHeatmapSessionKey = sessionKey;
+  activeHeatmapActivityOpen = true;
+  const data = heatmapDataCache.get(activeHeatmapWindow);
+  if (data) {
+    renderHeatmapContent(data);
+  }
+}
+
+function resetHeatmapCache() {
+  heatmapDataCache = new Map();
+  heatmapPending = null;
+  activeHeatmapSessionKey = null;
+  activeHeatmapActivityOpen = false;
+}
+
+function setHeatmapWindow(windowKey) {
+  const normalized = normalizeHeatmapWindow(windowKey);
+  if (normalized === activeHeatmapWindow) return;
+  activeHeatmapWindow = normalized;
+  saveStoredHeatmapWindow(normalized);
+  renderHeatmapWindowControls();
+  renderHeatmap();
+}
+
+async function loadHeatmapWindow(windowKey) {
+  const snapshots = await loadHeatmapSnapshots(windowKey);
+  const liveWorkouts = Array.isArray(recentWorkouts) ? recentWorkouts : [];
+  return buildHeatmapData(windowKey, snapshots, liveWorkouts);
+}
+
+async function loadHeatmapSnapshots(windowKey) {
+  const normalized = normalizeHeatmapWindow(windowKey);
+  if (normalized === "all") {
+    return loadAll();
+  }
+
+  const index = await loadIndex();
+  const dates = Array.isArray(index?.dates) ? index.dates : [];
+  const latestDate = dates.at(-1);
+  if (!latestDate) return [];
+
+  const windowDays = HEATMAP_WINDOWS[normalized]?.days ?? 30;
+  const end = new Date(`${latestDate}T00:00:00Z`);
+  if (Number.isNaN(end.getTime())) return [];
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - (windowDays - 1));
+  const startDate = start.toISOString().slice(0, 10);
+  return loadRange(startDate, latestDate);
+}
+
+function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
+  const normalized = normalizeHeatmapWindow(windowKey);
+  const orderedSnapshots = [...snapshots].sort((a, b) =>
+    String(a?.snapshot_date ?? "").localeCompare(
+      String(b?.snapshot_date ?? ""),
+    ),
+  );
+  const liveFallbackWeight = orderedSnapshots
+    .map((snapshot) => parseFloatNumber(snapshot?.athlete?.body_weight_kg))
+    .filter((value) => value != null)
+    .at(-1);
+  const workouts = new Map();
+
+  for (const snapshot of orderedSnapshots) {
+    const snapshotWeight =
+      parseFloatNumber(snapshot?.athlete?.body_weight_kg) ?? liveFallbackWeight;
+    const sourceWorkouts = Array.isArray(snapshot?.hevy?.recent_workouts)
+      ? snapshot.hevy.recent_workouts
+      : [];
+    for (const workout of sourceWorkouts) {
+      const key = workoutKey(workout);
+      if (!key) continue;
+      workouts.set(key, {
+        workout,
+        workoutDate:
+          workoutDateFromWorkout(workout) ?? snapshot?.snapshot_date ?? "",
+        bodyWeightKg: snapshotWeight,
+      });
+    }
+  }
+
+  const liveWeight = liveFallbackWeight;
+  for (const workout of liveWorkouts) {
+    const key = workoutKey(workout);
+    if (!key) continue;
+    workouts.set(key, {
+      workout,
+      workoutDate:
+        workoutDateFromWorkout(workout) ??
+        String(workout?.start_time ?? "").slice(0, 10),
+      bodyWeightKg: liveWeight ?? liveFallbackWeight ?? null,
+    });
+  }
+
+  const windowEnd =
+    [...orderedSnapshots, ...liveWorkouts]
+      .map(
+        (item) =>
+          workoutDateFromWorkout(item) ||
+          String(item?.snapshot_date ?? "").trim(),
+      )
+      .filter(Boolean)
+      .sort()
+      .at(-1) ?? null;
+  const windowStart = windowStartDate(normalized, windowEnd);
+  const zoneStats = new Map(
+    HEATMAP_ZONES.map((zone) => [
+      zone.id,
+      {
+        ...zone,
+        volume: 0,
+        setCount: 0,
+        workoutKeys: new Set(),
+        exerciseKeys: new Set(),
+        sessions: new Map(),
+        exerciseTotals: new Map(),
+        lastTrained: null,
+      },
+    ]),
+  );
+  let totalVolume = 0;
+  let totalSets = 0;
+  let workoutCount = 0;
+  let exerciseCount = 0;
+
+  for (const { workout, workoutDate, bodyWeightKg } of workouts.values()) {
+    if (windowStart && workoutDate && workoutDate < windowStart) continue;
+    if (windowEnd && workoutDate && workoutDate > windowEnd) continue;
+    const workoutExercises = Array.isArray(workout?.exercises)
+      ? workout.exercises.filter(isObject)
+      : [];
+    if (!workoutExercises.length) continue;
+
+    workoutCount += 1;
+    const workoutId = workoutKey(workout);
+    const workoutTitleValue = workoutTitle(workout);
+
+    for (const exercise of workoutExercises) {
+      const targets = resolveHeatmapTargets(exercise);
+      if (!targets.length) continue;
+      const sets = Array.isArray(exercise.sets)
+        ? exercise.sets.filter(isObject)
+        : [];
+      if (!sets.length) continue;
+
+      exerciseCount += 1;
+      const exerciseVolume = computeExerciseVolume(exercise, bodyWeightKg);
+      totalVolume += exerciseVolume;
+      totalSets += sets.length;
+      const exerciseKey = normalizeNameKey(
+        `${exercise.exercise_template_id ?? ""}:${exercise.name ?? exercise.title ?? ""}`,
+      );
+      const targetTotal =
+        targets.reduce((sum, target) => sum + target.share, 0) || 1;
+
+      for (const target of targets) {
+        const zone = zoneStats.get(target.id);
+        if (!zone) continue;
+        const zoneVolume = (exerciseVolume * target.share) / targetTotal;
+        zone.volume += zoneVolume;
+        zone.setCount += sets.length;
+        if (workoutId) zone.workoutKeys.add(workoutId);
+        if (exerciseKey) zone.exerciseKeys.add(exerciseKey);
+        if (workoutId) {
+          const session = zone.sessions.get(workoutId) ?? {
+            key: workoutId,
+            title: workoutTitleValue,
+            date: workoutDate,
+            workout: isObject(workout) ? workout : {},
+            exercises: workoutExercises,
+            volume: 0,
+          };
+          session.volume += zoneVolume;
+          zone.sessions.set(workoutId, session);
+        }
+        if (
+          workoutDate &&
+          (!zone.lastTrained || workoutDate > zone.lastTrained)
+        ) {
+          zone.lastTrained = workoutDate;
+        }
+        const exerciseName = String(
+          exercise.name ?? exercise.title ?? "Exercise",
+        );
+        zone.exerciseTotals.set(
+          exerciseName,
+          (zone.exerciseTotals.get(exerciseName) ?? 0) + zoneVolume,
+        );
+      }
+    }
+  }
+
+  const zones = [...zoneStats.values()].map((zone) => {
+    const share = totalVolume > 0 ? zone.volume / totalVolume : 0;
+    const maxVolume = Math.max(
+      ...[...zoneStats.values()].map((item) => item.volume),
+      0,
+    );
+    const ratio = maxVolume > 0 ? zone.volume / maxVolume : 0;
+    const intensityClass = heatmapIntensityClass(zone.volume, maxVolume);
+    const heatmapStrength =
+      zone.volume <= 0 ? 0.16 : Math.min(0.28 + ratio * 0.55, 0.86);
+    return {
+      ...zone,
+      share,
+      workoutCount: zone.workoutKeys.size,
+      exerciseCount: zone.exerciseKeys.size,
+      sessions: [...zone.sessions.values()].sort(
+        (a, b) =>
+          String(b.date ?? "").localeCompare(String(a.date ?? "")) ||
+          String(b.key ?? "").localeCompare(String(a.key ?? "")),
+      ),
+      topExercises: [...zone.exerciseTotals.entries()]
+        .map(([name, volume]) => ({ name, volume }))
+        .sort((a, b) => b.volume - a.volume),
+      heatmapLabel:
+        intensityClass === "is-hot"
+          ? "Hot"
+          : intensityClass === "is-warm"
+            ? "Warm"
+            : intensityClass === "is-cool"
+              ? "Cool"
+              : "Gray",
+      heatmapStrength,
+      intensityClass,
+    };
+  });
+
+  const topZone = [...zones].sort((a, b) => b.volume - a.volume)[0] ?? null;
+  return {
+    window: normalized,
+    startDate: windowStart,
+    endDate: windowEnd,
+    workoutCount,
+    exerciseCount,
+    setCount: totalSets,
+    totalVolume,
+    zones,
+    topZone,
+  };
+}
+
+function buildEmptyHeatmapData(windowKey) {
+  const zones = HEATMAP_ZONES.map((zone) => ({
+    ...zone,
+    volume: 0,
+    share: 0,
+    workoutCount: 0,
+    exerciseCount: 0,
+    setCount: 0,
+    lastTrained: null,
+    sessions: [],
+    topExercises: [],
+    heatmapLabel: "Gray",
+    heatmapStrength: 0.16,
+    intensityClass: "is-gray",
+  }));
+  return {
+    window: normalizeHeatmapWindow(windowKey),
+    startDate: null,
+    endDate: null,
+    workoutCount: 0,
+    exerciseCount: 0,
+    setCount: 0,
+    totalVolume: 0,
+    zones,
+    topZone: null,
+  };
+}
+
+function normalizeHeatmapWindow(windowKey) {
+  return windowKey === "7d" || windowKey === "30d" || windowKey === "all"
+    ? windowKey
+    : "30d";
+}
+
+function heatmapWindowLabel(windowKey) {
+  return HEATMAP_WINDOWS[normalizeHeatmapWindow(windowKey)]?.label ?? "30d";
+}
+
+function windowStartDate(windowKey, endDate) {
+  const normalized = normalizeHeatmapWindow(windowKey);
+  if (normalized === "all" || !endDate) return null;
+  const windowDays = HEATMAP_WINDOWS[normalized]?.days ?? 30;
+  const end = new Date(`${endDate}T00:00:00Z`);
+  if (Number.isNaN(end.getTime())) return null;
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - (windowDays - 1));
+  return start.toISOString().slice(0, 10);
+}
+
+function workoutKey(workout) {
+  if (!isObject(workout)) return "";
+  const startTime = String(
+    workout.start_time ?? workout.startTime ?? "",
+  ).trim();
+  const title = String(workout.title ?? workout.name ?? "").trim();
+  return `${startTime}|${title}`.trim();
+}
+
+function workoutDateFromWorkout(workout) {
+  return String(
+    workout?.start_time?.slice?.(0, 10) ??
+      workout?.start_date?.slice?.(0, 10) ??
+      workout?.workout_start_date ??
+      "",
+  ).trim();
+}
+
+function computeExerciseVolume(exercise, bodyWeightKg) {
+  const sets = Array.isArray(exercise?.sets)
+    ? exercise.sets.filter(isObject)
+    : [];
+  const bodyweightExercise = isBodyweightExercise(exercise);
+  let volume = 0;
+  let repsOnly = 0;
+
+  for (const set of sets) {
+    const reps = parseInteger(set.reps);
+    if (reps == null) continue;
+    const loadKg = resolveSetLoadKg(set, bodyweightExercise, bodyWeightKg);
+    if (loadKg != null && loadKg > 0) {
+      volume += loadKg * reps;
+    } else {
+      repsOnly += reps;
+    }
+  }
+
+  return volume > 0 ? volume : repsOnly;
+}
+
+function resolveSetLoadKg(set, bodyweightExercise, bodyWeightKg) {
+  const weightKg = parseFloatNumber(set?.weight_kg);
+  if (bodyweightExercise) {
+    const baseline = parseFloatNumber(bodyWeightKg);
+    if (baseline != null && baseline > 0) {
+      return baseline + Math.max(weightKg ?? 0, 0);
+    }
+    return weightKg != null && weightKg > 0 ? weightKg : null;
+  }
+  return weightKg;
+}
+
+function isBodyweightExercise(exercise) {
+  const templateId = normalizeTemplateId(exercise?.exercise_template_id);
+  const name = normalizeNameKey(exercise?.name ?? exercise?.title ?? "");
+  if (
+    ["29083183", "28BB4A95", "392887AA"].includes(templateId) ||
+    /chin\s*up|pull\s*up|dip|push\s*up|bodyweight|calisthenic/.test(name)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function resolveHeatmapTargets(exercise) {
+  const templateId = normalizeTemplateId(exercise?.exercise_template_id);
+  const name = normalizeNameKey(exercise?.name ?? exercise?.title ?? "");
+  const catalogCategory =
+    exerciseCategoryByName.get(
+      String(exercise?.name ?? exercise?.title ?? ""),
+    ) ?? "";
+  const category = normalizeCategory(
+    exercise?.category ?? catalogCategory ?? "",
+  );
+
+  if (
+    templateId === "D04AC939" ||
+    /squat|leg press|lunge|split squat|hack squat|bulgarian/.test(name)
+  ) {
+    return [
+      { id: "front-quads", share: 0.48 },
+      { id: "back-glutes", share: 0.26 },
+      { id: "back-hamstrings", share: 0.16 },
+      { id: "front-calves", share: 0.1 },
+    ];
+  }
+
+  if (
+    templateId === "79D0BB3A" ||
+    /bench press|chest press|push up/.test(name)
+  ) {
+    return [
+      { id: "front-chest", share: 0.54 },
+      { id: "front-shoulders", share: 0.24 },
+      { id: "back-arms", share: 0.22 },
+    ];
+  }
+
+  if (templateId === "29083183" || /chin\s*up|pull\s*up/.test(name)) {
+    return [
+      { id: "back-lats", share: 0.46 },
+      { id: "back-upper-back", share: 0.28 },
+      { id: "back-arms", share: 0.26 },
+    ];
+  }
+
+  if (templateId === "F1E57334" || /row/.test(name)) {
+    return [
+      { id: "back-upper-back", share: 0.38 },
+      { id: "back-lats", share: 0.3 },
+      { id: "back-rear-delts", share: 0.17 },
+      { id: "back-arms", share: 0.15 },
+    ];
+  }
+
+  if (templateId === "28BB4A95" || /dip/.test(name)) {
+    return [
+      { id: "front-chest", share: 0.42 },
+      { id: "back-arms", share: 0.38 },
+      { id: "front-shoulders", share: 0.2 },
+    ];
+  }
+
+  if (
+    /deadlift|romanian deadlift|rdl|hip thrust|good morning|back extension/.test(
+      name,
+    )
+  ) {
+    return [
+      { id: "back-hamstrings", share: 0.42 },
+      { id: "back-glutes", share: 0.33 },
+      { id: "back-upper-back", share: 0.25 },
+    ];
+  }
+
+  if (/shoulder press|overhead press|arnold press/.test(name)) {
+    return [
+      { id: "front-shoulders", share: 0.52 },
+      { id: "back-arms", share: 0.25 },
+      { id: "front-chest", share: 0.13 },
+      { id: "back-rear-delts", share: 0.1 },
+    ];
+  }
+
+  if (/curl|bicep/.test(name)) {
+    return [
+      { id: "back-arms", share: 0.62 },
+      { id: "back-upper-back", share: 0.38 },
+    ];
+  }
+
+  if (/tricep|extension/.test(name)) {
+    return [
+      { id: "back-arms", share: 0.72 },
+      { id: "front-shoulders", share: 0.28 },
+    ];
+  }
+
+  if (/plank|crunch|leg raise|ab wheel|core/.test(name)) {
+    return [{ id: "front-core", share: 1 }];
+  }
+
+  if (/calf/.test(name)) {
+    return [
+      { id: "front-calves", share: 0.5 },
+      { id: "back-calves", share: 0.5 },
+    ];
+  }
+
+  if (category === "Lower body") {
+    return [
+      { id: "front-quads", share: 0.4 },
+      { id: "back-glutes", share: 0.3 },
+      { id: "back-hamstrings", share: 0.18 },
+      { id: "front-calves", share: 0.12 },
+    ];
+  }
+
+  if (category === "Push") {
+    return [
+      { id: "front-chest", share: 0.48 },
+      { id: "front-shoulders", share: 0.28 },
+      { id: "back-arms", share: 0.24 },
+    ];
+  }
+
+  if (category === "Pull") {
+    return [
+      { id: "back-upper-back", share: 0.4 },
+      { id: "back-lats", share: 0.3 },
+      { id: "back-arms", share: 0.18 },
+      { id: "back-rear-delts", share: 0.12 },
+    ];
+  }
+
+  if (category === "Accessory") {
+    return [
+      { id: "front-core", share: 0.5 },
+      { id: "back-arms", share: 0.25 },
+      { id: "front-shoulders", share: 0.25 },
+    ];
+  }
+
+  return [{ id: "front-core", share: 1 }];
+}
+
+function heatmapIntensityClass(volume, maxVolume = null) {
+  if (!(volume > 0)) return "is-gray";
+  const ratio = maxVolume && maxVolume > 0 ? volume / maxVolume : 0;
+  if (ratio >= 0.72) return "is-hot";
+  if (ratio >= 0.38) return "is-warm";
+  return "is-cool";
+}
+
+function formatVolume(value) {
+  if (!(value > 0)) return "0 kg";
+  return `${fmtNum(value)} kg`;
+}
+
+function formatPct(value) {
+  if (!(value > 0)) return "0%";
+  return `${Math.round(value * 100)}%`;
+}
+
+function pluralize(count, singular, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function readStoredHeatmapWindow() {
+  try {
+    return normalizeHeatmapWindow(
+      localStorage.getItem("personal-trainer:strength-heatmap-window"),
+    );
+  } catch {
+    return "30d";
+  }
+}
+
+function saveStoredHeatmapWindow(windowKey) {
+  try {
+    localStorage.setItem(
+      "personal-trainer:strength-heatmap-window",
+      normalizeHeatmapWindow(windowKey),
+    );
+  } catch {}
 }
 
 function renderWorkoutCard(workout, index) {
@@ -993,6 +2264,61 @@ function saveStoredProgressionGoal(goal) {
   } catch {}
 }
 
+function readStoredStrengthTab() {
+  try {
+    const raw = localStorage.getItem(activeTabStorageKey);
+    return ["history", "heatmap", "exercises"].includes(raw) ? raw : "history";
+  } catch {
+    return "history";
+  }
+}
+
+function saveStoredStrengthTab(tab) {
+  try {
+    localStorage.setItem(
+      activeTabStorageKey,
+      ["history", "heatmap", "exercises"].includes(tab) ? tab : "history",
+    );
+  } catch {}
+}
+
+function readStoredHeatmapZone() {
+  try {
+    const raw = localStorage.getItem(activeHeatmapZoneStorageKey);
+    return raw ? raw.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredHeatmapZone(zoneId) {
+  try {
+    if (!zoneId) {
+      localStorage.removeItem(activeHeatmapZoneStorageKey);
+      return;
+    }
+    localStorage.setItem(activeHeatmapZoneStorageKey, zoneId);
+  } catch {}
+}
+
+function readStoredStrengthAnalytics() {
+  try {
+    const raw = localStorage.getItem(analyticsVisibilityStorageKey);
+    return raw == null ? true : raw !== "false";
+  } catch {
+    return true;
+  }
+}
+
+function saveStoredStrengthAnalytics(visible) {
+  try {
+    localStorage.setItem(
+      analyticsVisibilityStorageKey,
+      visible ? "true" : "false",
+    );
+  } catch {}
+}
+
 function progressionStateClassName(state) {
   return (
     {
@@ -1115,6 +2441,7 @@ async function refreshHevy() {
     recentWorkouts = Array.isArray(livePayload.recent_workouts)
       ? livePayload.recent_workouts
       : [];
+    resetHeatmapCache();
     sourceLabel.textContent = `${livePayload.source ?? "Hevy"} · ${livePayload.snapshot_date ?? "unknown date"}`;
     statusBanner.textContent = `${entries.length} lifts · ${formatHevyRefreshLabel(livePayload)}`;
     syncHevyWindowUI(livePayload.refresh_window ?? workoutWindow, livePayload);
@@ -1122,10 +2449,12 @@ async function refreshHevy() {
     renderControls();
     renderSummary();
     renderHighlights();
+    renderStrengthAnalyticsVisibility();
     renderTabs();
     renderCurrentTab();
     await loadGains();
     renderHighlights();
+    renderStrengthAnalyticsVisibility();
     renderCurrentTab();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -1200,14 +2529,6 @@ function renderHistoryFallback() {
       <p>Sync your Hevy data to populate the workout timeline.</p>
     </div>
   `;
-}
-
-function renderHistoryOrExercises() {
-  if (activeTab === "history") {
-    renderHistory();
-  } else {
-    renderExercises();
-  }
 }
 
 function parseFloatNumber(value) {

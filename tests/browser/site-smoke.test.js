@@ -33,10 +33,13 @@ const pages = [
     title: "Strength",
     ready: "#history-panel",
     checks: [
+      "#strength-analytics",
       "#strength-summary",
+      "#strength-analytics-toggle",
       "#strength-tabs",
       "#strength-controls",
       'button[data-tab="history"]',
+      'button[data-tab="heatmap"]',
       'button[data-tab="exercises"]',
       "#history-panel",
     ],
@@ -423,6 +426,400 @@ test("bodyweight exercises render a clean history modal", async ({ page }) => {
   await expect(modal).toContainText("6 reps total");
   await expect(modal).not.toContainText("undefined");
   await expect(modal).not.toContainText("Infinity");
+});
+
+test("strength heatmap aggregates volume across windows", async ({ page }) => {
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Hevy exercise history",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Strength history ready",
+          detail: "Hevy data is available and current.",
+        },
+        entries: [
+          {
+            templateId: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            category: "Push",
+            best_set: {
+              weight_kg: 70,
+              reps: 4,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: 79.3,
+            workout_title: "Upper Body",
+          },
+          {
+            templateId: "29083183",
+            name: "Chin Up",
+            category: "Pull",
+            best_set: {
+              weight_kg: null,
+              reps: 6,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: null,
+            workout_title: "Upper Body",
+          },
+          {
+            templateId: "D04AC939",
+            name: "Squat (Barbell)",
+            category: "Lower body",
+            best_set: {
+              weight_kg: 100,
+              reps: 5,
+              workout_start_date: "2026-07-01",
+            },
+            estimated_one_rm_kg: 116.7,
+            workout_title: "Leg Day",
+          },
+        ],
+        recent_workouts: [
+          {
+            title: "Upper Body",
+            start_time: "2026-07-13T07:00:00Z",
+            end_time: "2026-07-13T08:00:00Z",
+            exercises: [
+              {
+                exercise_template_id: "79D0BB3A",
+                name: "Bench Press (Barbell)",
+                sets: [{ weight_kg: 70, reps: 4 }],
+              },
+              {
+                exercise_template_id: "29083183",
+                name: "Chin Up",
+                sets: [{ weight_kg: null, reps: 6 }],
+              },
+              {
+                exercise_template_id: "28BB4A95",
+                name: "Triceps Dip",
+                sets: [{ weight_kg: null, reps: 8 }],
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  });
+  await page.route("**/history/index.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        dates: [
+          "2026-05-20",
+          "2026-06-20",
+          "2026-07-01",
+          "2026-07-05",
+          "2026-07-13",
+        ],
+      }),
+    });
+  });
+  await page.route("**/history/2026-05-20.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        snapshot_date: "2026-05-20",
+        athlete: { body_weight_kg: 82.9 },
+        hevy: {
+          recent_workouts: [
+            {
+              title: "Full Body",
+              start_time: "2026-05-20T07:00:00Z",
+              end_time: "2026-05-20T08:00:00Z",
+              exercises: [
+                {
+                  exercise_template_id: "A1B2C3D4",
+                  name: "Deadlift",
+                  sets: [{ weight_kg: 140, reps: 3 }],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    });
+  });
+  await page.route("**/history/2026-06-20.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        snapshot_date: "2026-06-20",
+        athlete: { body_weight_kg: 83.5 },
+        hevy: {
+          recent_workouts: [
+            {
+              title: "Pull Day",
+              start_time: "2026-06-20T07:00:00Z",
+              end_time: "2026-06-20T08:00:00Z",
+              exercises: [
+                {
+                  exercise_template_id: "F1E57334",
+                  name: "Dumbbell Row",
+                  sets: [{ weight_kg: 32.5, reps: 10 }],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    });
+  });
+  await page.route("**/history/2026-07-01.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        snapshot_date: "2026-07-01",
+        athlete: { body_weight_kg: 83.2 },
+        hevy: {
+          recent_workouts: [
+            {
+              title: "Leg Day",
+              start_time: "2026-07-01T07:00:00Z",
+              end_time: "2026-07-01T08:00:00Z",
+              exercises: [
+                {
+                  exercise_template_id: "D04AC939",
+                  name: "Squat (Barbell)",
+                  sets: [
+                    { weight_kg: 100, reps: 5 },
+                    { weight_kg: 102.5, reps: 4 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    });
+  });
+  await page.route("**/history/2026-07-05.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        snapshot_date: "2026-07-05",
+        athlete: { body_weight_kg: 83.4 },
+        hevy: {
+          recent_workouts: [
+            {
+              title: "Upper Body",
+              start_time: "2026-07-05T07:00:00Z",
+              end_time: "2026-07-05T08:00:00Z",
+              exercises: [
+                {
+                  exercise_template_id: "79D0BB3A",
+                  name: "Bench Press (Barbell)",
+                  sets: [{ weight_kg: 67.5, reps: 5 }],
+                },
+                {
+                  exercise_template_id: "29083183",
+                  name: "Chin Up",
+                  sets: [{ weight_kg: null, reps: 5 }],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    });
+  });
+  await page.route("**/history/2026-07-13.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        snapshot_date: "2026-07-13",
+        athlete: { body_weight_kg: 83.5 },
+        hevy: {
+          recent_workouts: [
+            {
+              title: "Upper Body",
+              start_time: "2026-07-13T07:00:00Z",
+              end_time: "2026-07-13T08:00:00Z",
+              exercises: [
+                {
+                  exercise_template_id: "79D0BB3A",
+                  name: "Bench Press (Barbell)",
+                  sets: [{ weight_kg: 70, reps: 4 }],
+                },
+                {
+                  exercise_template_id: "29083183",
+                  name: "Chin Up",
+                  sets: [{ weight_kg: null, reps: 6 }],
+                },
+                {
+                  exercise_template_id: "28BB4A95",
+                  name: "Triceps Dip",
+                  sets: [{ weight_kg: null, reps: 8 }],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    });
+  });
+  await page.route("**/history/exercises/_gains.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        "79D0BB3A": {
+          start: 65,
+          current: 70,
+          peak: 70,
+          gain_pct: 7.7,
+          stalled: false,
+        },
+        D04AC939: {
+          start: 95,
+          current: 100,
+          peak: 100,
+          gain_pct: 5.3,
+          stalled: false,
+        },
+        29083183: {
+          start: null,
+          current: null,
+          peak: null,
+          gain_pct: 0,
+          stalled: false,
+        },
+      }),
+    });
+  });
+
+  await page.goto("/strength.html");
+  await expect(page.locator("#strength-analytics")).toBeVisible();
+  await expect(page.locator("#strength-summary")).toBeVisible();
+  await page.locator("#strength-analytics-toggle").click();
+  await expect(page.locator("#strength-analytics")).toHaveClass(/is-collapsed/);
+  await expect(page.locator("#strength-summary")).toBeHidden();
+  await page.reload();
+  await expect(page.locator("#strength-analytics")).toHaveClass(/is-collapsed/);
+  await expect(page.locator("#strength-summary")).toBeHidden();
+  await page.locator('button[data-tab="heatmap"]').click();
+  await expect(page.locator("#heatmap-summary")).toContainText("30d");
+  await expect(page.locator("#heatmap-summary")).toContainText("4 workouts");
+  await expect(page.locator("#heatmap-legend")).toBeVisible();
+  await expect(page.locator("#heatmap-legend")).toContainText("Hot");
+  await expect(page.locator("#heatmap-figure svg")).toBeVisible();
+  await expect(page.locator('[data-heatmap-region="back-lats"]')).toBeVisible();
+
+  await page.locator('button[data-heatmap-window="7d"]').click();
+  await expect(page.locator("#heatmap-summary")).toContainText("1 workout");
+
+  await page.locator("#back-lat-left").click();
+  await expect(page.locator("#heatmap-detail")).toContainText("Lats");
+  await page.locator('button[data-heatmap-window="all"]').click();
+  await expect(page.locator("#heatmap-summary")).toContainText("5 workouts");
+  await expect(page.locator("#heatmap-detail")).toContainText("Activity");
+  await page.locator('[data-heatmap-activity-toggle="true"]').click();
+  await expect(page.locator("#heatmap-detail")).toContainText("2026-07-13");
+  await expect(page.locator("#heatmap-detail")).toContainText("2026-07-05");
+  await page
+    .locator("[data-heatmap-session]")
+    .filter({ hasText: "2026-07-05" })
+    .click();
+  await expect(page.locator("#heatmap-detail")).not.toContainText(
+    "Bench Press (Barbell)",
+  );
+  await expect(page.locator("#heatmap-detail")).toContainText("Chin Up");
+  await expect(page.locator("#heatmap-detail")).not.toContainText(
+    "Triceps Dip",
+  );
+  await expect(page.locator("#heatmap-detail")).not.toContainText("undefined");
+  await page
+    .locator("#heatmap-detail .workout-exercise", { hasText: "Chin Up" })
+    .click();
+  await expect(page.locator(".modal-content")).toContainText("Chin Up");
+  await expect(page.locator(".modal-content")).toContainText("Best volume set");
+
+  await page.reload();
+  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(
+    /is-active/,
+  );
+  await expect(page.locator("#heatmap-detail")).toContainText("Lats");
+  await expect(page.locator("#heatmap-detail")).toContainText("Activity");
+});
+
+test("strength heatmap shows a helpful hint when no load exists", async ({
+  page,
+}) => {
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Hevy exercise history",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Strength history ready",
+          detail: "Hevy data is available and current.",
+        },
+        entries: [
+          {
+            templateId: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            category: "Push",
+            best_set: {
+              weight_kg: 70,
+              reps: 4,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: 79.3,
+            workout_title: "Upper Body",
+          },
+        ],
+        recent_workouts: [],
+      }),
+    });
+  });
+  await page.route("**/history/index.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        dates: ["2026-07-13"],
+      }),
+    });
+  });
+  await page.route("**/history/2026-07-13.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        snapshot_date: "2026-07-13",
+        hevy: {
+          recent_workouts: [],
+        },
+      }),
+    });
+  });
+
+  await page.goto("/strength.html");
+  await page.locator('button[data-tab="heatmap"]').click();
+  await expect(page.locator("#heatmap-legend")).toBeVisible();
+  await expect(page.locator("#heatmap-detail")).toContainText(
+    "This window has no recorded load yet",
+  );
+  await expect(page.locator("#heatmap-detail")).toContainText("gray");
+});
+
+test("strength heatmap tab survives a refresh", async ({ page }) => {
+  await page.goto("/strength.html");
+  await page.locator('button[data-tab="heatmap"]').click();
+  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(
+    /is-active/,
+  );
+  await expect(page.locator("#heatmap-panel")).toBeVisible();
+
+  await page.reload();
+
+  await expect(page.locator('button[data-tab="heatmap"]')).toHaveClass(
+    /is-active/,
+  );
+  await expect(page.locator("#heatmap-panel")).toBeVisible();
 });
 
 test("favicon is served", async ({ request }) => {
