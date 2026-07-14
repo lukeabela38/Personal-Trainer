@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from scripts import site_preview
 
@@ -87,3 +87,27 @@ class SitePreviewTest(TestCase):
         self.assertEqual(image_build_call.args[0], ["docker", "compose", "build", "app"])
         build_call = run.call_args_list[1]
         self.assertNotIn("--sources-file", build_call.args[0])
+
+    def test_cloudflared_not_installed_returns_false(self) -> None:
+        with patch.object(site_preview.subprocess, "run", side_effect=FileNotFoundError):
+            self.assertFalse(site_preview._cloudflared_installed())
+
+    def test_tunnel_flag_does_not_crash_when_cloudflared_missing(self) -> None:
+        site_output = site_preview.DEFAULT_SITE_OUTPUT
+        with (
+            patch.object(site_preview.subprocess, "run") as mock_run,
+            patch.object(site_preview.subprocess, "Popen") as mock_popen,
+        ):
+            mock_run.return_value = subprocess.CompletedProcess([], 0)
+            process = Mock()
+            process.stdout = iter(["https://fake.trycloudflare.com"])
+            mock_popen.return_value = process
+            exit_code = site_preview.main(
+                [
+                    "--tunnel",
+                    "--skip-build",
+                    "--site-output",
+                    str(site_output),
+                ]
+            )
+        self.assertEqual(exit_code, 0)
