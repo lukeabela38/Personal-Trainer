@@ -1,5 +1,6 @@
 const OPEN_FOOD_FACTS_API = "https://world.openfoodfacts.org/api/v2/product";
-const ZBAR_CDN = "https://cdn.jsdelivr.net/npm/zbar-wasm@2/dist/index.min.mjs";
+const ZBAR_CDN =
+  "https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/main.mjs";
 
 let scannerModal = null;
 let scannerVideo = null;
@@ -7,7 +8,6 @@ let scannerStatus = null;
 let mediaStream = null;
 let scanCanvas = null;
 let scanContext = null;
-let zbarReady = null;
 
 export async function scanBarcode() {
   ensureModal();
@@ -48,17 +48,6 @@ function ensureModal() {
   scanContext = scanCanvas.getContext("2d");
 }
 
-async function ensureZbar() {
-  if (zbarReady) return zbarReady;
-  zbarReady = (async () => {
-    const mod = await import(ZBAR_CDN);
-    const scanner = new mod.Scanner();
-    await scanner.init();
-    return scanner;
-  })();
-  return zbarReady;
-}
-
 async function startScanning() {
   try {
     scannerModal.showModal();
@@ -75,7 +64,7 @@ async function startScanning() {
     await scannerVideo.play();
 
     scannerStatus.textContent = "Loading barcode detector…";
-    const scanner = await ensureZbar();
+    const { scanImageData } = await import(ZBAR_CDN);
 
     scannerStatus.textContent = "Point camera at a barcode";
 
@@ -87,7 +76,7 @@ async function startScanning() {
     while (mediaStream) {
       scanContext.drawImage(scannerVideo, 0, 0, 640, 480);
       const imageData = scanContext.getImageData(0, 0, 640, 480);
-      const symbols = scanner.scanImageData(imageData);
+      const symbols = await scanImageData(imageData);
       if (symbols.length > 0) {
         clearTimeout(timeout);
         return symbols[0].decode();
