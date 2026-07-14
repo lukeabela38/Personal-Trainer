@@ -4,14 +4,13 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-try:
-    import qrcode
-except ImportError:
-    print("error: qrcode library not installed. Run: pip install qrcode", file=sys.stderr)
-    raise SystemExit(1)
-
 
 def main(argv: list[str] | None = None) -> int:
+    try:
+        import qrcode
+    except ImportError:
+        print("error: qrcode library not installed. Run: pip install qrcode pillow", file=sys.stderr)
+        return 1
     args = argv if argv is not None else sys.argv[1:]
     if not args:
         print("usage: generate_qr.py <url> [output_path]", file=sys.stderr)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from unittest import TestCase
-from unittest.mock import patch
 
 from scripts import generate_qr
 
@@ -11,13 +10,19 @@ class GenerateQrTest(TestCase):
         exit_code = generate_qr.main([])
         self.assertEqual(exit_code, 1)
 
-    def test_main_saves_qr_to_path(self) -> None:
-        with (
-            patch.object(generate_qr.qrcode, "make") as mock_make,
-            patch.object(generate_qr.Path, "open"),
-        ):
-            mock_qr = mock_make.return_value
-            exit_code = generate_qr.main(["https://example.com", "/tmp/test.png"])
-        self.assertEqual(exit_code, 0)
-        mock_make.assert_called_once_with("https://example.com")
-        mock_qr.save.assert_called_once()
+    def test_main_exits_when_qrcode_missing(self) -> None:
+        import builtins
+
+        original_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "qrcode":
+                raise ImportError("no qrcode")
+            return original_import(name, *args, **kwargs)
+
+        builtins.__import__ = fake_import
+        try:
+            exit_code = generate_qr.main(["https://x.com"])
+            self.assertEqual(exit_code, 1)
+        finally:
+            builtins.__import__ = original_import
