@@ -277,10 +277,18 @@ grid?.addEventListener("click", async (event) => {
     const response = await fetch(
       `./history/exercises/${templateId}.json?v=${Date.now()}`,
     );
+    if (!response.ok) {
+      renderEmptyModal(card.dataset.exerciseName ?? templateId);
+      return;
+    }
     const history = await response.json();
+    if (!Array.isArray(history) || history.length === 0) {
+      renderEmptyModal(card.dataset.exerciseName ?? templateId);
+      return;
+    }
     renderTrendModal(card.dataset.exerciseName ?? templateId, history);
   } catch {
-    // no history available
+    renderEmptyModal(card.dataset.exerciseName ?? templateId);
   }
 });
 
@@ -451,7 +459,7 @@ function renderControls() {
     filterPills.innerHTML = categories
       .map((category) => {
         const count =
-          category === "All" ? entries.length : counts[category] ?? 0;
+          category === "All" ? entries.length : (counts[category] ?? 0);
         return `<button class="pill${
           category === activeCategory ? " is-active" : ""
         }" data-category="${escapeHtml(category)}" type="button">${escapeHtml(
@@ -1597,10 +1605,10 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
         intensityClass === "is-hot"
           ? "Hot"
           : intensityClass === "is-warm"
-          ? "Warm"
-          : intensityClass === "is-cool"
-          ? "Cool"
-          : "Gray",
+            ? "Warm"
+            : intensityClass === "is-cool"
+              ? "Cool"
+              : "Gray",
       heatmapStrength,
       intensityClass,
     };
@@ -2936,6 +2944,29 @@ function getWorkoutExerciseStats(sets) {
       ? formatVolumeLabel(bestVolumeSet)
       : "—",
   };
+}
+
+function renderEmptyModal(name) {
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h2>${escapeHtml(name)}</h2>
+        <button class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-progression">
+        <span class="modal-progression-value">No history yet</span>
+        <span class="modal-progression-pct">Log this exercise in Hevy to see trend data here.</span>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest(".modal-close")) {
+      modal.remove();
+    }
+  });
+  document.body.appendChild(modal);
 }
 
 function renderTrendModal(name, history) {
