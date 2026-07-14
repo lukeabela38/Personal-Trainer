@@ -2,6 +2,12 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-14 Strength Analytics Toggle
+
+- The strength page now groups the summary strip, hero note, and highlight cards into a dedicated `#strength-analytics` section.
+- A localStorage-backed toggle (`personal-trainer:strength-show-analytics`) collapses that analytics block so the workout history and exercise data can take visual priority.
+- The browser smoke test now checks both the toggle state and its persistence across reloads.
+
 ## 2026-07-13 Hevy Exercise Catalog Externalized
 
 - `site/history/exercises/index.json` now holds the shared Hevy template-id catalog with names and categories.

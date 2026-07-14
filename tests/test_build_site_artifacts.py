@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 from pathlib import Path
 from unittest import TestCase
@@ -45,6 +46,15 @@ class BuildSiteArtifactsTest(TestCase):
         catalog_dst = site_dir / "history" / "exercises" / "index.json"
         catalog_dst.parent.mkdir(parents=True, exist_ok=True)
         catalog_dst.write_text(catalog_src.read_text(encoding="utf-8"), encoding="utf-8")
+        assets_src = REPO_ROOT / "site" / "assets"
+        assets_dst = site_dir / "assets"
+        if assets_src.exists():
+            for source in assets_src.rglob("*"):
+                if not source.is_file():
+                    continue
+                destination = assets_dst / source.relative_to(assets_src)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
         for name in (
             "history/index.json",
             "history/2026-07-02.json",
@@ -188,6 +198,7 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertTrue((output_dir / "food.html").exists())
             self.assertTrue((output_dir / "food.js").exists())
             self.assertTrue((output_dir / "food/index.html").exists())
+            self.assertTrue((output_dir / "assets" / "strength-heatmap.svg").exists())
             self.assertTrue((output_dir / "strength.json").exists())
             self.assertTrue((output_dir / "history/index.json").exists())
             self.assertTrue((output_dir / "history/exercises/index.json").exists())

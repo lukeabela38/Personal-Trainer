@@ -11,7 +11,7 @@
       content="black-translucent"
     />
     <link rel="stylesheet" href="./styles.css?v=17" />
-    <link rel="stylesheet" href="./strength.css?v=10" />
+    <link rel="stylesheet" href="./strength.css?v=12" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./favicon.png?v=3" type="image/png" />
     <link rel="apple-touch-icon" href="./favicon.png?v=3" />
@@ -43,11 +43,37 @@
           <p class="lede">
             All-time PBs and estimated 1RMs from live Hevy history.
           </p>
-          <p id="strength-hero-note" class="strength-hero-note skeleton">
-            Loading coaching context...
-          </p>
         </div>
       </header>
+
+      <section id="strength-analytics" class="strength-analytics">
+        <div class="strength-analytics-head">
+          <div class="strength-analytics-copy">
+            <p class="label">Analytics</p>
+            <h2>Derived coaching signals</h2>
+            <p class="strength-analytics-note">
+              These cards summarize the current training picture. Hide them if
+              you want the raw workout data to take center stage.
+            </p>
+          </div>
+          <button
+            id="strength-analytics-toggle"
+            class="sort-btn strength-analytics-toggle"
+            type="button"
+            aria-expanded="true"
+          >
+            Hide analytics
+          </button>
+        </div>
+
+        <p id="strength-hero-note" class="strength-hero-note skeleton">
+          Loading coaching context...
+        </p>
+
+        <div id="strength-summary" class="summary-strip strength-summary"></div>
+
+        <div id="strength-highlights" class="strength-highlights" hidden></div>
+      </section>
 
       <section class="card shell-panel">
         <div class="strength-header">
@@ -68,10 +94,6 @@
             >Waiting</span
           >
         </div>
-
-        <div id="strength-summary" class="summary-strip strength-summary"></div>
-
-        <div id="strength-highlights" class="strength-highlights" hidden></div>
 
         <div class="strength-command-stack">
           <div
@@ -95,6 +117,14 @@
               aria-selected="false"
             >
               Exercises
+            </button>
+            <button
+              class="strength-tab"
+              type="button"
+              data-tab="heatmap"
+              aria-selected="false"
+            >
+              Heatmap
             </button>
           </div>
 
@@ -218,6 +248,62 @@
           </section>
 
           <section
+            id="heatmap-panel"
+            class="strength-panel"
+            data-strength-tab-panel="heatmap"
+            hidden
+          >
+            <div class="heatmap-toolbar">
+              <div class="heatmap-toolbar-copy">
+                <p class="label">Heatmap</p>
+                <h3>Training volume by muscle group</h3>
+                <p class="heatmap-toolbar-note">
+                  Tap a region to inspect the selected window. Bodyweight work
+                  counts toward the total load.
+                </p>
+              </div>
+              <div
+                id="heatmap-window-controls"
+                class="heatmap-window-controls"
+                role="tablist"
+                aria-label="Heatmap window"
+              >
+                <button
+                  class="pill heatmap-window-btn is-active"
+                  type="button"
+                  data-heatmap-window="7d"
+                  aria-selected="false"
+                >
+                  7d
+                </button>
+                <button
+                  class="pill heatmap-window-btn"
+                  type="button"
+                  data-heatmap-window="30d"
+                  aria-selected="true"
+                >
+                  30d
+                </button>
+                <button
+                  class="pill heatmap-window-btn"
+                  type="button"
+                  data-heatmap-window="all"
+                  aria-selected="false"
+                >
+                  All-time
+                </button>
+              </div>
+            </div>
+
+            <div id="heatmap-summary" class="heatmap-summary"></div>
+
+            <div class="heatmap-stage">
+              <div id="heatmap-figure" class="heatmap-figure"></div>
+              <aside id="heatmap-detail" class="heatmap-detail"></aside>
+            </div>
+          </section>
+
+          <section
             id="exercises-panel"
             class="strength-panel"
             data-strength-tab-panel="exercises"
@@ -263,6 +349,6 @@
         <div id="insights" class="stat-groups" hidden></div>
       </section>
     </main>
-    <script type="module" src="./strength.js?v=14"></script>
+    <script type="module" src="./strength.js?v=16"></script>
   </body>
 </html>
