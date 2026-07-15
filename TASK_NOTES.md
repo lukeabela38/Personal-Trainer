@@ -46,6 +46,11 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - `site/strength.html` was cache-busted so the refreshed presentation loads immediately in the browser preview.
 - Validation passed with `npm run lint:js` and `npx playwright test tests/browser/site-smoke.test.js`.
 
+## CI Fix Follow-Up
+
+- PR #220 initially failed `javascript` because Prettier drift had accumulated in `site/app.js`, `site/goals.js`, `site/progression.js`, `site/speed.js`, `site/strength.css`, `site/strength.js`, and `site/styles.css`.
+- The `lint` job failed on `tests/test_snapshot_fuzz.py` due to import ordering; the file now matches Ruff’s expected grouping.
+
 Follow-up for the strength UI polish branch:
 
 - `site/strength.js` now sorts exercise history before deriving modal stats, and the rest recommendation uses the latest set rather than the average rep count across the full history.
