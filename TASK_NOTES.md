@@ -41,6 +41,7 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 ## Warm-Up Ramp Polish
 
 - The strength modal now renders warm-up sets as a compact ladder with percentage badges, aligned weights, and rep counts instead of a single inline string.
+- The latest pass adds a subtle connector spine and a short "build toward the working set" cue while keeping the percentage badges prominent.
 - `site/strength.html` was cache-busted so the refreshed presentation loads immediately in the browser preview.
 - Validation passed with `npm run lint:js` and `npx playwright test tests/browser/site-smoke.test.js`.
 

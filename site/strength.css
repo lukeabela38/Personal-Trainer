@@ -1644,12 +1644,45 @@
   gap: 8px;
 }
 
+.warmup-ramp-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.warmup-ramp-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .warmup-ramp-list {
   display: grid;
   gap: 8px;
+  position: relative;
+  padding-left: 14px;
+}
+
+.warmup-ramp-list::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(127, 209, 185, 0.05),
+    rgba(127, 209, 185, 0.28),
+    rgba(157, 140, 255, 0.18)
+  );
 }
 
 .warmup-ramp-item {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -1658,6 +1691,19 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(127, 209, 185, 0.12);
+}
+
+.warmup-ramp-item::before {
+  content: "";
+  position: absolute;
+  left: -19px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  background: rgba(127, 209, 185, 0.46);
+  box-shadow: 0 0 0 4px rgba(127, 209, 185, 0.08);
 }
 
 .warmup-ramp-step {
@@ -1829,6 +1875,18 @@
 
   .warmup-ramp-reps {
     grid-column: 2;
+  }
+
+  .warmup-ramp-list {
+    padding-left: 12px;
+  }
+
+  .warmup-ramp-list::before {
+    left: 16px;
+  }
+
+  .warmup-ramp-item::before {
+    left: -17px;
   }
 
   .workout-summary {

@@ -2898,7 +2898,9 @@ function makeWarmupSets(workingKg) {
 
 function renderWarmupRamp(steps) {
   return `
-    <div class="warmup-ramp-list">
+    <div class="warmup-ramp-shell">
+      <p class="warmup-ramp-note">Build toward the working set.</p>
+      <div class="warmup-ramp-list">
       ${steps
         .map(
           (step) => `
@@ -2914,6 +2916,7 @@ function renderWarmupRamp(steps) {
       `,
         )
         .join("")}
+      </div>
     </div>
   `;
 }
