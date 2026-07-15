@@ -2902,19 +2902,22 @@ function renderWarmupRamp(steps) {
       <p class="warmup-ramp-note">Build toward the working set.</p>
       <div class="warmup-ramp-list">
       ${steps
-        .map(
-          (step) => `
-        <div class="warmup-ramp-item">
+        .map((step, index) => {
+          const isFinal = index === steps.length - 1;
+          return `
+        <div class="warmup-ramp-item${
+          isFinal ? " warmup-ramp-item--final" : ""
+        }" style="--warmup-pct: ${Math.round((step.pct ?? 0) * 100)}%;">
           <span class="warmup-ramp-step">${Math.round(
             (step.pct ?? 0) * 100,
           )}%</span>
           <span class="warmup-ramp-weight">${escapeHtml(step.label)}</span>
-          <span class="warmup-ramp-reps">${escapeHtml(
-            `${step.reps} reps`,
-          )}</span>
+          <span class="warmup-ramp-reps">${escapeHtml(`${step.reps} reps`)}${
+            isFinal ? ' <span class="warmup-ramp-final">working set</span>' : ""
+          }</span>
         </div>
-      `,
-        )
+      `;
+        })
         .join("")}
       </div>
     </div>
