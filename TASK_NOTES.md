@@ -40,8 +40,9 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 
 Follow-up for the strength UI polish branch:
 
-- The CI `browser-smoke` failure was a stale expectation in `tests/browser/site-smoke.test.js`; the heatmap drill-down now correctly asserts that filtered session details exclude unrelated exercises like Bench Press (Barbell).
-- `npm run format:js:check` and `npx playwright test tests/browser/site-smoke.test.js` both pass after the fix.
+- `site/strength.js` now sorts exercise history before deriving modal stats, and the rest recommendation uses the latest set rather than the average rep count across the full history.
+- Added a browser regression test that proves the modal shows `60-90 sec` for a latest 6-rep set instead of the older average-based interval.
+- `npm run lint:js` and `npx playwright test tests/browser/site-smoke.test.js` both pass after the fix.
 
 ## 2026-07-13 Hevy Browser Window
 
