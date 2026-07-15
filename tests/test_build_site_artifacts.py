@@ -465,19 +465,13 @@ class BuildSiteArtifactsTest(TestCase):
                     )
 
                     self.assertEqual(exit_code, 0)
-                    built_snapshot = json.loads(
-                        (output_dir / "data" / "snapshot.json").read_text(encoding="utf-8")
-                    )
-                    self.assertEqual(
-                        built_snapshot["derived"]["page_states"]["food"]["kind"], expected["food"]
-                    )
+                    built_snapshot = json.loads((output_dir / "data" / "snapshot.json").read_text(encoding="utf-8"))
+                    self.assertEqual(built_snapshot["derived"]["page_states"]["food"]["kind"], expected["food"])
                     self.assertEqual(
                         built_snapshot["derived"]["page_states"]["strength"]["kind"],
                         expected["strength"],
                     )
-                    self.assertEqual(
-                        built_snapshot["derived"]["page_states"]["speed"]["kind"], expected["speed"]
-                    )
+                    self.assertEqual(built_snapshot["derived"]["page_states"]["speed"]["kind"], expected["speed"])
 
     def test_rejects_invalid_snapshot_before_building_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

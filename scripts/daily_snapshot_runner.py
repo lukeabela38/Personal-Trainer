@@ -223,11 +223,7 @@ def _run_optional_history_report(
                 str(REPO_ROOT / "scripts" / script),
                 "--output",
                 str(output_path),
-                *(
-                    ["--catalog-output", str(catalog_output_path)]
-                    if catalog_output_path is not None
-                    else []
-                ),
+                *(["--catalog-output", str(catalog_output_path)] if catalog_output_path is not None else []),
             ],
             check=True,
             env=_with_pythonpath(),

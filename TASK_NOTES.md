@@ -38,10 +38,24 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The live panel now leads with today's consumed macros, with targets shown underneath for context.
 - `food.js` cache-bust version was bumped so the browser doesn’t reuse the previous module after the panel change.
 
+## Warm-Up Ramp Polish
+
+- The strength modal now renders warm-up sets as a compact ladder with percentage badges, aligned weights, and rep counts instead of a single inline string.
+- The latest pass adds a subtle connector spine and a short "build toward the working set" cue while keeping the percentage badges prominent.
+- The final ramp row now gets a stronger visual treatment so the working set reads as the destination rather than just another step.
+- `site/strength.html` was cache-busted so the refreshed presentation loads immediately in the browser preview.
+- Validation passed with `npm run lint:js` and `npx playwright test tests/browser/site-smoke.test.js`.
+
+## CI Fix Follow-Up
+
+- PR #220 initially failed `javascript` because Prettier drift had accumulated in `site/app.js`, `site/goals.js`, `site/progression.js`, `site/speed.js`, `site/strength.css`, `site/strength.js`, and `site/styles.css`.
+- The `lint` job failed on `tests/test_snapshot_fuzz.py` due to import ordering; the file now matches Ruff’s expected grouping.
+
 Follow-up for the strength UI polish branch:
 
-- The CI `browser-smoke` failure was a stale expectation in `tests/browser/site-smoke.test.js`; the heatmap drill-down now correctly asserts that filtered session details exclude unrelated exercises like Bench Press (Barbell).
-- `npm run format:js:check` and `npx playwright test tests/browser/site-smoke.test.js` both pass after the fix.
+- `site/strength.js` now sorts exercise history before deriving modal stats, and the rest recommendation uses the latest set rather than the average rep count across the full history.
+- Added a browser regression test that proves the modal shows `60-90 sec` for a latest 6-rep set instead of the older average-based interval.
+- `npm run lint:js` and `npx playwright test tests/browser/site-smoke.test.js` both pass after the fix.
 
 ## 2026-07-13 Hevy Browser Window
 

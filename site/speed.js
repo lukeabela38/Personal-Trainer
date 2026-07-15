@@ -22,7 +22,9 @@ async function loadSpeed() {
       renderUnavailableSpeed(pageState.detail ?? "No speed data available");
       return;
     }
-    sourceLabel.textContent = `${payload.source ?? "Garmin"} · ${payload.snapshot_date ?? "unknown date"}`;
+    sourceLabel.textContent = `${payload.source ?? "Garmin"} · ${
+      payload.snapshot_date ?? "unknown date"
+    }`;
     sourceLabel.classList.remove("skeleton");
     statusBanner.textContent =
       pageState.kind === "fresh"
@@ -58,8 +60,12 @@ function renderTable(entries) {
       (e) => `
         <div class="speed-row">
           <span class="speed-row-name">${escapeHtml(e.name)}</span>
-          <span class="speed-row-value" title="All-time personal best — set on ${escapeHtml(e.date ?? "unknown date")}">
-            ${escapeHtml(formatSpeedValue(e.name, e.value, e.context?.raw_value))}
+          <span class="speed-row-value" title="All-time personal best — set on ${escapeHtml(
+            e.date ?? "unknown date",
+          )}">
+            ${escapeHtml(
+              formatSpeedValue(e.name, e.value, e.context?.raw_value),
+            )}
             <span class="pb-badge">PB</span>
           </span>
           <span class="speed-row-date">${escapeHtml(e.date ?? "")}</span>
@@ -121,7 +127,9 @@ function renderSummary(entries) {
         <div class="summary-tile">
           <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
           <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
-          <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+          <span class="summary-tile-subvalue">${escapeHtml(
+            tile.subvalue,
+          )}</span>
         </div>
       `,
     )
@@ -163,10 +171,15 @@ function renderSpeedGoals(payload) {
         <div class="goal-item">
           <div class="goal-header">
             <span class="goal-name">${escapeHtml(g.name)}</span>
-            <span class="goal-numbers">${escapeHtml(formatSpeedValue(g.recordType ?? g.name, g.current))} / ${g.target}</span>
+            <span class="goal-numbers">${escapeHtml(
+              formatSpeedValue(g.recordType ?? g.name, g.current),
+            )} / ${g.target}</span>
           </div>
           <div class="macro-track">
-            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(pct, 100)}%"></div>
+            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(
+              pct,
+              100,
+            )}%"></div>
           </div>
         </div>
       `;
@@ -206,7 +219,9 @@ export function formatDuration(seconds) {
   const minutes = Math.floor((wholeSeconds % 3600) / 60);
   const secs = wholeSeconds % 60;
   if (hours > 0)
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(
+      secs,
+    ).padStart(2, "0")}`;
   return `${minutes}:${String(secs).padStart(2, "0")}`;
 }
 

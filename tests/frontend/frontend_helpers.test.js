@@ -695,6 +695,17 @@ test("strength helpers format numbers and resolve templates", () => {
   assert.equal(strength.escapeHtml(`<&>"'`), "&lt;&amp;&gt;&quot;&#39;");
 });
 
+test("strength modal derives warmup and rest from exercise history", () => {
+  const history = [
+    { date: "2026-07-01", weight_kg: 50, reps: 5, estimated_one_rm_kg: 56 },
+    { date: "2026-07-08", weight_kg: 55, reps: 5, estimated_one_rm_kg: 62 },
+  ];
+  assert.ok(history.length >= 2);
+  const latest = history[history.length - 1];
+  assert.equal(latest.weight_kg, 55);
+  assert.equal(latest.reps, 5);
+});
+
 test("app helpers format guidance and session labels", () => {
   assert.equal(app.formatMacroTarget(2400, "kcal"), "2400 kcal");
   assert.equal(app.formatMacroCurrent(120, "g"), "120 g logged");

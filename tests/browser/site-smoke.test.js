@@ -428,6 +428,75 @@ test("bodyweight exercises render a clean history modal", async ({ page }) => {
   await expect(modal).not.toContainText("Infinity");
 });
 
+test("strength exercise modal bases rest guidance on the latest set", async ({
+  page,
+}) => {
+  await page.route("**/strength.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Hevy exercise history",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Strength history ready",
+          detail: "Hevy data is available and current.",
+        },
+        entries: [
+          {
+            templateId: "79D0BB3A",
+            name: "Bench Press (Barbell)",
+            category: "Push",
+            best_set: {
+              weight_kg: 70,
+              reps: 6,
+              workout_start_date: "2026-07-13",
+            },
+            estimated_one_rm_kg: 84,
+            workout_title: "Upper Body",
+          },
+        ],
+        recent_workouts: [],
+      }),
+    });
+  });
+  await page.route("**/history/exercises/79D0BB3A.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([
+        {
+          date: "2026-07-10",
+          weight_kg: 65,
+          reps: 4,
+          estimated_one_rm_kg: 73,
+          workout_start_time: "2026-07-10T07:00:00Z",
+          workout_title: "Upper Body",
+        },
+        {
+          date: "2026-07-13",
+          weight_kg: 70,
+          reps: 6,
+          estimated_one_rm_kg: 84,
+          workout_start_time: "2026-07-13T07:00:00Z",
+          workout_title: "Upper Body",
+        },
+      ]),
+    });
+  });
+
+  await page.goto("/strength.html");
+  await page.locator('button[data-tab="exercises"]').click();
+  await page.locator(".exercise-card").click();
+
+  const modal = page.locator(".modal-overlay");
+  await expect(modal).toBeVisible();
+  await expect(modal).toContainText("Bench Press (Barbell)");
+  await expect(modal).toContainText("Warm-up ramp");
+  await expect(modal).toContainText("Rest period");
+  await expect(modal).toContainText("60-90 sec");
+  await expect(modal).not.toContainText("3-5 min");
+});
+
 test("strength heatmap aggregates volume across windows", async ({ page }) => {
   await page.route("**/strength.json**", async (route) => {
     await route.fulfill({
