@@ -15,12 +15,12 @@ export function buildProgressionState(
   const sourceSet = isObject(entry?.last_set)
     ? entry.last_set
     : isObject(entry?.latest_set)
-    ? entry.latest_set
-    : bestSet;
+      ? entry.latest_set
+      : bestSet;
   const weightKg = toFloat(sourceSet.weight_kg);
   const reps = toInt(sourceSet.reps);
   const current = isObject(gain) ? toFloat(gain.current) : null;
-  const peak = isObject(gain) ? toFloat(gain.peak) ?? current : current;
+  const peak = isObject(gain) ? (toFloat(gain.peak) ?? current) : current;
   const stalled = Boolean(isObject(gain) && gain.stalled);
   const equipmentLimited = isEquipmentLimited(entry, bestSet, equipment);
   const incrementKg = resolveIncrement(goal, weightKg, equipment);

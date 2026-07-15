@@ -196,8 +196,8 @@ export function formatSpeedValue(recordType, value, rawValue = null) {
     rawValue == null || rawValue === ""
       ? null
       : typeof rawValue === "number"
-      ? rawValue
-      : Number(rawValue);
+        ? rawValue
+        : Number(rawValue);
   const source = Number.isFinite(rawNumeric) ? rawNumeric : numeric;
 
   if (type === "Longest Run") {

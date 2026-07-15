@@ -6,9 +6,8 @@ import re
 from pathlib import Path
 from unittest import TestCase
 
-from personal_trainer.snapshot import _validate_snapshot
-
 from personal_trainer import build_daily_recommendation, build_snapshot
+from personal_trainer.snapshot import _validate_snapshot
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[1] / "personal_trainer" / "examples"
 

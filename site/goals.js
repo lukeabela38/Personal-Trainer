@@ -73,14 +73,14 @@ export function updateGoalCurrent(goals, snapshot) {
         (b) => b.exercise_template_id === g.exerciseId,
       );
       next.current = best
-        ? best.estimated_one_rm_kg ?? best.weight_kg ?? null
+        ? (best.estimated_one_rm_kg ?? best.weight_kg ?? null)
         : null;
     }
     if (g.type === "speed" && g.recordType) {
       const best = snapshot.garmin?.recent_bests?.find(
         (b) => b.record_type === g.recordType,
       );
-      next.current = best ? best.value ?? null : null;
+      next.current = best ? (best.value ?? null) : null;
     }
     return next;
   });

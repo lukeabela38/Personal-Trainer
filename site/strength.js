@@ -451,7 +451,7 @@ function renderControls() {
     filterPills.innerHTML = categories
       .map((category) => {
         const count =
-          category === "All" ? entries.length : counts[category] ?? 0;
+          category === "All" ? entries.length : (counts[category] ?? 0);
         return `<button class="pill${
           category === activeCategory ? " is-active" : ""
         }" data-category="${escapeHtml(category)}" type="button">${escapeHtml(
@@ -1597,10 +1597,10 @@ function buildHeatmapData(windowKey, snapshots, liveWorkouts) {
         intensityClass === "is-hot"
           ? "Hot"
           : intensityClass === "is-warm"
-          ? "Warm"
-          : intensityClass === "is-cool"
-          ? "Cool"
-          : "Gray",
+            ? "Warm"
+            : intensityClass === "is-cool"
+              ? "Cool"
+              : "Gray",
       heatmapStrength,
       intensityClass,
     };
@@ -2957,8 +2957,8 @@ function renderTrendModal(name, history) {
       ? latestReps <= 5
         ? "3-5 min"
         : latestReps <= 12
-        ? "60-90 sec"
-        : "30-60 sec"
+          ? "60-90 sec"
+          : "30-60 sec"
       : null;
   const bestVolumeSet = getBestVolumeSet(history);
   const hasOneRmTrend = oneRms.length > 0;

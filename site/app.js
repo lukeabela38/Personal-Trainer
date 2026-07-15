@@ -495,7 +495,7 @@ function renderSnapshot(snapshot, recommendation, sourceLabel) {
   );
   const nutrition = formatSentenceValue(
     sourceIsLive
-      ? recommendation.Nutrition ?? recommendation.nutrition ?? "-"
+      ? (recommendation.Nutrition ?? recommendation.nutrition ?? "-")
       : "Unavailable",
   );
   const confidence =
@@ -792,10 +792,10 @@ export function renderCheckInPanel({
     ? allAnswered
       ? "Captured"
       : checkInQuestions.length
-      ? `${checkInQuestions.length} question${
-          checkInQuestions.length === 1 ? "" : "s"
-        }`
-      : "Needed"
+        ? `${checkInQuestions.length} question${
+            checkInQuestions.length === 1 ? "" : "s"
+          }`
+        : "Needed"
     : "Not needed";
   const title = needsCheckIn
     ? allAnswered
@@ -966,8 +966,8 @@ export function describeImportStatus(snapshot, detailOverride = "") {
     source === "live"
       ? "Live import"
       : source === "example"
-      ? "Example snapshot"
-      : "Snapshot";
+        ? "Example snapshot"
+        : "Snapshot";
   if (freshness.kind === "fresh") {
     return {
       kind: "fresh",
