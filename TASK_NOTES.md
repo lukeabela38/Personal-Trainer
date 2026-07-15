@@ -38,6 +38,12 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The live panel now leads with today's consumed macros, with targets shown underneath for context.
 - `food.js` cache-bust version was bumped so the browser doesn’t reuse the previous module after the panel change.
 
+## Warm-Up Ramp Polish
+
+- The strength modal now renders warm-up sets as a compact ladder with percentage badges, aligned weights, and rep counts instead of a single inline string.
+- `site/strength.html` was cache-busted so the refreshed presentation loads immediately in the browser preview.
+- Validation passed with `npm run lint:js` and `npx playwright test tests/browser/site-smoke.test.js`.
+
 Follow-up for the strength UI polish branch:
 
 - `site/strength.js` now sorts exercise history before deriving modal stats, and the rest recommendation uses the latest set rather than the average rep count across the full history.

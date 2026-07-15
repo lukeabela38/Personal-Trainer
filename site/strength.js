@@ -2886,9 +2886,36 @@ function makeWarmupSets(workingKg) {
     .map((s) => {
       const w = roundPlate(workingKg * s.pct);
       if (w <= 0) return null;
-      return { weight: w, reps: s.reps, label: `${fmtWarmupWeight(w)} kg` };
+      return {
+        pct: s.pct,
+        weight: w,
+        reps: s.reps,
+        label: `${fmtWarmupWeight(w)} kg`,
+      };
     })
     .filter(Boolean);
+}
+
+function renderWarmupRamp(steps) {
+  return `
+    <div class="warmup-ramp-list">
+      ${steps
+        .map(
+          (step) => `
+        <div class="warmup-ramp-item">
+          <span class="warmup-ramp-step">${Math.round(
+            (step.pct ?? 0) * 100,
+          )}%</span>
+          <span class="warmup-ramp-weight">${escapeHtml(step.label)}</span>
+          <span class="warmup-ramp-reps">${escapeHtml(
+            `${step.reps} reps`,
+          )}</span>
+        </div>
+      `,
+        )
+        .join("")}
+    </div>
+  `;
 }
 
 function fmtWarmupWeight(value) {
@@ -3035,11 +3062,7 @@ function renderTrendModal(name, history) {
             ? `
         <div class="stat-item">
           <span class="stat-item-label">Warm-up ramp</span>
-          <span class="stat-item-value">${modalWarmup
-            .map(
-              (s) => `${escapeHtml(fmtWarmupWeight(s.weight))} kg × ${s.reps}`,
-            )
-            .join("<br>")}</span>
+          ${renderWarmupRamp(modalWarmup)}
         </div>`
             : ""
         }
