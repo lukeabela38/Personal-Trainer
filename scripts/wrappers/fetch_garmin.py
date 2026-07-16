@@ -19,6 +19,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+RUN_RECORD_TYPES = {
+    1: "Fastest 1K",
+    2: "Fastest Mile",
+    3: "Fastest 5K",
+    4: "Fastest 10K",
+    5: "Fastest Half Marathon",
+    7: "Longest Run",
+}
+
 
 def _configure_logging() -> None:
     if not logging.getLogger().handlers:
@@ -108,22 +117,17 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
 
     try:
         trend = client.get_vo2max_trend(month_ago, today)
-        if isinstance(trend, list) and trend:
-            vals = [t.get("vo2Max") or t.get("vo2MaxValue") for t in trend if t.get("vo2Max") or t.get("vo2MaxValue")]
-            if vals:
-                payload["current_vo2max"] = max(vals)
-                payload["vo2max_trend"] = "up" if vals[-1] > vals[0] else "down" if vals[-1] < vals[0] else "stable"
+        trend_points = _normalize_vo2max_trend_points(trend)
+        if trend_points:
+            payload["vo2max_trend_points"] = trend_points
+            payload["vo2max_trend"] = _trend_label(trend_points)
     except Exception:
         pass
 
     try:
         summary = client.get_user_summary(today)
-        payload["readiness"] = {
-            "sleep_score": (summary.get("sleepingQualifierSummary", {}).get("value") or summary.get("sleepingSeconds")),
-            "hrv": summary.get("heartRateVariabilitySummary", {}).get("value"),
-            "stress": summary.get("stressQualifierSummary", {}).get("value"),
-            "body_battery": summary.get("bodyBatteryChargedValue"),
-        }
+        sleep_data = client.get_sleep_data(today)
+        payload["readiness"] = _normalize_readiness(summary, sleep_data)
     except Exception:
         pass
 
@@ -148,7 +152,8 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
     try:
         runs = client.get_activities_by_date(month_ago, today, "running")
         if isinstance(runs, list):
-            payload["recent_runs"] = runs[:10]
+            payload["recent_runs"] = [_summarize_run(run) for run in runs if isinstance(run, dict)]
+            run_trend_points = []
             vo2_values = []
             for run in runs:
                 name = str(run.get("activityName", "")).lower()
@@ -157,18 +162,30 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
                 vo2_value = _safe_float(run.get("vO2MaxValue") or run.get("vo2MaxValue"))
                 if vo2_value is not None:
                     vo2_values.append(vo2_value)
+                    run_trend_points.append(
+                        {
+                            "date": run.get("startTimeLocal") or run.get("startTimeGMT") or run.get("startTime"),
+                            "vo2max": vo2_value,
+                        }
+                    )
                 if any(kw in name or kw in rtype for kw in ("interval", "tempo", "threshold", "quality")):
                     if payload["last_quality_run"] is None:
                         payload["last_quality_run"] = _summarize_activity(run)
                 if "long" in name or "long" in rtype or (distance is not None and distance >= 15000):
                     if payload["last_long_run"] is None:
                         payload["last_long_run"] = _summarize_activity(run)
+            if run_trend_points and not payload.get("vo2max_trend_points"):
+                payload["vo2max_trend_points"] = run_trend_points
             if vo2_values:
                 payload["current_vo2max"] = vo2_values[0]
-            if len(vo2_values) > 1:
-                payload["vo2max_trend"] = (
-                    "up" if vo2_values[0] > vo2_values[-1] else "down" if vo2_values[0] < vo2_values[-1] else "stable"
-                )
+                if len(vo2_values) > 1 and payload.get("vo2max_trend") in (None, "unknown"):
+                    payload["vo2max_trend"] = (
+                        "up"
+                        if vo2_values[0] > vo2_values[-1]
+                        else "down"
+                        if vo2_values[0] < vo2_values[-1]
+                        else "stable"
+                    )
     except Exception:
         pass
 
@@ -180,13 +197,22 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
         pass
 
     try:
-        records = client.get_personal_records()
+        records = client.get_personal_record()
         if isinstance(records, list):
             payload["recent_bests"] = [
                 {
-                    "record_type": r.get("record_type") or r.get("recordType") or r.get("name") or "",
+                    "record_type": _record_type_for_entry(r),
                     "value": r.get("value") or r.get("displayValue"),
                     "date": r.get("date") or r.get("startDate"),
+                    "activity_id": r.get("activityId") or r.get("activity_id"),
+                    "activity_name": r.get("activityName") or r.get("name"),
+                    "activity_type": r.get("activityType") or r.get("activity_type"),
+                    "activity_start_time_gmt": r.get("activityStartDateTimeInGMTFormatted")
+                    or r.get("activityStartDateTimeInGMT"),
+                    "activity_start_time_local": r.get("activityStartDateTimeLocalFormatted")
+                    or r.get("activityStartDateTimeLocal"),
+                    "pr_start_time_gmt": r.get("prStartTimeGmtFormatted") or r.get("prStartTimeGmt"),
+                    "pr_start_time_local": r.get("prStartTimeLocalFormatted") or r.get("prStartTimeLocal"),
                 }
                 for r in records
                 if isinstance(r, dict)
@@ -214,6 +240,7 @@ def _empty_payload() -> dict:
         "freshness": "fresh",
         "current_vo2max": None,
         "vo2max_trend": "unknown",
+        "vo2max_trend_points": [],
         "training_status": None,
         "training_load_trend": None,
         "readiness": {},
@@ -238,6 +265,105 @@ def _activity_flags(activities: list) -> list[str]:
     return flags
 
 
+def _normalize_readiness(summary: dict, sleep_data: object | None = None) -> dict:
+    raw_hrv_ms = _safe_float(
+        _summary_value(
+            summary,
+            (
+                "heartRateVariabilitySummary",
+                "value",
+            ),
+            summary.get("latestHrvValue")
+            or summary.get("hrvValue")
+            or summary.get("hrvMs")
+            or summary.get("heartRateVariabilityMs"),
+        )
+    )
+    if raw_hrv_ms is None and isinstance(sleep_data, dict):
+        raw_hrv_ms = _safe_float(
+            sleep_data.get("avgOvernightHrv")
+            or _summary_value(
+                sleep_data,
+                (
+                    "hrvData",
+                    "value",
+                ),
+            )
+        )
+
+    return {
+        "sleep_score": _summary_value(summary, ("sleepingQualifierSummary", "value"), summary.get("sleepingSeconds")),
+        "resting_heart_rate_bpm": _safe_float(
+            summary.get("restingHeartRate") or summary.get("lastSevenDaysAvgRestingHeartRate")
+        ),
+        "raw_hrv_ms": raw_hrv_ms,
+        "hrv": _summary_value(summary, ("heartRateVariabilitySummary", "value")),
+        "stress": _summary_value(summary, ("stressQualifierSummary", "value")),
+        "body_battery": _safe_float(summary.get("bodyBatteryChargedValue")),
+    }
+
+
+def _record_type_for_entry(entry: dict) -> str:
+    record_type = str(entry.get("record_type") or entry.get("recordType") or entry.get("name") or "")
+    if record_type in RUN_RECORD_TYPES.values():
+        return record_type
+
+    type_id = entry.get("typeId") or entry.get("type_id")
+    try:
+        type_id = int(type_id)
+    except (TypeError, ValueError):
+        type_id = None
+    if type_id in RUN_RECORD_TYPES:
+        return RUN_RECORD_TYPES[type_id]
+    return record_type
+
+
+def _summary_value(summary: dict, path: tuple[str, ...], default=None):
+    if not isinstance(summary, dict):
+        return default
+    current: object = summary
+    for key in path:
+        if not isinstance(current, dict):
+            return default
+        current = current.get(key)
+    return current if current not in (None, "") else default
+
+
+def _normalize_vo2max_trend_points(trend: object) -> list[dict]:
+    if not isinstance(trend, list):
+        return []
+    points: list[dict] = []
+    for entry in trend:
+        if not isinstance(entry, dict):
+            continue
+        value = _safe_float(
+            entry.get("vo2Max")
+            or entry.get("vo2MaxValue")
+            or entry.get("vO2MaxValue")
+            or entry.get("vo2max")
+            or entry.get("value")
+        )
+        date = entry.get("calendarDate") or entry.get("date") or entry.get("startDate")
+        point = {"date": date, "vo2max": value}
+        if date is None and value is None:
+            continue
+        points.append(point)
+    return points
+
+
+def _trend_label(points: list[dict]) -> str:
+    values = [point.get("vo2max") for point in points if point.get("vo2max") is not None]
+    if len(values) < 2:
+        return "stable"
+    first = values[0]
+    last = values[-1]
+    if last > first:
+        return "up"
+    if last < first:
+        return "down"
+    return "stable"
+
+
 def _summarize_activity(run: dict) -> dict:
     return {
         "date": run.get("start_time") or run.get("startTimeLocal") or "",
@@ -248,6 +374,34 @@ def _summarize_activity(run: dict) -> dict:
     }
 
 
+def _summarize_run(run: dict) -> dict:
+    return {
+        "activity_id": run.get("activityId") or run.get("activity_id"),
+        "name": run.get("activityName") or run.get("name") or "Run",
+        "activity_type": _extract_activity_type(run),
+        "start_time": run.get("startTimeLocal") or run.get("startTimeGMT") or run.get("startTime"),
+        "distance_meters": run.get("distance"),
+        "duration_seconds": run.get("duration")
+        or run.get("movingDuration")
+        or run.get("elapsedDuration")
+        or run.get("moving_duration")
+        or run.get("timerDuration"),
+        "avg_heart_rate_bpm": _extract_avg_heart_rate(run),
+    }
+
+
+def _extract_activity_type(entry: dict) -> str:
+    activity_type = entry.get("activity_type") or entry.get("type") or entry.get("sport")
+    if isinstance(activity_type, dict):
+        activity_type = activity_type.get("typeKey") or activity_type.get("typeName")
+    if activity_type:
+        return str(activity_type)
+    nested = entry.get("activityType")
+    if isinstance(nested, dict):
+        return str(nested.get("typeKey") or nested.get("typeName") or nested.get("name") or "")
+    return ""
+
+
 def _safe_float(v) -> float | None:
     if v is None:
         return None
@@ -255,6 +409,41 @@ def _safe_float(v) -> float | None:
         return float(v)
     except (ValueError, TypeError):
         return None
+
+
+def _extract_avg_heart_rate(entry: dict) -> float | None:
+    for candidate in (
+        entry.get("averageHeartRateInBeatsPerMinute"),
+        entry.get("averageHeartRate"),
+        entry.get("averageHR"),
+        entry.get("average_hr"),
+        entry.get("avgHeartRate"),
+        entry.get("avg_hr"),
+    ):
+        value = _safe_float(candidate)
+        if value is not None:
+            return value
+
+    for nested in (
+        entry.get("summary"),
+        entry.get("metrics"),
+        entry.get("stats"),
+        entry.get("performance"),
+    ):
+        if not isinstance(nested, dict):
+            continue
+        for key in (
+            "averageHeartRateInBeatsPerMinute",
+            "averageHeartRate",
+            "averageHR",
+            "average_hr",
+            "avgHeartRate",
+            "avg_hr",
+        ):
+            value = _safe_float(nested.get(key))
+            if value is not None:
+                return value
+    return None
 
 
 def main() -> int:

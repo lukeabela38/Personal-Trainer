@@ -2,11 +2,50 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-16 GitHub Pages Live Refresh
+
+- The Pages workflow already decrypts the repo-backed `.env` with `GIT_CRYPT_KEY` and runs the live source capture during the build.
+- Added a daily scheduled trigger to `.github/workflows/pages.yml` so GitHub Actions refreshes the static site from live Garmin/Hevy/Cronometer data even when no code changes land.
+- The workflow still builds the published site through `scripts/daily_snapshot_runner.py`, so GitHub Pages remains static while the data is refreshed at build time.
+- The deploy now uses an explicit Garmin coverage gate (`--require-live-garmin`) so a missing live Garmin capture fails the Pages build instead of publishing a partial refresh.
+
+## 2026-07-15 Speed Full History Ingestion
+
+- `scripts/wrappers/fetch_garmin_speed.py` now pages through `get_activities` in 1000-row chunks instead of relying on the date-bounded activity window.
+- The speed wrapper still keeps the configurable lookback for VO2 max and training-load trends, but the run list now comes from the entire available activity history.
+- Added a regression test that proves the paging helper makes a second Garmin request when the first page is full.
+
 ## 2026-07-14 Strength Analytics Toggle
 
 - The strength page now groups the summary strip, hero note, and highlight cards into a dedicated `#strength-analytics` section.
 - A localStorage-backed toggle (`personal-trainer:strength-show-analytics`) collapses that analytics block so the workout history and exercise data can take visual priority.
 - The browser smoke test now checks both the toggle state and its persistence across reloads.
+
+## 2026-07-15 Speed Analytics Cleanup
+
+- The speed page now has a localStorage-backed analytics visibility toggle so derived metrics can be hidden without losing state.
+- On narrow viewports, the analytics bubble now starts collapsed by default unless the user has already stored a preference.
+- The source header now includes a `Last synced:` line so freshness is visible without scanning the status banner.
+- VO2 max and training load now render as explicit "Unavailable" tiles when the live payload is partial, and the page surfaces a partial-data warning instead of silently leaving gaps.
+- Readiness now shows clearer row labels and helpers, with body battery rendered as a `/100` value and sleep shown in the most legible form available.
+- Browser smoke coverage now checks that the speed toggle is present and the page loads cleanly after the layout change.
+
+## 2026-07-15 Speed Run Popup
+
+- Recent Garmin runs on the speed page are now button rows that open a shared modal with run details.
+- The modal shows the run date, duration, pace, age, activity type, and activity ID when available.
+- Browser smoke coverage now verifies that a speed run row opens the detail modal and that the expected fields are present.
+
+## 2026-07-15 Speed Run Grouping
+
+- The recent-runs list on the speed page is now grouped by date so repeated run names are easier to scan.
+- Each date group shows a run count and keeps the click-through detail modal on the individual run rows.
+- The browser smoke test now checks both the date grouping and the modal interaction.
+
+## 2026-07-15 Preview Reload Wrapper
+
+- Added `scripts/reload_site.sh` as a one-command wrapper that kills stale preview processes and relaunches the live site preview.
+- The wrapper reuses `scripts/serve_site.sh --live`, so the build-and-serve logic still has one implementation path.
 
 ## 2026-07-13 Hevy Exercise Catalog Externalized
 
@@ -37,6 +76,19 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The Food page now also pulls `dist/data/snapshot.json` to show a live nutrition summary, and it falls back to an explicit unavailable state instead of synthetic data.
 - The live panel now leads with today's consumed macros, with targets shown underneath for context.
 - `food.js` cache-bust version was bumped so the browser doesn’t reuse the previous module after the panel change.
+
+## 2026-07-15 Speed Run Count Selector
+
+- The speed page now has a localStorage-backed `Runs to use` selector in the history bubble, so the user can choose how many recent Garmin runs drive the rendered history and prediction set.
+- The Garmin wrapper no longer truncates the recent-run window at 10 before it reaches the page, so the selector can actually use the full captured window.
+- The browser smoke test was extended to cover the selector, but Chromium launch in this sandbox aborted with `SIGABRT`, so the end-to-end browser verification could not complete here.
+
+## 2026-07-15 Garmin Summary Preservation
+
+- The Garmin speed path now preserves `avg_heart_rate_bpm`, `resting_heart_rate_bpm`, `raw_hrv_ms`, and `vo2max_trend_points` instead of flattening them away.
+- Recent-run VO2 trend points are derived from run summaries when Garmin does not return a dedicated trend array, so the speed payload still carries a usable series.
+- The speed page now renders resting HR and raw HRV in readiness, plus a VO2 trend summary tile, and the analytics completeness warning now keys off the extra fields.
+- Live Garmin summary data in this environment still does not provide a raw HRV ms value, so that field remains `null` until the source starts returning it.
 
 ## Warm-Up Ramp Polish
 
@@ -403,3 +455,36 @@ Garmin auth/session caching card from the project board.
 - Strength now shows a personalized coaching note in the hero, a lead momentum tile in the summary strip, and lighter command-stack chrome.
 - Exercise cards now emphasize the latest session first and de-emphasize the older best-ever metric.
 - Workout history summaries now expose duration and exercise-count badges for quicker scanning on desktop and mobile.
+## 2026-07-15
+
+- Fixed `scripts/speed_report.py` so Garmin PR entries render display-ready values again while preserving the raw numeric payload in `context.raw_value`.
+- Verified the speed report, Garmin wrapper, build-artifacts integration, and frontend helper tests all pass after the change.
+- Reordered the speed page into personal bests, history, then analytics, and limited the analytics bubble to 5K/10K predictions.
+- Removed the speed-page goal bars from the personal bests bubble so the section now only shows the PB table.
+
+## 2026-07-15 Speed Analytics Polish
+
+- The speed page now treats analytics as a distinct derived surface with its own accent treatment and a short explanatory note.
+- The analytics summary now counts unique source runs instead of duplicating the same run for each prediction target.
+- Rebuilt the live preview from the working tree after killing the older preview session so the browser sees the refreshed speed UI.
+
+## 2026-07-15 Raw HRV Recovery
+
+- Garmin readiness now pulls `raw_hrv_ms` from sleep data when the daily summary does not provide it.
+- Rebuilt `dist/data/snapshot.json` and `dist/speed.json` in Docker so the preview now shows `raw_hrv_ms: 62.0` instead of `null`.
+
+## 2026-07-15 Personal Bests Recovery
+
+- Garmin personal records were present in the raw payload, but the wrapper was dropping the record type because it did not map `typeId`.
+- The Garmin wrapper now maps `typeId` to the six running PB labels, and `dist/speed.json` now includes all six personal best entries again.
+
+## 2026-07-15 Speed Date Range Filter
+
+- Added a persistent `From` / `To` date filter to the speed history section.
+- The date filter narrows the visible recent-runs list only; analytics still use the configured recent-run window.
+# 2026-07-16 speed page update
+
+- Removed the speed-page run-count selector and its localStorage state.
+- History filtering is now date-range only; predictions and analytics still use the full recent-runs set.
+- Empty date ranges now show a stronger inline message with a direct clear-filter action.
+- The speed page now opens on the latest 7 days by default and resets back to that same 7-day window.

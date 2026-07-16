@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import shutil
 import sys
 from pathlib import Path
@@ -15,6 +14,8 @@ if str(_PACKAGE_ROOT) not in sys.path:
 
 from personal_trainer.recommendation import build_daily_recommendation
 from personal_trainer.snapshot import _validate_snapshot
+
+from scripts.speed_report import build_report as build_speed_report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -64,7 +65,24 @@ def main(argv: list[str] | None = None) -> int:
             encoding="utf-8",
         )
         (output_dir / "speed.json").write_text(
-            json.dumps(_build_speed_view(snapshot, page_states["speed"]), indent=2),
+            json.dumps(
+                build_speed_report(
+                    {
+                        "source": "Garmin speed data",
+                        "source_mode": snapshot.get("source") or "example",
+                        "snapshot_date": snapshot.get("snapshot_date"),
+                        "current_vo2max": snapshot.get("garmin", {}).get("current_vo2max"),
+                        "vo2max_trend": snapshot.get("garmin", {}).get("vo2max_trend"),
+                        "vo2max_trend_points": snapshot.get("garmin", {}).get("vo2max_trend_points", []),
+                        "training_load_trend": snapshot.get("garmin", {}).get("training_load_trend"),
+                        "readiness": snapshot.get("garmin", {}).get("readiness", {}),
+                        "recent_bests": snapshot.get("garmin", {}).get("recent_bests", []),
+                        "recent_runs": snapshot.get("garmin", {}).get("recent_runs", []),
+                    },
+                    page_state=page_states["speed"],
+                ),
+                indent=2,
+            ),
             encoding="utf-8",
         )
     except (OSError, json.JSONDecodeError, ValueError) as exc:
@@ -251,76 +269,6 @@ def _build_strength_view(
         "entries": entries,
         "recent_workouts": recent_workouts,
     }
-
-
-_TRACKED_NAMES = {
-    "Fastest 1K": "Fastest 1K",
-    "Fastest Mile": "Fastest Mile",
-    "Fastest 5K": "Fastest 5K",
-    "Fastest 10K": "Fastest 10K",
-    "Fastest Half Marathon": "Fastest Half Marathon",
-    "Longest Run": "Longest Run",
-}
-
-
-def _build_speed_view(snapshot: dict[str, Any], page_state: dict[str, str]) -> dict[str, Any]:
-    garmin = snapshot.get("garmin", {})
-    entries = []
-    for b in garmin.get("recent_bests", []):
-        if not isinstance(b, dict):
-            continue
-        rtype = str(b.get("record_type") or b.get("name") or "")
-        if rtype not in _TRACKED_NAMES:
-            continue
-        context = b.get("context")
-        raw_value = context.get("raw_value") if isinstance(context, dict) else b.get("raw_value")
-        entries.append(
-            {
-                "name": rtype,
-                "category": "Running",
-                "value": _format_speed_value(rtype, b.get("value"), raw_value),
-                "date": b.get("date"),
-            }
-        )
-    return {
-        "source": "Garmin personal records",
-        "snapshot_date": snapshot.get("snapshot_date"),
-        "page_state": page_state,
-        "entries": entries,
-    }
-
-
-def _format_speed_value(record_type: str, value: Any, raw_value: Any = None) -> Any:
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped:
-            return value
-        try:
-            numeric_value = float(stripped)
-        except ValueError:
-            return value
-    elif isinstance(value, (int, float)):
-        numeric_value = float(value)
-    else:
-        return value
-
-    numeric_source = raw_value if isinstance(raw_value, (int, float)) else numeric_value
-    if record_type == "Longest Run":
-        return _format_distance_km(numeric_source)
-    return _format_duration(numeric_source)
-
-
-def _format_duration(seconds: float) -> str:
-    whole_seconds = int(math.floor(seconds))
-    hours, remainder = divmod(whole_seconds, 3600)
-    minutes, sec = divmod(remainder, 60)
-    if hours:
-        return f"{hours}:{minutes:02d}:{sec:02d}"
-    return f"{minutes}:{sec:02d}"
-
-
-def _format_distance_km(meters: float) -> str:
-    return f"{math.floor((meters / 1000) * 100) / 100:.2f} km"
 
 
 def _infer_snapshot_source(snapshot: dict[str, Any]) -> str:

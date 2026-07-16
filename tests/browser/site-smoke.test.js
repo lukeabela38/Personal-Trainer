@@ -48,7 +48,15 @@ const pages = [
     path: "/speed.html",
     title: "Speed",
     ready: "#speed-table",
-    checks: ["#speed-summary", "#speed-table", 'a[href="./food.html"]'],
+    checks: [
+      "#speed-last-synced",
+      "#speed-summary",
+      "#speed-analytics-toggle",
+      "#speed-run-limit",
+      "#speed-runs-note",
+      "#speed-table",
+      'a[href="./food.html"]',
+    ],
   },
   {
     path: "/progress.html",
@@ -132,6 +140,120 @@ test("strength page renders at its short route", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: "Food" }),
   ).toBeVisible();
+});
+
+test("speed page starts collapsed on mobile when no preference is stored", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/speed.html");
+  await expect(page.locator("#speed-analytics")).toHaveClass(/is-collapsed/);
+  await expect(page.locator("#speed-analytics-body")).toBeHidden();
+  await expect(page.locator("#speed-analytics-toggle")).toHaveText(
+    "Show analytics",
+  );
+});
+
+test("speed run day cards reveal runs and open a detail modal", async ({
+  page,
+}) => {
+  await page.route("**/speed.json**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "Garmin",
+        source_mode: "live",
+        snapshot_date: "2026-07-13",
+        page_state: {
+          kind: "fresh",
+          label: "Speed history ready",
+          detail: "Garmin data is available and current.",
+        },
+        entries: [],
+        recent_runs: [
+          {
+            name: "Morning Intervals",
+            date: "2026-07-12",
+            distance: "5.00 km",
+            distance_m: 5000,
+            duration: "22:30",
+            duration_s: 1350,
+            pace: "4:30 /km",
+            pace_s_per_km: 270,
+          },
+          {
+            name: "Evening Easy Run",
+            date: "2026-07-12",
+            distance: "7.50 km",
+            distance_m: 7500,
+            duration: "39:00",
+            duration_s: 2340,
+            pace: "5:12 /km",
+            pace_s_per_km: 312,
+          },
+          {
+            name: "Long Run",
+            date: "2026-07-11",
+            distance: "14.00 km",
+            distance_m: 14000,
+            duration: "1:12:00",
+            duration_s: 4320,
+            pace: "5:09 /km",
+            pace_s_per_km: 309,
+          },
+        ],
+        predictions: [],
+        prediction_summary: {
+          useful_run_count: 1,
+          latest_useful_run: {
+            date: "2026-07-12",
+            distance: "5.00 km",
+          },
+          stale: false,
+          warning: "Based on 2026-07-12.",
+        },
+      }),
+    });
+  });
+
+  await page.goto("/speed.html");
+  await expect(page.locator(".speed-run-date-group")).toHaveCount(2);
+  await expect(page.locator(".speed-run-date-group-kicker").first()).toHaveText(
+    "Run day",
+  );
+  await expect(page.locator(".speed-run-date-group-label").first()).toHaveText(
+    "Sunday 12 Jul",
+  );
+  await expect(page.locator(".speed-run-date-group-meta").first()).toHaveText(
+    "2 workouts",
+  );
+  await page.locator("#speed-run-limit").selectOption("1");
+  await expect(page.locator("#speed-runs-note")).toHaveText(
+    "Showing 1 of 3 recent runs.",
+  );
+  await expect(page.locator(".speed-run-row-button")).toHaveCount(1);
+  await expect(
+    page.locator(".speed-run-date-group-action").first(),
+  ).toContainText("Show workouts");
+  await expect(page.locator(".speed-run-date-group-list").first()).toBeHidden();
+  await page.locator(".speed-run-date-group-summary").first().click();
+  await expect(
+    page.locator(".speed-run-date-group-list").first(),
+  ).toBeVisible();
+  await expect(
+    page.locator(".speed-run-date-group-action").first(),
+  ).toContainText("Hide workouts");
+  await page.locator(".speed-run-row-button").first().click();
+
+  const modal = page.locator(".modal-overlay");
+  await expect(modal).toBeVisible();
+  await expect(modal).toContainText("Morning Intervals");
+  await expect(modal).toContainText("5.00 km");
+  await expect(modal).toContainText("22:30");
+  await expect(modal).toContainText("4:30 /km");
+  await expect(modal).not.toContainText("Age");
+  await expect(modal).not.toContainText("Activity type");
+  await expect(modal).not.toContainText("Activity ID");
 });
 
 test("strength tabs switch between history and exercises", async ({ page }) => {

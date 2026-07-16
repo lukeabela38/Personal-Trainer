@@ -7,9 +7,14 @@ import logging
 import os
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+try:
+    from datetime import UTC
+except ImportError:  # pragma: no cover - compatibility for older local interpreters
+    UTC = UTC
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "personal_trainer" / "src"
@@ -68,9 +73,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Where to write a deployment log file.",
     )
     parser.add_argument(
+        "--require-live-garmin",
+        action="store_true",
+        help="Fail the build when live Garmin capture does not produce usable Garmin data.",
+    )
+    parser.add_argument(
         "--require-garmin-vo2max",
         action="store_true",
-        help="Fail the build when live Garmin data does not include current_vo2max.",
+        help=argparse.SUPPRESS,
     )
     args = parser.parse_args(argv)
 
@@ -84,7 +94,10 @@ def main(argv: list[str] | None = None) -> int:
             f"sources_mode: {'file' if args.sources_file is not None else 'live'}",
         )
         sources = _load_sources(args.sources_file, args.date, args.timezone, deployment_log)
-        _validate_live_sources(sources, require_garmin_vo2max=args.require_garmin_vo2max)
+        _validate_live_sources(
+            sources,
+            require_live_garmin=args.require_live_garmin or args.require_garmin_vo2max,
+        )
         if args.sources_file is None:
             _write_json(args.sources_output, sources)
             _log_line(deployment_log, f"wrote_sources: {args.sources_output}")
@@ -102,8 +115,11 @@ def main(argv: list[str] | None = None) -> int:
         _log_line(deployment_log, f"wrote_snapshot: {args.snapshot_output}")
         _log_line(deployment_log, "building_site_artifacts: start")
         _build_site_artifacts(args.snapshot_output, args.site_output)
+        strength_page_state = _load_strength_page_state(args.site_output / "strength.json")
         _log_line(deployment_log, "building_history_artifacts: start")
-        _build_history_artifacts(args.site_output, deployment_log)
+        _build_history_artifacts(args.site_output, source_kind, deployment_log)
+        if strength_page_state is not None:
+            _restore_strength_page_state(args.site_output / "strength.json", strength_page_state)
         _log_line(deployment_log, f"wrote_site_output: {args.site_output}")
         status = "succeeded"
         _write_deploy_log(args.deploy_log_output, deployment_log, status=status)
@@ -187,7 +203,11 @@ def _build_site_artifacts(snapshot_path: Path, site_output: Path) -> None:
     subprocess.run(command, check=True, env=_with_pythonpath())
 
 
-def _build_history_artifacts(site_output: Path, deployment_log: list[str] | None = None) -> None:
+def _build_history_artifacts(
+    site_output: Path,
+    source_kind: str,
+    deployment_log: list[str] | None = None,
+) -> None:
     _run_optional_history_report(
         env_var="PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND",
         script="strength_report.py",
@@ -199,6 +219,7 @@ def _build_history_artifacts(site_output: Path, deployment_log: list[str] | None
         env_var="PERSONAL_TRAINER_GARMIN_SPEED_COMMAND",
         script="speed_report.py",
         output_path=site_output / "speed.json",
+        extra_args=["--source-mode", source_kind],
         deployment_log=deployment_log,
     )
 
@@ -208,6 +229,7 @@ def _run_optional_history_report(
     script: str,
     output_path: Path,
     catalog_output_path: Path | None = None,
+    extra_args: list[str] | None = None,
     deployment_log: list[str] | None = None,
 ) -> None:
     if not os.environ.get(env_var):
@@ -223,6 +245,7 @@ def _run_optional_history_report(
                 str(REPO_ROOT / "scripts" / script),
                 "--output",
                 str(output_path),
+                *(extra_args or []),
                 *(["--catalog-output", str(catalog_output_path)] if catalog_output_path is not None else []),
             ],
             check=True,
@@ -233,6 +256,30 @@ def _run_optional_history_report(
         print(message, file=sys.stderr)
         if deployment_log is not None:
             _log_line(deployment_log, message)
+
+
+def _load_strength_page_state(strength_path: Path) -> dict[str, Any] | None:
+    if not strength_path.exists():
+        return None
+    strength = json.loads(strength_path.read_text(encoding="utf-8"))
+    if not isinstance(strength, dict):
+        raise ValueError("strength.json must contain a JSON object")
+    page_state = strength.get("page_state")
+    if page_state is None:
+        return None
+    if not isinstance(page_state, dict):
+        raise ValueError("strength.json page_state must contain a JSON object")
+    return page_state
+
+
+def _restore_strength_page_state(strength_path: Path, page_state: dict[str, str]) -> None:
+    if not strength_path.exists():
+        return
+    strength = json.loads(strength_path.read_text(encoding="utf-8"))
+    if not isinstance(strength, dict):
+        raise ValueError("strength.json must contain a JSON object")
+    strength["page_state"] = page_state
+    _write_json(strength_path, strength)
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -267,27 +314,14 @@ def _infer_live_source_kind(sources: dict[str, Any]) -> str:
     return "unavailable"
 
 
-def _validate_live_sources(sources: dict[str, Any], *, require_garmin_vo2max: bool) -> None:
-    if not require_garmin_vo2max:
+def _validate_live_sources(sources: dict[str, Any], *, require_live_garmin: bool) -> None:
+    if not require_live_garmin:
         return
-
-    missing = []
 
     garmin = sources.get("garmin")
     if not _has_garmin_coverage(garmin):
-        missing.append("garmin")
-
-    hevy = sources.get("hevy")
-    if not _has_hevy_coverage(hevy):
-        missing.append("hevy")
-
-    cronometer = sources.get("cronometer")
-    if not _has_cronometer_coverage(cronometer):
-        missing.append("cronometer")
-
-    if missing:
-        logger.error("live snapshot missing coverage for: %s", ", ".join(missing))
-        raise ValueError("live snapshot missing useful data after capture; refusing to publish a Pages snapshot")
+        logger.error("live snapshot missing Garmin coverage")
+        raise ValueError("live Garmin capture missing useful data after capture; refusing to publish a Pages snapshot")
 
 
 def _has_garmin_coverage(garmin: Any) -> bool:
