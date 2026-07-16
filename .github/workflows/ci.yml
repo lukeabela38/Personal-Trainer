@@ -44,13 +44,13 @@ jobs:
           python-version: "3.12"
       - name: Install ruff
         run: python3 -m pip install ruff==0.15.21
-      - name: Ruff format
+      - name: Ruff auto-fix
         working-directory: personal_trainer
         run: |
           set -o pipefail
-          echo "### Ruff format" >> "$GITHUB_STEP_SUMMARY"
-          python3 -m ruff format src tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
-          python3 -m ruff format ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "### Ruff auto-fix" >> "$GITHUB_STEP_SUMMARY"
+          python3 -m ruff check --fix src tests ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 -m ruff format src tests ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Ruff lint check
         working-directory: personal_trainer
         run: |
@@ -108,8 +108,10 @@ jobs:
           cache: npm
       - name: Install JS tools
         run: npm ci
-      - name: Check JS formatting
-        run: npm run format:js:check
+      - name: Apply JS formatting fixes
+        run: npm run format:js
+      - name: Apply JS lint fixes
+        run: npm run lint:js:fix
       - name: Lint JS
         run: npm run lint:js
 

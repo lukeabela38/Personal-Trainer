@@ -11,7 +11,7 @@
       content="black-translucent"
     />
     <link rel="stylesheet" href="./styles.css?v=17" />
-    <link rel="stylesheet" href="./speed.css?v=5" />
+    <link rel="stylesheet" href="./speed.css?v=16" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="./favicon.png" />
@@ -41,12 +41,14 @@
           <p class="eyebrow">Personal Trainer</p>
           <h1>Speed</h1>
           <p class="lede">
-            Personal bests for running, surfaced from Garmin data.
+            Garmin personal bests, recent runs, and the derived signals that sit
+            on top of them.
           </p>
         </div>
       </header>
 
       <section class="card shell-panel">
+        <div id="speed-live-banner" class="speed-live-banner" hidden></div>
         <div class="speed-header">
           <div>
             <p class="label">Source</p>
@@ -57,6 +59,13 @@
             >
               Loading…
             </h2>
+            <p
+              id="speed-last-synced"
+              class="speed-last-synced skeleton"
+              style="width: 180px; height: 14px"
+            >
+              Last synced…
+            </p>
           </div>
           <span
             class="status-banner skeleton"
@@ -66,22 +75,140 @@
           >
         </div>
 
-        <div id="speed-summary" class="summary-strip speed-summary"></div>
+        <section class="speed-bubble speed-bubble-bests">
+          <div class="speed-section-heading">
+            <div>
+              <p class="label">Records</p>
+              <h3>Personal bests</h3>
+            </div>
+            <p class="speed-section-copy">
+              All-time running records imported from Garmin.
+            </p>
+          </div>
+          <div id="speed-table" class="speed-table">
+            <div
+              class="skeleton skeleton-line"
+              style="width: 100%; height: 48px"
+            ></div>
+            <div
+              class="skeleton skeleton-line"
+              style="width: 100%; height: 48px"
+            ></div>
+          </div>
+        </section>
 
-        <div id="speed-goals" class="stat-groups" hidden></div>
+        <section class="speed-bubble speed-bubble-history">
+          <div class="speed-section-heading">
+            <div>
+              <p class="label">History</p>
+              <h3>Recent runs</h3>
+            </div>
+            <div class="speed-section-meta">
+              <p class="speed-section-copy">
+                Recent Garmin activities used as the live source for
+                predictions. The date range below only changes what you see in
+                the list.
+              </p>
+              <div class="speed-run-range-control">
+                <span class="speed-run-range-label">Display range</span>
+                <div class="speed-run-range-fields">
+                  <label class="speed-run-range-field">
+                    <span class="speed-run-range-input-label">Start</span>
+                    <input
+                      id="speed-run-date-from"
+                      class="speed-run-range-input"
+                      type="date"
+                      autocomplete="off"
+                    />
+                  </label>
+                  <label class="speed-run-range-field">
+                    <span class="speed-run-range-input-label">End</span>
+                    <input
+                      id="speed-run-date-to"
+                      class="speed-run-range-input"
+                      type="date"
+                      autocomplete="off"
+                    />
+                  </label>
+                </div>
+                <div class="speed-run-range-actions">
+                  <button
+                    id="speed-run-range-reset"
+                    class="speed-range-reset"
+                    type="button"
+                  >
+                    Reset to latest 7 days
+                  </button>
+                </div>
+              </div>
+              <p id="speed-runs-note" class="speed-runs-note"></p>
+            </div>
+          </div>
+          <div id="speed-runs" class="speed-table speed-table-runs"></div>
+        </section>
 
-        <div id="speed-table" class="speed-table">
-          <div
-            class="skeleton skeleton-line"
-            style="width: 100%; height: 48px"
-          ></div>
-          <div
-            class="skeleton skeleton-line"
-            style="width: 100%; height: 48px"
-          ></div>
-        </div>
+        <section
+          class="speed-bubble speed-bubble-analytics"
+          id="speed-analytics"
+        >
+          <div class="speed-section-heading speed-section-heading-with-action">
+            <div>
+              <p class="label">Derived</p>
+              <h3>Analytics</h3>
+            </div>
+            <div class="speed-section-meta">
+              <p class="speed-section-copy">
+                Performance signals and projected finish times, separated from
+                the underlying history.
+              </p>
+              <button
+                id="speed-analytics-toggle"
+                class="speed-toggle"
+                type="button"
+                aria-controls="speed-analytics-body"
+                aria-expanded="true"
+              >
+                Hide analytics
+              </button>
+            </div>
+          </div>
+          <div id="speed-analytics-body" class="speed-analytics-body">
+            <div
+              id="speed-summary"
+              class="summary-strip speed-summary speed-analytics-strip"
+            ></div>
+            <p
+              id="speed-analytics-warning"
+              class="speed-analytics-warning"
+              hidden
+            ></p>
+            <p class="speed-analytics-note">
+              Derived from the full recent-run set, so analytics stay stable
+              even when the history view is narrowed. Only the targets with
+              enough supporting data are shown.
+            </p>
+            <div
+              id="speed-predictions"
+              class="speed-table speed-table-predictions"
+            ></div>
+            <p id="speed-prediction-note" class="speed-note" hidden></p>
+          </div>
+        </section>
+
+        <section class="speed-bubble speed-bubble-readiness">
+          <div class="speed-section-heading">
+            <div>
+              <p class="label">Recovery</p>
+              <h3>Readiness</h3>
+            </div>
+            <p class="speed-section-copy">
+              Garmin recovery signals, separated from the main analytics strip.
+            </p>
+          </div>
+          <div id="speed-readiness" class="summary-strip speed-summary"></div>
+        </section>
       </section>
     </main>
-    <script type="module" src="./speed.js?v=6"></script>
+    <script type="module" src="./speed.js?v=24"></script>
   </body>
 </html>

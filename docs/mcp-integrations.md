@@ -29,6 +29,7 @@ The Garmin wrapper uses the `garminconnect` client directly. Set `GARMIN_EMAIL` 
 ```
 
 The wrapper also honors `GARMINTOKENS` when you want to override the tokenstore path. Docker mounts `./.cache/garmin` to `/app/.garminconnect` so repeated `docker compose run` invocations reuse the same session.
+The speed wrapper also honors `PERSONAL_TRAINER_GARMIN_SPEED_LOOKBACK_DAYS` for VO2 max and training-load trend queries. Recent runs are now pulled from the full activity history. The default is `30`.
 
 No Garmin email or password should be stored in `config.toml`.
 
@@ -180,7 +181,7 @@ Calls Garmin MCP tools (`get_vo2max_trend`, `get_latest_activity_summaries`, `ge
 
 ### Garmin Speed — `scripts/wrappers/fetch_garmin_speed.py`
 
-Calls `get_personal_records` and filters for running records (1K, Mile, 5K, 10K, Half Marathon, Longest Run). Used by `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND`.
+Calls `get_personal_records` and pages through `get_activities` to ingest the full running activity history, then emits running activity summaries plus running records (1K, Mile, 5K, 10K, Half Marathon, Longest Run). Trend queries still honor the configured lookback window. Used by `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND`.
 
 ### Hevy — `scripts/wrappers/fetch_hevy.py`
 
@@ -221,7 +222,8 @@ Key variables at a glance:
 | `PERSONAL_TRAINER_HEVY_COMMAND` | Hevy source fetcher |
 | `PERSONAL_TRAINER_CRONOMETER_COMMAND` | Cronometer source fetcher |
 | `PERSONAL_TRAINER_MANUAL_COMMAND` | Manual check-in |
-| `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND` | Garmin speed records |
+| `PERSONAL_TRAINER_GARMIN_SPEED_COMMAND` | Garmin speed records and recent runs |
+| `PERSONAL_TRAINER_GARMIN_SPEED_LOOKBACK_DAYS` | Lookback window for Garmin speed runs and trend queries |
 | `PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND` | Hevy exercise history |
 | `PERSONAL_TRAINER_GARMIN_MCP_COMMAND` | (optional) override Garmin MCP server command |
 | `PERSONAL_TRAINER_HEVY_MCP_COMMAND` | (optional) override Hevy MCP server command |

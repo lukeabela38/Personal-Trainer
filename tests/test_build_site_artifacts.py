@@ -128,11 +128,29 @@ class BuildSiteArtifactsTest(TestCase):
                         "freshness": "fresh",
                         "current_vo2max": 51,
                         "vo2max_trend": "unknown",
+                        "vo2max_trend_points": [
+                            {"date": "2026-07-01", "vo2max": 50.5},
+                            {"date": "2026-07-05", "vo2max": 51.0},
+                        ],
                         "training_status": None,
                         "training_load_trend": None,
-                        "readiness": {},
+                        "readiness": {
+                            "sleep_score": 83,
+                            "resting_heart_rate_bpm": 46,
+                            "raw_hrv_ms": 61,
+                            "stress": "low",
+                            "body_battery": 61,
+                        },
                         "recent_activities": [],
-                        "recent_runs": [],
+                        "recent_runs": [
+                            {
+                                "activityId": 101,
+                                "activityName": "Tempo Run",
+                                "startTimeLocal": "2026-07-06 07:00:00",
+                                "distance": 10000,
+                                "duration": 3600,
+                            }
+                        ],
                         "last_quality_run": None,
                         "last_long_run": None,
                         "recent_bests": [
@@ -216,10 +234,22 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertEqual(built_strength["entries"][0]["templateId"], "D04AC939")
             built_speed = json.loads((output_dir / "speed.json").read_text(encoding="utf-8"))
             self.assertEqual(built_speed["page_state"]["kind"], "fresh")
+            self.assertEqual(built_speed["source_mode"], "example")
+            self.assertEqual(built_speed["current_vo2max"], 51)
+            self.assertEqual(built_speed["vo2max_trend"], "unknown")
+            self.assertEqual(built_speed["readiness"]["sleep_score"], 83)
+            self.assertEqual(built_speed["readiness"]["resting_heart_rate_bpm"], 46)
+            self.assertEqual(built_speed["readiness"]["raw_hrv_ms"], 61)
+            self.assertEqual(built_speed["vo2max_trend_points"][0]["vo2max"], 50.5)
             self.assertEqual(
                 [entry["value"] for entry in built_speed["entries"]],
                 ["3:36", "6:23", "20:51", "48:11", "1:43:39", "21.37 km"],
             )
+            self.assertEqual(len(built_speed["recent_runs"]), 1)
+            self.assertEqual(built_speed["recent_runs"][0]["distance"], "10.00 km")
+            self.assertEqual(len(built_speed["predictions"]), 6)
+            self.assertFalse(built_speed["prediction_summary"]["stale"])
+            self.assertEqual(built_speed["prediction_summary"]["useful_run_count"], 1)
 
     def test_marks_page_states_missing_when_sources_are_unavailable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

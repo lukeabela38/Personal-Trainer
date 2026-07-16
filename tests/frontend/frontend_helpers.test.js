@@ -687,6 +687,149 @@ test("speed helpers normalize pace and distance records", () => {
   );
 });
 
+test("speed helpers build personal best modal details", () => {
+  const detail = speed.buildPersonalBestDetail({
+    name: "Fastest 5K",
+    value: 1251.10400390625,
+    date: "2026-05-01",
+    context: {
+      raw_value: 1251.10400390625,
+      source_run_date: "2026-05-01",
+      source_run_duration: "20:51",
+      source_run_pace: "4:10 /km",
+      source_run_avg_heart_rate_bpm: 164,
+      source_run_name: "Track Session",
+      source_run_activity_type: "track_running",
+      source_run_activity_id: 123,
+    },
+  });
+
+  assert.equal(detail.kicker, "Personal best");
+  assert.equal(detail.title, "Fastest 5K");
+  assert.equal(detail.heroValue, "20:51");
+  assert.equal(detail.heroMeta, "2026-05-01");
+  assert.ok(detail.items.some((item) => item.includes("Duration")));
+  assert.ok(detail.items.some((item) => item.includes("Pace")));
+  assert.ok(detail.items.some((item) => item.includes("Avg heart rate")));
+  assert.ok(!detail.items.some((item) => item.includes("Activity type")));
+  assert.ok(!detail.items.some((item) => item.includes("Activity ID")));
+  assert.ok(!detail.items.some((item) => item.includes("Raw value")));
+});
+
+test("speed helpers filter recent runs by date range", () => {
+  const filtered = speed.filterRecentRunsByDateRange(
+    [
+      { date: "2026-07-01", name: "A" },
+      { date: "2026-07-10", name: "B" },
+      { date: "2026-07-20", name: "C" },
+    ],
+    { from: "2026-07-05", to: "2026-07-15" },
+  );
+
+  assert.deepEqual(
+    filtered.map((run) => run.name),
+    ["B"],
+  );
+});
+
+test("speed helpers default the date range to the latest seven days", () => {
+  const range = speed.getDefaultRecentRunDateRange(
+    [
+      { date: "2026-07-14", name: "A" },
+      { date: "2026-07-09", name: "B" },
+      { date: "2026-07-03", name: "C" },
+    ],
+    "2026-07-16",
+  );
+
+  assert.deepEqual(range, {
+    from: "2026-07-08",
+    to: "2026-07-14",
+  });
+});
+
+test("speed helpers build predictions from recent runs", () => {
+  const recentRuns = [
+    {
+      name: "Tempo Run",
+      date: "2026-07-09",
+      distance_m: 10000,
+      distance: "10.00 km",
+      duration_s: 3600,
+      duration: "1:00:00",
+      pace_s_per_km: 360,
+      pace: "6:00 /km",
+      age_days: 1,
+    },
+  ];
+
+  const predictions = speed.buildPredictions(recentRuns, "2026-07-10");
+  const summary = speed.buildPredictionSummary(
+    predictions,
+    recentRuns,
+    "2026-07-10",
+  );
+
+  assert.equal(predictions.length, 6);
+  assert.equal(predictions[2].distance_label, "5K");
+  assert.equal(predictions[2].confidence, "fresh");
+  assert.equal(summary.stale, false);
+  assert.equal(summary.latest_useful_run.distance, "10.00 km");
+  assert.equal(summary.useful_run_count, 1);
+});
+
+test("speed helpers format Garmin analytics", () => {
+  assert.equal(speed.formatVo2max(51), "51.0 ml/kg/min");
+  assert.equal(speed.formatTrendLabel("flat_or_rising"), "Flat Or Rising");
+  assert.equal(speed.formatSleepMetric(83), "83/100");
+  assert.equal(speed.formatSleepMetric(26100), "7h 15m");
+  assert.equal(speed.formatHeartRate(162), "162 bpm");
+  assert.equal(speed.formatMilliseconds(61), "61 ms");
+  assert.match(
+    speed.buildAnalyticsNotice(
+      {
+        currentVo2max: null,
+        vo2maxTrendPoints: [],
+        trainingLoadTrend: "",
+        readiness: {},
+      },
+      [],
+      { stale: false, warning: "" },
+    ),
+    /VO2 max/,
+  );
+  assert.equal(
+    speed.buildCompletenessSuffix(
+      {
+        currentVo2max: null,
+        vo2maxTrendPoints: [],
+        trainingLoadTrend: "",
+        readiness: {},
+      },
+      [],
+    ),
+    " · partial data (7)",
+  );
+  assert.deepEqual(
+    speed.normalizeReadiness({
+      sleep_score: 83,
+      resting_heart_rate_bpm: 46,
+      raw_hrv_ms: 61,
+      hrv: "balanced",
+      stress: "low",
+      body_battery: 61,
+    }),
+    {
+      sleepScore: 83,
+      restingHeartRateBpm: 46,
+      rawHrvMs: 61,
+      hrv: "balanced",
+      stress: "low",
+      bodyBattery: 61,
+    },
+  );
+});
+
 test("strength helpers format numbers and resolve templates", () => {
   assert.equal(strength.formatNum(3), "3");
   assert.equal(strength.formatNum(3.25), "3.3");

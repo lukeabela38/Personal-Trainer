@@ -89,7 +89,7 @@ class DailySnapshotRunnerTest(TestCase):
             self.assertTrue(snapshot_output.exists())
             self.assertTrue(deploy_log_output.exists())
             build_site_artifacts.assert_called_once()
-            build_history_artifacts.assert_called_once_with(site_output, ANY)
+            build_history_artifacts.assert_called_once_with(site_output, "live", ANY)
 
             saved_sources = json.loads(sources_output.read_text(encoding="utf-8"))
             saved_snapshot = json.loads(snapshot_output.read_text(encoding="utf-8"))
@@ -99,6 +99,109 @@ class DailySnapshotRunnerTest(TestCase):
             self.assertEqual(saved_snapshot["recommendation"]["Priority"], "aerobic_quality")
             self.assertIn("status: succeeded", deploy_log)
             self.assertIn("wrote_snapshot:", deploy_log)
+
+    def test_restores_strength_page_state_from_built_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            sources_output = tmp_path / "live-sources.json"
+            snapshot_output = tmp_path / "snapshot.json"
+            site_output = tmp_path / "dist"
+            deploy_log_output = tmp_path / "deploy-log.txt"
+
+            def build_site_artifacts(snapshot_path: Path, output_dir: Path) -> None:
+                output_dir.mkdir(parents=True, exist_ok=True)
+                (output_dir / "strength.json").write_text(
+                    json.dumps(
+                        {
+                            "page_state": {
+                                "kind": "fresh",
+                                "label": "Strength history ready",
+                                "detail": "Hevy data is available and current.",
+                            },
+                            "entries": [{"name": "Squat"}],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+
+            def build_history_artifacts(output_dir: Path, source_kind: str, deployment_log: list[str]) -> None:
+                (output_dir / "strength.json").write_text(
+                    json.dumps({"entries": [{"name": "Squat"}]}),
+                    encoding="utf-8",
+                )
+
+            with (
+                patch.object(
+                    daily_snapshot_runner,
+                    "_capture_live_sources",
+                    return_value={
+                        "snapshot_date": "2026-07-06",
+                        "timezone": "Europe/Malta",
+                        "garmin": {
+                            "current_vo2max": 52,
+                            "recent_activities": [{"name": "Run"}],
+                            "recent_bests": [],
+                            "readiness": {"body_battery": 70},
+                        },
+                        "hevy": {
+                            "recent_workouts": [{"title": "Upper"}],
+                            "last_workout": {"title": "Upper"},
+                            "recent_bests": [],
+                        },
+                        "cronometer": {
+                            "today": {"calories_consumed": 2100},
+                            "recent_days": [{"date": "2026-07-05", "calories_consumed": 2100}],
+                            "fueling_status": "adequate",
+                        },
+                        "manual_context": {
+                            "sleep_quality": "good",
+                            "motivation": "normal",
+                        },
+                    },
+                ),
+                patch.object(
+                    daily_snapshot_runner,
+                    "build_daily_recommendation",
+                    return_value={
+                        "Priority": "aerobic_quality",
+                        "Session": "threshold",
+                        "Nutrition": "higher-carbohydrate day",
+                        "Macros": {
+                            "calories": 3094,
+                            "protein_g": 184,
+                            "carbs_g": 421,
+                            "fat_g": 75,
+                        },
+                        "Reason": "testing",
+                        "Guardrail": "testing",
+                        "Confidence": "high",
+                        "Needs check-in": "no",
+                    },
+                ),
+                patch.object(daily_snapshot_runner, "_build_site_artifacts", side_effect=build_site_artifacts),
+                patch.object(
+                    daily_snapshot_runner,
+                    "_build_history_artifacts",
+                    side_effect=build_history_artifacts,
+                ),
+            ):
+                exit_code = daily_snapshot_runner.main(
+                    [
+                        "--sources-output",
+                        str(sources_output),
+                        "--snapshot-output",
+                        str(snapshot_output),
+                        "--site-output",
+                        str(site_output),
+                        "--deploy-log-output",
+                        str(deploy_log_output),
+                    ]
+                )
+
+            self.assertEqual(exit_code, 0)
+            restored_strength = json.loads((site_output / "strength.json").read_text(encoding="utf-8"))
+            self.assertEqual(restored_strength["page_state"]["label"], "Strength history ready")
+            self.assertEqual(restored_strength["page_state"]["kind"], "fresh")
 
     def test_requires_live_coverage_before_publishing_pages_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -152,12 +255,12 @@ class DailySnapshotRunnerTest(TestCase):
                         str(site_output),
                         "--deploy-log-output",
                         str(deploy_log_output),
-                        "--require-garmin-vo2max",
+                        "--require-live-garmin",
                     ]
                 )
 
             self.assertEqual(exit_code, 1)
-            self.assertIn("live snapshot missing coverage for", stderr.getvalue())
+            self.assertIn("live snapshot missing Garmin coverage", stderr.getvalue())
             self.assertFalse(sources_output.exists())
             self.assertFalse(snapshot_output.exists())
             self.assertTrue(deploy_log_output.exists())
@@ -175,7 +278,7 @@ class DailySnapshotRunnerTest(TestCase):
                 patch.dict(daily_snapshot_runner.os.environ, {}, clear=True),
                 patch.object(daily_snapshot_runner.subprocess, "run") as run,
             ):
-                daily_snapshot_runner._build_history_artifacts(site_output)
+                daily_snapshot_runner._build_history_artifacts(site_output, "example")
 
             self.assertFalse(run.called)
             self.assertFalse((site_output / "strength.json").exists())
@@ -212,7 +315,38 @@ class DailySnapshotRunnerTest(TestCase):
                     env_var="PERSONAL_TRAINER_GARMIN_SPEED_COMMAND",
                     script="speed_report.py",
                     output_path=site_output / "speed.json",
+                    extra_args=["--source-mode", "example"],
                 )
 
             self.assertTrue(run.called)
             self.assertIn("Skipping speed_report.py", stderr.getvalue())
+
+    def test_restores_strength_page_state_after_history_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            strength_path = tmp_path / "dist" / "strength.json"
+            strength_path.parent.mkdir(parents=True, exist_ok=True)
+            strength_path.write_text(
+                json.dumps(
+                    {
+                        "source": "Hevy exercise history",
+                        "snapshot_date": "2026-07-13",
+                        "entries": [],
+                        "recent_workouts": [],
+                    },
+                ),
+                encoding="utf-8",
+            )
+
+            daily_snapshot_runner._restore_strength_page_state(
+                strength_path,
+                {
+                    "kind": "fresh",
+                    "label": "Strength history ready",
+                    "detail": "Hevy data is available and current.",
+                },
+            )
+
+            updated = json.loads(strength_path.read_text(encoding="utf-8"))
+            self.assertEqual(updated["page_state"]["kind"], "fresh")
+            self.assertEqual(updated["page_state"]["label"], "Strength history ready")

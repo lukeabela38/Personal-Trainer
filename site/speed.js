@@ -1,13 +1,51 @@
-import { loadGoals, updateGoalCurrent, goalProgress } from "./goals.js";
-
 const speedUrl = new URL("./speed.json", import.meta.url);
 const table = document.getElementById("speed-table");
-const goalsContainer = document.getElementById("speed-goals");
+const runsContainer = document.getElementById("speed-runs");
+const predictionsContainer = document.getElementById("speed-predictions");
+const predictionNote = document.getElementById("speed-prediction-note");
+const analyticsPanel = document.getElementById("speed-analytics");
+const analyticsBody = document.getElementById("speed-analytics-body");
+const analyticsToggle = document.getElementById("speed-analytics-toggle");
+const analyticsWarning = document.getElementById("speed-analytics-warning");
+const lastSyncedEl = document.getElementById("speed-last-synced");
 const summaryEl = document.getElementById("speed-summary");
+const readinessEl = document.getElementById("speed-readiness");
+const runsDateFromInput = document.getElementById("speed-run-date-from");
+const runsDateToInput = document.getElementById("speed-run-date-to");
+const runsDateRangeReset = document.getElementById("speed-run-range-reset");
+const runsNoteEl = document.getElementById("speed-runs-note");
+const liveBanner = document.getElementById("speed-live-banner");
 const statusBanner = document.getElementById("status-banner");
 const sourceLabel = document.getElementById("source-label");
 
+const PREDICTION_TARGETS = [
+  { label: "1K", distanceMeters: 1000 },
+  { label: "Mile", distanceMeters: 1609.344 },
+  { label: "5K", distanceMeters: 5000 },
+  { label: "10K", distanceMeters: 10000 },
+  { label: "Half Marathon", distanceMeters: 21097.5 },
+  { label: "Marathon", distanceMeters: 42195 },
+];
+
+const ANALYTICS_TARGETS = new Set(["5K", "10K"]);
+const PREDICTION_MIN_DISTANCE_RATIO = 0.75;
+const PREDICTION_STALE_DAYS = 14;
+const SCROLL_STORAGE_KEY = "personal-trainer:speed-scroll-y";
+const ANALYTICS_STORAGE_KEY = "personal-trainer:speed-show-analytics";
+const RUN_DATE_RANGE_STORAGE_KEY = "personal-trainer:speed-run-date-range";
+
+let showAnalytics = readStoredAnalyticsVisibility();
+let selectedRunDateRange = readStoredRunDateRange();
+let currentSpeedPayload = null;
+let activeRunDetailPanel = null;
+let activeRunDetailCleanup = null;
+let activeRunDetailAnchor = null;
+
 loadSpeed();
+setupAnalyticsVisibility();
+setupScrollPersistence();
+setupRecentRunDateRangeControl();
+setupRunDateRangeUiPersistence();
 
 async function loadSpeed() {
   try {
@@ -18,32 +56,951 @@ async function loadSpeed() {
       label: "Ready",
       detail: "",
     };
+    renderLiveBanner(payload.source_mode, payload.source, pageState);
     if (pageState.kind === "missing") {
       renderUnavailableSpeed(pageState.detail ?? "No speed data available");
       return;
     }
+    const entries = Array.isArray(payload.entries) ? payload.entries : [];
+    const recentRuns = Array.isArray(payload.recent_runs)
+      ? payload.recent_runs
+      : [];
+
+    currentSpeedPayload = {
+      entries,
+      recentRuns,
+      analytics: {
+        currentVo2max: toNumber(payload.current_vo2max),
+        vo2maxTrend: toText(payload.vo2max_trend),
+        vo2maxTrendPoints: normalizeVo2maxTrendPoints(
+          payload.vo2max_trend_points ?? payload.vo2max_trend,
+        ),
+        trainingLoadTrend: toText(payload.training_load_trend),
+        readiness: normalizeReadiness(payload.readiness),
+      },
+      snapshotDate: payload.snapshot_date,
+      source: payload.source,
+      pageState,
+    };
+
     sourceLabel.textContent = `${payload.source ?? "Garmin"} · ${
       payload.snapshot_date ?? "unknown date"
     }`;
     sourceLabel.classList.remove("skeleton");
-    statusBanner.textContent =
-      pageState.kind === "fresh"
-        ? `${payload.entries.length} bests`
-        : `${payload.entries.length} bests · ${pageState.label}`;
-    statusBanner.classList.remove("skeleton");
-    renderSummary(payload.entries);
-    renderTable(payload.entries);
-    renderSpeedGoals(payload);
+    renderLastSynced(payload.snapshot_date, payload.source);
+    selectedRunDateRange = resolveInitialRunDateRange(
+      recentRuns,
+      payload.snapshot_date,
+      selectedRunDateRange,
+    );
+    applyRunDateRangeControls(selectedRunDateRange, { persist: false });
+    renderSpeedView();
   } catch {
     renderUnavailableSpeed("Could not load speed data");
   }
 }
 
 function renderUnavailableSpeed(message) {
+  currentSpeedPayload = null;
   sourceLabel.textContent = "Unavailable";
+  if (lastSyncedEl) {
+    lastSyncedEl.textContent = "Last synced unavailable";
+    lastSyncedEl.classList.remove("skeleton");
+  }
   statusBanner.textContent = message;
+  if (liveBanner) liveBanner.setAttribute("hidden", "");
   if (summaryEl) summaryEl.innerHTML = "";
+  if (runsContainer) runsContainer.innerHTML = "";
+  if (predictionsContainer) predictionsContainer.innerHTML = "";
+  if (predictionNote) {
+    predictionNote.textContent = "";
+    predictionNote.setAttribute("hidden", "");
+  }
+  if (analyticsWarning) {
+    analyticsWarning.textContent = "";
+    analyticsWarning.setAttribute("hidden", "");
+  }
+  if (runsNoteEl) {
+    runsNoteEl.textContent = "";
+    runsNoteEl.setAttribute("hidden", "");
+  }
   table.innerHTML = `<div class="speed-empty">Failed to load speed data.</div>`;
+}
+
+function renderSpeedView() {
+  if (!currentSpeedPayload) return;
+
+  const entries = currentSpeedPayload.entries ?? [];
+  const recentRuns = currentSpeedPayload.recentRuns ?? [];
+  const analytics = currentSpeedPayload.analytics ?? {};
+  const filteredRuns = filterRecentRunsByDateRange(
+    recentRuns,
+    selectedRunDateRange,
+  );
+  const visibleRuns = filteredRuns;
+  const predictions = buildPredictions(
+    recentRuns,
+    currentSpeedPayload.snapshotDate,
+  );
+  const analyticsPredictions = filterAnalyticsPredictions(predictions);
+  const predictionSummary = buildPredictionSummary(
+    predictions,
+    recentRuns,
+    currentSpeedPayload.snapshotDate,
+  );
+
+  statusBanner.textContent =
+    currentSpeedPayload.pageState?.kind === "fresh"
+      ? `${entries.length} bests · ${formatRecentRunWindowLabel(
+          visibleRuns.length,
+          recentRuns.length,
+          selectedRunDateRange,
+        )} · ${
+          predictionSummary.useful_run_count ?? 0
+        } useful runs${buildCompletenessSuffix(analytics, recentRuns)}`
+      : `${entries.length} bests · ${formatRecentRunWindowLabel(
+          visibleRuns.length,
+          recentRuns.length,
+          selectedRunDateRange,
+        )} · ${currentSpeedPayload.pageState?.label ?? "Ready"}`;
+  statusBanner.classList.remove("skeleton");
+
+  renderSummary(entries, recentRuns, analytics, predictionSummary);
+  renderAnalyticsNotice(analytics, recentRuns, predictionSummary);
+  renderReadiness(analytics.readiness);
+  renderRecentRuns(visibleRuns, recentRuns.length, selectedRunDateRange);
+  renderPredictions(analyticsPredictions, predictionSummary);
+  renderTable(entries);
+}
+
+function renderLiveBanner(sourceMode, sourceLabelText, pageState) {
+  if (!liveBanner) return;
+  const normalizedMode = toText(sourceMode).toLowerCase();
+  const isLive = normalizedMode === "live";
+  const isExample = normalizedMode === "example";
+  if (isLive) {
+    liveBanner.setAttribute("hidden", "");
+    return;
+  }
+
+  const label =
+    isExample || normalizedMode === "fixture"
+      ? "Example data loaded"
+      : "Live Garmin data is not loaded";
+  const details = [];
+  if (sourceLabelText) details.push(String(sourceLabelText));
+  if (pageState?.kind && pageState.kind !== "fresh") {
+    details.push(pageState.label ?? pageState.kind);
+  }
+  liveBanner.textContent = `${label}. ${
+    details.join(" · ") || "This preview is using a non-live speed payload."
+  }`;
+  liveBanner.removeAttribute("hidden");
+}
+
+function setupScrollPersistence() {
+  if (!window?.localStorage) return;
+  const restoredY = Number(window.localStorage.getItem(SCROLL_STORAGE_KEY));
+  if (Number.isFinite(restoredY) && restoredY > 0) {
+    window.addEventListener(
+      "load",
+      () => {
+        window.scrollTo({ top: restoredY, behavior: "auto" });
+      },
+      { once: true },
+    );
+  }
+
+  let rafId = null;
+  const persistScroll = () => {
+    rafId = null;
+    try {
+      window.localStorage.setItem(
+        SCROLL_STORAGE_KEY,
+        String(Math.max(0, Math.floor(window.scrollY || 0))),
+      );
+    } catch {
+      // Ignore storage quota or private browsing failures.
+    }
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (rafId != null) return;
+      rafId = window.requestAnimationFrame(persistScroll);
+    },
+    { passive: true },
+  );
+  window.addEventListener("pagehide", persistScroll);
+}
+
+function setupAnalyticsVisibility() {
+  if (!analyticsPanel || !analyticsBody || !analyticsToggle) return;
+  applyAnalyticsVisibility(showAnalytics, { persist: false });
+  analyticsToggle.addEventListener("click", () => {
+    showAnalytics = !showAnalytics;
+    applyAnalyticsVisibility(showAnalytics);
+  });
+}
+
+function applyAnalyticsVisibility(visible, { persist = true } = {}) {
+  if (!analyticsPanel || !analyticsBody || !analyticsToggle) return;
+  analyticsPanel.classList.toggle("is-collapsed", !visible);
+  analyticsBody.hidden = !visible;
+  analyticsToggle.textContent = visible ? "Hide analytics" : "Show analytics";
+  analyticsToggle.setAttribute("aria-expanded", String(visible));
+  if (persist) saveStoredAnalyticsVisibility(visible);
+}
+
+function readStoredAnalyticsVisibility() {
+  try {
+    if (!window?.localStorage) return true;
+    const raw = window.localStorage.getItem(ANALYTICS_STORAGE_KEY);
+    if (raw == null) return !isMobileViewport();
+    return raw !== "false";
+  } catch {
+    return !isMobileViewport();
+  }
+}
+
+function setupRecentRunDateRangeControl() {
+  applyRunDateRangeControls(selectedRunDateRange, { persist: false });
+  if (runsDateFromInput) {
+    runsDateFromInput.addEventListener("change", () => {
+      selectedRunDateRange = normalizeRunDateRange({
+        from: runsDateFromInput.value,
+        to: runsDateToInput?.value,
+      });
+      saveStoredRunDateRange(selectedRunDateRange);
+      applyRunDateRangeControls(selectedRunDateRange, { persist: false });
+      renderSpeedView();
+    });
+  }
+  if (runsDateToInput) {
+    runsDateToInput.addEventListener("change", () => {
+      selectedRunDateRange = normalizeRunDateRange({
+        from: runsDateFromInput?.value,
+        to: runsDateToInput.value,
+      });
+      saveStoredRunDateRange(selectedRunDateRange);
+      applyRunDateRangeControls(selectedRunDateRange, { persist: false });
+      renderSpeedView();
+    });
+  }
+  if (runsDateRangeReset) {
+    runsDateRangeReset.addEventListener("click", () => {
+      selectedRunDateRange = getDefaultRecentRunDateRange(
+        currentSpeedPayload?.recentRuns ?? [],
+        currentSpeedPayload?.snapshotDate,
+      );
+      saveStoredRunDateRange(selectedRunDateRange);
+      applyRunDateRangeControls(selectedRunDateRange, { persist: false });
+      renderSpeedView();
+    });
+  }
+}
+
+function setupRunDateRangeUiPersistence() {
+  const syncUi = () => {
+    applyRunDateRangeControls(selectedRunDateRange, { persist: false });
+  };
+
+  window.addEventListener("load", syncUi, { once: true });
+  window.addEventListener("pageshow", syncUi);
+}
+
+function saveStoredAnalyticsVisibility(visible) {
+  try {
+    if (!window?.localStorage) return;
+    window.localStorage.setItem(
+      ANALYTICS_STORAGE_KEY,
+      String(Boolean(visible)),
+    );
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+export function filterRecentRunsByDateRange(recentRuns, range) {
+  if (!Array.isArray(recentRuns) || !recentRuns.length) return [];
+  const normalized = normalizeRunDateRange(range);
+  if (!normalized.from && !normalized.to) return [...recentRuns];
+  return recentRuns.filter((run) => {
+    const date = typeof run?.date === "string" ? run.date : "";
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+    if (normalized.from && date < normalized.from) return false;
+    if (normalized.to && date > normalized.to) return false;
+    return true;
+  });
+}
+
+function readStoredRunDateRange() {
+  try {
+    if (!window?.localStorage) return { from: null, to: null };
+    const raw = window.localStorage.getItem(RUN_DATE_RANGE_STORAGE_KEY);
+    if (!raw) return { from: null, to: null };
+    const parsed = JSON.parse(raw);
+    return normalizeRunDateRange(parsed);
+  } catch {
+    return { from: null, to: null };
+  }
+}
+
+function saveStoredRunDateRange(range) {
+  try {
+    if (!window?.localStorage) return;
+    window.localStorage.setItem(
+      RUN_DATE_RANGE_STORAGE_KEY,
+      JSON.stringify(normalizeRunDateRange(range)),
+    );
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function applyRunDateRangeControls(range, { persist = true } = {}) {
+  if (runsDateFromInput) runsDateFromInput.value = range?.from ?? "";
+  if (runsDateToInput) runsDateToInput.value = range?.to ?? "";
+  if (persist) saveStoredRunDateRange(range);
+}
+
+function normalizeRunDateRange(range) {
+  const from = normalizeDateInputValue(range?.from);
+  const to = normalizeDateInputValue(range?.to);
+  if (from && to && from > to) {
+    return { from: to, to: from };
+  }
+  return { from, to };
+}
+
+function normalizeDateInputValue(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return parseIsoDate(trimmed) ? trimmed : null;
+}
+
+function resolveInitialRunDateRange(recentRuns, snapshotDate, storedRange) {
+  const normalizedStoredRange = normalizeRunDateRange(storedRange);
+  if (hasRunDateRange(normalizedStoredRange)) {
+    return normalizedStoredRange;
+  }
+  return getDefaultRecentRunDateRange(recentRuns, snapshotDate);
+}
+
+export function getDefaultRecentRunDateRange(recentRuns, snapshotDate = null) {
+  const anchorDate =
+    findLatestRunDate(recentRuns) ??
+    normalizeDateInputValue(snapshotDate) ??
+    null;
+  if (!anchorDate) return { from: null, to: null };
+  return {
+    from: addIsoDateDays(anchorDate, -6),
+    to: anchorDate,
+  };
+}
+
+function findLatestRunDate(recentRuns) {
+  if (!Array.isArray(recentRuns) || !recentRuns.length) return null;
+  let latest = null;
+  for (const run of recentRuns) {
+    const date = normalizeDateInputValue(run?.date);
+    if (!date) continue;
+    if (!latest || date > latest) {
+      latest = date;
+    }
+  }
+  return latest;
+}
+
+function addIsoDateDays(dateText, days) {
+  const parsed = parseIsoDate(dateText);
+  if (!parsed) return null;
+  const shifted = new Date(parsed.getTime());
+  shifted.setDate(shifted.getDate() + days);
+  return `${shifted.getFullYear()}-${String(shifted.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(shifted.getDate()).padStart(2, "0")}`;
+}
+
+function hasRunDateRange(range) {
+  return Boolean(range?.from || range?.to);
+}
+
+function isMobileViewport() {
+  return Boolean(window?.matchMedia?.("(max-width: 768px)")?.matches);
+}
+
+function renderLastSynced(snapshotDate, source) {
+  if (!lastSyncedEl) return;
+  const sourceLabelText = source ? String(source) : "Garmin";
+  lastSyncedEl.textContent = snapshotDate
+    ? `Last synced: ${snapshotDate} · ${sourceLabelText}`
+    : `Last synced: unavailable · ${sourceLabelText}`;
+  lastSyncedEl.classList.remove("skeleton");
+}
+
+function renderSummary(entries, recentRuns, analytics, predictionSummary) {
+  if (!summaryEl) return;
+  const coverageTile = renderPredictionCoverage(predictionSummary);
+  const tiles = [
+    {
+      label: "VO2 max",
+      value:
+        analytics.currentVo2max != null
+          ? formatVo2max(analytics.currentVo2max)
+          : "Unavailable",
+      subvalue:
+        analytics.currentVo2max != null
+          ? analytics.vo2maxTrend
+            ? `Trend: ${formatTrendLabel(analytics.vo2maxTrend)}`
+            : "Garmin current value"
+          : "Not present in this snapshot",
+      unavailable: analytics.currentVo2max == null,
+    },
+    {
+      label: "VO2 trend",
+      value: analytics.vo2maxTrendPoints?.length
+        ? `${analytics.vo2maxTrendPoints.length} samples`
+        : "Unavailable",
+      subvalue: analytics.vo2maxTrendPoints?.length
+        ? formatVo2maxTrendSummary(analytics.vo2maxTrendPoints)
+        : "Trend array not present in this snapshot",
+      unavailable: !analytics.vo2maxTrendPoints?.length,
+    },
+    {
+      label: "Training load",
+      value: analytics.trainingLoadTrend
+        ? formatTrendLabel(analytics.trainingLoadTrend)
+        : "Unavailable",
+      subvalue: analytics.trainingLoadTrend
+        ? "Garmin load trend"
+        : "Not present in this snapshot",
+      unavailable: !analytics.trainingLoadTrend,
+    },
+  ];
+  summaryEl.innerHTML = tiles.map(renderSummaryTile).join("") + coverageTile;
+}
+
+function renderSummaryTile(tile) {
+  return `
+    <div class="summary-tile${
+      tile.unavailable ? " summary-tile-unavailable" : ""
+    }">
+      <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
+      <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
+      <span class="summary-tile-subvalue">${escapeHtml(tile.subvalue)}</span>
+    </div>
+  `;
+}
+
+function renderPredictionCoverage(predictionSummary) {
+  const latestUsefulRun = predictionSummary?.latest_useful_run ?? null;
+  return `
+    <div class="summary-tile summary-tile-coverage">
+      <span class="summary-tile-label">Prediction coverage</span>
+      <span class="summary-tile-value">${escapeHtml(
+        `${predictionSummary?.useful_run_count ?? 0} runs`,
+      )}</span>
+      <span class="summary-tile-subvalue">${escapeHtml(
+        latestUsefulRun?.date && latestUsefulRun?.distance
+          ? `Last useful run ${latestUsefulRun.distance} on ${latestUsefulRun.date}`
+          : predictionSummary?.warning ||
+              "Runs that can anchor prediction targets",
+      )}</span>
+    </div>
+  `;
+}
+
+function renderReadiness(readiness) {
+  if (!readinessEl) return;
+  readinessEl.innerHTML = `
+    <div class="summary-tile summary-tile-readiness">
+      <span class="summary-tile-label">Readiness</span>
+      <span class="summary-tile-subvalue">Garmin recovery signals with sleep shown in the most legible format available.</span>
+      <div class="readiness-grid">
+        ${readinessRows(readiness)
+          .map(
+            (row) => `
+              <div class="readiness-row">
+                <div class="readiness-row-copy">
+                  <span class="readiness-row-label">${escapeHtml(
+                    row.label,
+                  )}</span>
+                  <span class="readiness-row-helper">${escapeHtml(
+                    row.helper,
+                  )}</span>
+                </div>
+                <span class="readiness-row-value">${escapeHtml(
+                  row.value,
+                )}</span>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderAnalyticsNotice(analytics, recentRuns, predictionSummary) {
+  if (!analyticsWarning) return;
+  const message = buildAnalyticsNotice(
+    analytics,
+    recentRuns,
+    predictionSummary,
+  );
+  if (!message) {
+    analyticsWarning.textContent = "";
+    analyticsWarning.setAttribute("hidden", "");
+    return;
+  }
+  analyticsWarning.textContent = message;
+  analyticsWarning.removeAttribute("hidden");
+}
+
+export function buildAnalyticsNotice(analytics, recentRuns, predictionSummary) {
+  const missing = collectMissingAnalyticsSignals(analytics, recentRuns);
+  if (!missing.length) {
+    if (predictionSummary?.stale && predictionSummary?.warning) {
+      return predictionSummary.warning;
+    }
+    return null;
+  }
+  return `Some Garmin metrics are missing from this snapshot: ${formatMissingList(
+    missing,
+  )}. We show the live data we do have and leave the rest blank.`;
+}
+
+export function buildCompletenessSuffix(analytics, recentRuns) {
+  const missing = collectMissingAnalyticsSignals(analytics, recentRuns);
+  return missing.length ? ` · partial data (${missing.length})` : "";
+}
+
+export function collectMissingAnalyticsSignals(analytics, recentRuns) {
+  const missing = [];
+  if (analytics.currentVo2max == null) missing.push("VO2 max");
+  if (!analytics.vo2maxTrendPoints?.length) missing.push("VO2 trend");
+  if (!analytics.trainingLoadTrend) missing.push("training load");
+  if (!analytics.readiness || !Object.keys(analytics.readiness).length)
+    missing.push("readiness");
+  if (analytics.readiness?.restingHeartRateBpm == null)
+    missing.push("resting heart rate");
+  if (analytics.readiness?.rawHrvMs == null) missing.push("raw HRV");
+  if (!Array.isArray(recentRuns) || !recentRuns.length)
+    missing.push("recent runs");
+  return missing;
+}
+
+function filterAnalyticsPredictions(predictions) {
+  return predictions.filter((prediction) =>
+    ANALYTICS_TARGETS.has(prediction.distance_label),
+  );
+}
+
+function renderRecentRuns(
+  recentRuns,
+  totalRuns,
+  dateRange = { from: null, to: null },
+) {
+  if (!runsContainer) return;
+  if (!recentRuns.length) {
+    const hasDateFilter = Boolean(dateRange?.from || dateRange?.to);
+    runsContainer.innerHTML = hasDateFilter
+      ? `
+        <div class="speed-empty">
+          <div class="speed-empty-copy">No runs match the selected date range.</div>
+          <button class="speed-empty-action" type="button" data-reset-display-range>
+            Reset to latest 7 days
+          </button>
+        </div>
+      `
+      : `<div class="speed-empty">No recent Garmin runs yet.</div>`;
+    if (runsNoteEl) {
+      runsNoteEl.textContent = hasDateFilter
+        ? `No runs found between ${formatRunDateRangeLabel(
+            dateRange,
+          )}. Reset to the latest 7 days to restore the default view.`
+        : "No recent runs available in the selected window.";
+      runsNoteEl.removeAttribute("hidden");
+    }
+    runsContainer
+      .querySelectorAll("[data-reset-display-range]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedRunDateRange = getDefaultRecentRunDateRange(
+            currentSpeedPayload?.recentRuns ?? [],
+            currentSpeedPayload?.snapshotDate,
+          );
+          saveStoredRunDateRange(selectedRunDateRange);
+          applyRunDateRangeControls(selectedRunDateRange, {
+            persist: false,
+          });
+          renderSpeedView();
+        });
+      });
+    return;
+  }
+
+  if (runsNoteEl) {
+    const rangeLabel = formatRunDateRangeLabel(dateRange);
+    const baseLabel =
+      totalRuns > recentRuns.length
+        ? `Showing ${recentRuns.length} of ${totalRuns} recent runs`
+        : `Showing all ${totalRuns} recent runs`;
+    runsNoteEl.textContent = rangeLabel
+      ? `${baseLabel} from ${rangeLabel}.`
+      : `${baseLabel}.`;
+    runsNoteEl.removeAttribute("hidden");
+  }
+
+  const groups = new Map();
+  recentRuns.forEach((run, index) => {
+    const date = run.date ?? "Unknown date";
+    const group = groups.get(date) ?? [];
+    group.push({ run, index });
+    groups.set(date, group);
+  });
+
+  runsContainer.innerHTML = [...groups.entries()]
+    .map(
+      ([date, runs]) => `
+        <details class="speed-run-date-group">
+          <summary class="speed-run-date-group-summary">
+            <div class="speed-run-date-group-copy">
+              <span class="speed-run-date-group-kicker">Run day</span>
+              <span class="speed-run-date-group-label">${escapeHtml(
+                formatRunGroupLabel(date),
+              )}</span>
+              <span class="speed-run-date-group-meta">${escapeHtml(
+                runs.length === 1 ? "1 workout" : `${runs.length} workouts`,
+              )}</span>
+            </div>
+            <span class="speed-run-date-group-action" aria-hidden="true"></span>
+          </summary>
+          <div class="speed-run-date-group-list" hidden>
+            ${runs
+              .map(({ run, index }) => {
+                const name = run.name ?? "Run";
+                const distance =
+                  run.distance ?? formatDistanceKm(run.distance_m);
+                const duration = run.duration ?? formatDuration(run.duration_s);
+                const pace = run.pace ?? formatPace(run.pace_s_per_km);
+                return `
+                  <button
+                    class="speed-row speed-run-row speed-run-row-button"
+                    type="button"
+                    data-run-index="${index}"
+                    aria-expanded="false"
+                    aria-label="Open details for ${escapeHtml(
+                      name,
+                    )} on ${escapeHtml(date)}"
+                  >
+                    <span class="speed-row-name">${escapeHtml(name)}</span>
+                    <span class="speed-row-value">${escapeHtml(distance)}</span>
+                    <span class="speed-row-meta">${escapeHtml(
+                      `${duration} · ${pace}`,
+                    )}</span>
+                  </button>
+                `;
+              })
+              .join("")}
+          </div>
+        </details>
+      `,
+    )
+    .join("");
+
+  runsContainer.querySelectorAll(".speed-run-row-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.runIndex);
+      const run = Number.isInteger(index) ? recentRuns[index] : null;
+      if (run) openRunDetailsModal(run, button);
+    });
+  });
+
+  runsContainer.querySelectorAll(".speed-run-date-group").forEach((group) => {
+    const list = group.querySelector(".speed-run-date-group-list");
+    if (!list) return;
+    group.addEventListener("toggle", () => {
+      list.hidden = !group.open;
+      if (
+        !group.open &&
+        activeRunDetailPanel &&
+        group.contains(activeRunDetailPanel)
+      ) {
+        closeRunDetailsModal();
+      }
+    });
+  });
+}
+
+function openRunDetailsModal(run, anchorButton = null) {
+  openInlineDetailPanel(
+    {
+      kicker: "Recent run",
+      title: run.name ?? "Run",
+      heroValue: run.distance ?? formatDistanceKm(run.distance_m),
+      heroMeta: `${run.duration ?? formatDuration(run.duration_s)} · ${
+        run.pace ?? formatPace(run.pace_s_per_km)
+      }`,
+      items: [
+        renderDetailItem("Date", run.date ?? "—"),
+        renderDetailItem(
+          "Duration",
+          run.duration ?? formatDuration(run.duration_s),
+        ),
+        renderDetailItem("Pace", run.pace ?? formatPace(run.pace_s_per_km)),
+        ...(run.avg_heart_rate_bpm != null
+          ? [
+              renderDetailItem(
+                "Avg heart rate",
+                formatHeartRate(run.avg_heart_rate_bpm),
+              ),
+            ]
+          : []),
+      ],
+    },
+    anchorButton,
+  );
+}
+
+function openPersonalBestDetailsModal(entry, anchorButton = null) {
+  openInlineDetailPanel(buildPersonalBestDetail(entry), anchorButton);
+}
+
+export function buildPersonalBestDetail(entry) {
+  const rawValue = entry?.context?.raw_value ?? null;
+  const sourceRunDate = entry?.context?.source_run_date ?? entry?.date ?? "—";
+  const sourceRunDuration =
+    entry?.context?.source_run_duration ?? entry?.context?.duration ?? null;
+  const sourceRunPace =
+    entry?.context?.source_run_pace ?? entry?.context?.pace ?? null;
+  const sourceRunHeartRate =
+    entry?.context?.source_run_avg_heart_rate_bpm ??
+    entry?.context?.avg_heart_rate_bpm ??
+    null;
+  return {
+    kicker: "Personal best",
+    title: entry?.name ?? "Record",
+    heroValue: formatSpeedValue(entry?.name, entry?.value, rawValue),
+    heroMeta: sourceRunDate ?? "",
+    items: [
+      renderDetailItem("Record", entry?.name ?? "—"),
+      renderDetailItem(
+        "Value",
+        formatSpeedValue(entry?.name, entry?.value, rawValue),
+      ),
+      renderDetailItem("Date", sourceRunDate ?? "—"),
+      ...(sourceRunDuration
+        ? [renderDetailItem("Duration", sourceRunDuration)]
+        : []),
+      ...(sourceRunPace ? [renderDetailItem("Pace", sourceRunPace)] : []),
+      ...(sourceRunHeartRate != null
+        ? [
+            renderDetailItem(
+              "Avg heart rate",
+              formatHeartRate(sourceRunHeartRate),
+            ),
+          ]
+        : []),
+    ],
+  };
+}
+
+function openInlineDetailPanel(detail, anchorButton = null) {
+  if (
+    anchorButton &&
+    activeRunDetailAnchor === anchorButton &&
+    activeRunDetailPanel
+  ) {
+    closeRunDetailsModal();
+    return;
+  }
+
+  closeRunDetailsModal();
+
+  const panel = document.createElement("div");
+  panel.className = "card speed-run-modal speed-run-inline-panel";
+  panel.setAttribute("role", "region");
+  panel.innerHTML = `
+    <div class="speed-run-modal-heading">
+      <div class="speed-run-modal-heading-copy">
+        <div class="modal-header">
+          <p class="label">${escapeHtml(detail.kicker ?? "Details")}</p>
+          <h2>${escapeHtml(detail.title ?? "Item")}</h2>
+        </div>
+        <button class="modal-close" type="button" aria-label="Close run details">&times;</button>
+      </div>
+      <div class="speed-run-modal-hero">
+        <span class="speed-run-modal-hero-value">${escapeHtml(
+          detail.heroValue ?? "—",
+        )}</span>
+        <span class="speed-run-modal-hero-meta">${escapeHtml(
+          detail.heroMeta ?? "",
+        )}</span>
+      </div>
+      <div class="speed-run-modal-grid">
+        ${(detail.items ?? []).join("")}
+      </div>
+    </div>
+  `;
+
+  const close = () => closeRunDetailsModal();
+  panel.addEventListener("click", (event) => {
+    if (event.target.closest(".modal-close")) {
+      close();
+    }
+  });
+
+  const onKeyDown = (event) => {
+    if (event.key === "Escape") close();
+  };
+  document.addEventListener("keydown", onKeyDown);
+
+  const cleanup = () => {
+    document.removeEventListener("keydown", onKeyDown);
+  };
+
+  if (anchorButton?.parentElement) {
+    anchorButton.insertAdjacentElement("afterend", panel);
+    anchorButton.setAttribute("aria-expanded", "true");
+  } else {
+    document.body.appendChild(panel);
+  }
+
+  activeRunDetailPanel = panel;
+  activeRunDetailCleanup = cleanup;
+  activeRunDetailAnchor = anchorButton ?? null;
+  panel.querySelector(".modal-close")?.focus();
+}
+
+function closeRunDetailsModal() {
+  if (!activeRunDetailPanel) return;
+  activeRunDetailCleanup?.();
+  activeRunDetailCleanup = null;
+  if (activeRunDetailAnchor) {
+    activeRunDetailAnchor.setAttribute("aria-expanded", "false");
+  }
+  activeRunDetailPanel.remove();
+  activeRunDetailPanel = null;
+  activeRunDetailAnchor = null;
+}
+
+function renderDetailItem(label, value) {
+  return `
+    <div class="speed-run-detail-item">
+      <span class="speed-run-detail-label">${escapeHtml(label)}</span>
+      <span class="speed-run-detail-value">${escapeHtml(value)}</span>
+    </div>
+  `;
+}
+
+function formatRunGroupLabel(dateText) {
+  const date = parseIsoDate(dateText);
+  if (!date) return dateText ?? "Unknown day";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+function formatRunDateRangeLabel(range) {
+  const from = normalizeDateInputValue(range?.from);
+  const to = normalizeDateInputValue(range?.to);
+  if (!from && !to) return "";
+  if (from && to) return `${from} to ${to}`;
+  if (from) return `from ${from}`;
+  return `until ${to}`;
+}
+
+function formatRecentRunWindowLabel(selectedCount, totalCount, range) {
+  if (!totalCount) return "0 runs";
+  const runLabel = `${selectedCount} ${selectedCount === 1 ? "run" : "runs"}`;
+  const rangeLabel = formatRunDateRangeLabel(range);
+  if (rangeLabel) return `${runLabel} from ${rangeLabel}`;
+  if (selectedCount >= totalCount) {
+    return `${totalCount} ${totalCount === 1 ? "run" : "runs"}`;
+  }
+  return `${runLabel} of ${totalCount} recent runs`;
+}
+
+function parseIsoDate(dateText) {
+  if (typeof dateText !== "string") return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
+}
+
+function renderPredictions(predictions, predictionSummary) {
+  if (!predictionsContainer) return;
+  if (!predictions.length) {
+    predictionsContainer.innerHTML = `<div class="speed-empty">No predicted times yet.</div>`;
+    if (predictionNote) {
+      predictionNote.textContent = "";
+      predictionNote.setAttribute("hidden", "");
+    }
+    return;
+  }
+
+  predictionsContainer.innerHTML = predictions
+    .map((prediction) => {
+      const confidenceClass = `prediction-confidence--${
+        prediction.confidence ?? "unknown"
+      }`;
+      const source = prediction.source_run ?? {};
+      return `
+        <div class="speed-row speed-prediction-row">
+          <span class="speed-row-name">${escapeHtml(
+            prediction.distance_label ?? "Distance",
+          )}</span>
+          <span class="speed-row-value">${escapeHtml(
+            prediction.predicted_time ?? "-",
+          )}</span>
+          <span class="speed-row-meta">
+            ${escapeHtml(
+              `${source.distance ?? "Unknown source"} · ${
+                source.date ?? "No date"
+              }${
+                prediction.predicted_pace
+                  ? ` · ${prediction.predicted_pace}`
+                  : ""
+              }`,
+            )}
+          </span>
+          <span class="speed-row-date">
+            <span class="prediction-confidence ${confidenceClass}">
+              ${escapeHtml(formatConfidenceLabel(prediction.confidence))}
+            </span>
+          </span>
+        </div>
+      `;
+    })
+    .join("");
+
+  if (!predictionNote) return;
+  if (predictionSummary?.warning) {
+    predictionNote.textContent = predictionSummary.warning;
+    predictionNote.removeAttribute("hidden");
+  } else {
+    predictionNote.textContent = "";
+    predictionNote.setAttribute("hidden", "");
+  }
 }
 
 function renderTable(entries) {
@@ -52,88 +1009,113 @@ function renderTable(entries) {
     return;
   }
 
-  table.innerHTML = "";
   const sorted = sortEntries(entries);
-
   table.innerHTML = sorted
     .map(
-      (e) => `
-        <div class="speed-row">
-          <span class="speed-row-name">${escapeHtml(e.name)}</span>
+      (entry, index) => `
+        <button
+          class="speed-row speed-run-row-button speed-pb-row-button"
+          type="button"
+          data-entry-index="${index}"
+          aria-expanded="false"
+          aria-label="Open details for ${escapeHtml(entry.name)}"
+        >
+          <span class="speed-row-name">${escapeHtml(entry.name)}</span>
           <span class="speed-row-value" title="All-time personal best — set on ${escapeHtml(
-            e.date ?? "unknown date",
+            entry.date ?? "unknown date",
           )}">
             ${escapeHtml(
-              formatSpeedValue(e.name, e.value, e.context?.raw_value),
+              formatSpeedValue(
+                entry.name,
+                entry.value,
+                entry.context?.raw_value,
+              ),
             )}
             <span class="pb-badge">PB</span>
           </span>
-          <span class="speed-row-date">${escapeHtml(e.date ?? "")}</span>
-        </div>
+          <span class="speed-row-date">${escapeHtml(entry.date ?? "")}</span>
+        </button>
       `,
     )
     .join("");
+
+  table.querySelectorAll(".speed-pb-row-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.entryIndex);
+      const entry = Number.isInteger(index) ? sorted[index] : null;
+      if (entry) openPersonalBestDetailsModal(entry, button);
+    });
+  });
 }
 
-function renderSummary(entries) {
-  if (!summaryEl) return;
-  const sorted = sortEntries(entries);
-  const fastest = sorted[0];
-  const longest = sorted.at(-1);
-  const latest = [...entries]
-    .filter((entry) => entry.date)
-    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-    .at(-1);
+export function buildPredictions(recentRuns, snapshotDate = null) {
+  const runs = normalizeRuns(recentRuns, snapshotDate);
+  const predictions = [];
+  for (const target of PREDICTION_TARGETS) {
+    const sourceRun = selectSourceRun(runs, target.distanceMeters);
+    if (!sourceRun) continue;
+    const predictedSeconds = riegelPrediction(
+      sourceRun.duration_s,
+      sourceRun.distance_m,
+      target.distanceMeters,
+    );
+    predictions.push({
+      distance_label: target.label,
+      target_distance_m: target.distanceMeters,
+      predicted_time_s: predictedSeconds,
+      predicted_time: formatDuration(predictedSeconds),
+      predicted_pace: formatPace(
+        predictedSeconds / (target.distanceMeters / 1000),
+      ),
+      source_run: {
+        name: sourceRun.name,
+        date: sourceRun.date,
+        distance: sourceRun.distance,
+        duration: sourceRun.duration,
+        avg_heart_rate_bpm: sourceRun.avg_heart_rate_bpm,
+        age_days: sourceRun.age_days,
+        confidence: confidenceFromAge(sourceRun.age_days),
+      },
+      confidence: confidenceFromAge(sourceRun.age_days),
+      stale: Boolean(
+        sourceRun.age_days != null &&
+          sourceRun.age_days > PREDICTION_STALE_DAYS,
+      ),
+    });
+  }
+  return predictions;
+}
 
-  summaryEl.innerHTML = [
-    {
-      label: "Records",
-      value: `${entries.length}`,
-      subvalue:
-        entries.length > 0
-          ? "Loaded from Garmin history"
-          : "No Garmin records available yet",
-    },
-    {
-      label: "Fastest",
-      value: fastest?.name ?? "No records",
-      subvalue: fastest
-        ? formatSpeedValue(
-            fastest.name,
-            fastest.value,
-            fastest.context?.raw_value,
-          )
-        : "Top current race effort",
-    },
-    {
-      label: "Longest",
-      value: longest?.name ?? "No records",
-      subvalue: longest
-        ? formatSpeedValue(
-            longest.name,
-            longest.value,
-            longest.context?.raw_value,
-          )
-        : "Best endurance marker",
-    },
-    {
-      label: "Latest PB",
-      value: latest?.date ?? "No records",
-      subvalue: latest?.name ?? "Most recent best",
-    },
-  ]
-    .map(
-      (tile) => `
-        <div class="summary-tile">
-          <span class="summary-tile-label">${escapeHtml(tile.label)}</span>
-          <span class="summary-tile-value">${escapeHtml(tile.value)}</span>
-          <span class="summary-tile-subvalue">${escapeHtml(
-            tile.subvalue,
-          )}</span>
-        </div>
-      `,
-    )
-    .join("");
+export function buildPredictionSummary(
+  predictions,
+  recentRuns,
+  snapshotDate = null,
+) {
+  const normalizedRuns = normalizeRuns(recentRuns, snapshotDate);
+  const usefulRuns = uniqueSourceRuns(
+    predictions.map((prediction) => prediction.source_run),
+  );
+  const latestUsefulRun = usefulRuns.length
+    ? [...usefulRuns].sort((a, b) =>
+        String(b.date).localeCompare(String(a.date)),
+      )[0]
+    : normalizedRuns[0] ?? null;
+  const stale = Boolean(
+    latestUsefulRun &&
+      latestUsefulRun.age_days != null &&
+      latestUsefulRun.age_days > PREDICTION_STALE_DAYS,
+  );
+  return {
+    snapshot_date: snapshotDate ?? null,
+    latest_useful_run: latestUsefulRun,
+    stale,
+    warning: stale
+      ? "Predictions are based on a run older than 14 days."
+      : latestUsefulRun
+      ? `Based on ${latestUsefulRun.date}.`
+      : "",
+    useful_run_count: usefulRuns.length,
+  };
 }
 
 export function sortEntries(entries) {
@@ -150,44 +1132,6 @@ export function sortEntries(entries) {
   );
 }
 
-function renderSpeedGoals(payload) {
-  if (!goalsContainer) return;
-  const snapshot = {
-    garmin: {
-      recent_bests: payload.entries.map((e) => ({
-        record_type: e.name ?? "",
-        value: e.value ?? null,
-      })),
-    },
-  };
-  const goals = updateGoalCurrent(loadGoals(), snapshot);
-  const speedGoals = goals.filter((g) => g.type === "speed");
-  if (!speedGoals.length) return;
-  goalsContainer.innerHTML = speedGoals
-    .map((g) => {
-      const pct = goalProgress(g);
-      const cls = pct >= 100 ? "high" : pct >= 75 ? "medium" : "low";
-      return `
-        <div class="goal-item">
-          <div class="goal-header">
-            <span class="goal-name">${escapeHtml(g.name)}</span>
-            <span class="goal-numbers">${escapeHtml(
-              formatSpeedValue(g.recordType ?? g.name, g.current),
-            )} / ${g.target}</span>
-          </div>
-          <div class="macro-track">
-            <div class="macro-fill macro-fill-${cls}" style="width:${Math.min(
-              pct,
-              100,
-            )}%"></div>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-  goalsContainer.removeAttribute("hidden");
-}
-
 export function formatSpeedValue(recordType, value, rawValue = null) {
   if (value == null || value === "") return "-";
   const type = String(recordType ?? "");
@@ -196,8 +1140,8 @@ export function formatSpeedValue(recordType, value, rawValue = null) {
     rawValue == null || rawValue === ""
       ? null
       : typeof rawValue === "number"
-        ? rawValue
-        : Number(rawValue);
+      ? rawValue
+      : Number(rawValue);
   const source = Number.isFinite(rawNumeric) ? rawNumeric : numeric;
 
   if (type === "Longest Run") {
@@ -231,6 +1175,21 @@ export function formatDistanceKm(meters) {
     .replace(/\.00$/, "");
 }
 
+export function formatPace(secondsPerKm) {
+  if (!Number.isFinite(secondsPerKm)) return "-";
+  return `${formatDuration(secondsPerKm)} /km`;
+}
+
+export function formatHeartRate(value) {
+  const numeric = toNumber(value);
+  return numeric == null ? "—" : `${Math.round(numeric)} bpm`;
+}
+
+export function formatMilliseconds(value) {
+  const numeric = toNumber(value);
+  return numeric == null ? "—" : `${Math.round(numeric)} ms`;
+}
+
 export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -238,4 +1197,324 @@ export function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function normalizeRuns(recentRuns, snapshotDate) {
+  if (!Array.isArray(recentRuns)) return [];
+  const snapshot = parseDate(snapshotDate) ?? new Date();
+  return recentRuns
+    .map((run) => normalizeRun(run, snapshot))
+    .filter((run) => run != null);
+}
+
+function normalizeRun(run, snapshotDate) {
+  if (!run || typeof run !== "object") return null;
+  const distanceMeters = numberFrom(
+    run.distance_m ?? run.distance_meters ?? run.distance ?? run.meters,
+  );
+  const durationSeconds = numberFrom(
+    run.duration_s ??
+      run.duration_seconds ??
+      run.duration ??
+      run.movingDuration ??
+      run.elapsedDuration ??
+      run.moving_duration ??
+      run.timerDuration,
+  );
+  if (
+    !Number.isFinite(distanceMeters) ||
+    !Number.isFinite(durationSeconds) ||
+    distanceMeters <= 0 ||
+    durationSeconds <= 0
+  ) {
+    return null;
+  }
+  const startedAt = parseDateTime(
+    run.start_time ??
+      run.startTimeLocal ??
+      run.startTimeGMT ??
+      run.startTime ??
+      run.date,
+  );
+  const ageDays =
+    run.age_days != null
+      ? Number(run.age_days)
+      : startedAt
+      ? Math.max(0, Math.floor((snapshotDate - startedAt) / 86400000))
+      : null;
+  const paceSeconds = durationSeconds / (distanceMeters / 1000);
+  const name = String(
+    run.name ?? run.activityName ?? run.title ?? run.activity_type ?? "Run",
+  );
+  return {
+    name,
+    activity_type: String(run.activity_type ?? run.type ?? run.sport ?? ""),
+    activity_id:
+      run.activity_id ?? run.activityId ?? run.id ?? run.activityID ?? null,
+    date: formatDisplayDate(
+      run.date ??
+        startedAt ??
+        run.startTimeLocal ??
+        run.startTimeGMT ??
+        run.startTime,
+    ),
+    distance_m: distanceMeters,
+    distance: run.distance ?? `${formatDistanceKm(distanceMeters)} km`,
+    duration_s: durationSeconds,
+    duration: run.duration ?? formatDuration(durationSeconds),
+    pace_s_per_km: paceSeconds,
+    pace: run.pace ?? formatPace(paceSeconds),
+    avg_heart_rate_bpm: numberFrom(
+      run.avg_heart_rate_bpm ??
+        run.averageHeartRateInBeatsPerMinute ??
+        run.averageHeartRate ??
+        run.average_hr ??
+        run.avgHeartRate ??
+        run.avg_hr,
+    ),
+    age_days: ageDays,
+  };
+}
+
+function normalizeVo2maxTrendPoints(points) {
+  if (!Array.isArray(points)) return [];
+  return points
+    .map((point) => {
+      if (!point || typeof point !== "object") return null;
+      const vo2max = numberFrom(
+        point.vo2max ??
+          point.vo2Max ??
+          point.vo2MaxValue ??
+          point.vO2MaxValue ??
+          point.value,
+      );
+      const date = toText(point.date ?? point.calendarDate ?? point.startDate);
+      if (!Number.isFinite(vo2max) && !date) return null;
+      return {
+        date: date || null,
+        vo2max: Number.isFinite(vo2max) ? vo2max : null,
+      };
+    })
+    .filter(Boolean);
+}
+
+function selectSourceRun(runs, targetDistanceMeters) {
+  const eligible = runs.filter(
+    (run) =>
+      run.distance_m >= targetDistanceMeters * PREDICTION_MIN_DISTANCE_RATIO,
+  );
+  if (eligible.length) return eligible[0];
+  return runs.reduce((best, run) => {
+    if (!best) return run;
+    return run.distance_m > best.distance_m ? run : best;
+  }, null);
+}
+
+function riegelPrediction(
+  sourceSeconds,
+  sourceDistanceMeters,
+  targetDistanceMeters,
+) {
+  return sourceSeconds * (targetDistanceMeters / sourceDistanceMeters) ** 1.06;
+}
+
+function confidenceFromAge(ageDays) {
+  if (ageDays == null) return "unknown";
+  if (ageDays <= 7) return "fresh";
+  if (ageDays <= PREDICTION_STALE_DAYS) return "aging";
+  return "stale";
+}
+
+export function normalizeReadiness(readiness) {
+  if (!readiness || typeof readiness !== "object") return {};
+  return {
+    sleepScore: toNumber(
+      readiness.sleep_score ??
+        readiness.sleepingSeconds ??
+        readiness.sleepingQualifierSummary?.value,
+    ),
+    restingHeartRateBpm: toNumber(
+      readiness.resting_heart_rate_bpm ??
+        readiness.restingHeartRate ??
+        readiness.lastSevenDaysAvgRestingHeartRate,
+    ),
+    rawHrvMs: toNumber(
+      readiness.raw_hrv_ms ??
+        readiness.hrv_ms ??
+        readiness.hrvMs ??
+        readiness.latestHrvValue ??
+        readiness.heartRateVariabilityMs,
+    ),
+    hrv: toText(
+      readiness.hrv ??
+        readiness.heartRateVariabilitySummary?.value ??
+        readiness.heartRateVariabilitySummary,
+    ),
+    stress: toText(readiness.stress ?? readiness.stressQualifierSummary?.value),
+    bodyBattery: toNumber(
+      readiness.body_battery ?? readiness.bodyBatteryChargedValue,
+    ),
+  };
+}
+
+function formatVo2maxTrendSummary(points) {
+  if (!Array.isArray(points) || !points.length)
+    return "No trend samples available";
+  const numericPoints = points.filter((point) =>
+    Number.isFinite(point?.vo2max),
+  );
+  if (!numericPoints.length) return `${points.length} trend samples retained`;
+  const first = numericPoints[0].vo2max;
+  const last = numericPoints[numericPoints.length - 1].vo2max;
+  const delta = last - first;
+  const direction = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
+  return `${first.toFixed(1)} -> ${last.toFixed(1)} (${direction})`;
+}
+
+export function formatSleepMetric(value) {
+  const numeric = toNumber(value);
+  if (numeric == null) return "—";
+  if (numeric > 1000) return formatSleepDuration(numeric);
+  return `${Math.round(numeric)}/100`;
+}
+
+export function formatVo2max(value) {
+  const numeric = toNumber(value);
+  return numeric == null ? "—" : `${numeric.toFixed(1)} ml/kg/min`;
+}
+
+export function formatTrendLabel(value) {
+  const text = toText(value);
+  if (!text) return "Unknown";
+  return text
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatMissingList(values) {
+  if (!values.length) return "";
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`;
+}
+
+function toNumber(value) {
+  if (value == null || value === "") return null;
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function toText(value) {
+  if (value == null) return "";
+  return String(value).trim();
+}
+
+function readinessRows(readiness) {
+  return [
+    {
+      label:
+        readiness?.sleepScore != null && readiness.sleepScore > 1000
+          ? "Sleep duration"
+          : "Sleep score",
+      helper:
+        readiness?.sleepScore != null && readiness.sleepScore > 1000
+          ? "Overnight duration"
+          : "Nightly recovery score",
+      value: formatSleepMetric(readiness?.sleepScore),
+    },
+    {
+      label: "Resting HR",
+      helper: "Current baseline",
+      value: formatHeartRate(readiness?.restingHeartRateBpm),
+    },
+    {
+      label: "Raw HRV",
+      helper: "Milliseconds",
+      value: formatMilliseconds(readiness?.rawHrvMs),
+    },
+    {
+      label: "Body battery",
+      helper: "Remaining energy",
+      value:
+        readiness?.bodyBattery != null
+          ? `${Math.round(readiness.bodyBattery)}/100`
+          : "—",
+    },
+    {
+      label: "Stress",
+      helper: "Current load",
+      value: readiness?.stress ? formatTrendLabel(readiness.stress) : "—",
+    },
+  ];
+}
+
+function formatSleepDuration(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "—";
+  const totalMinutes = Math.floor(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours <= 0) return `${minutes}m`;
+  if (minutes <= 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
+}
+
+function formatConfidenceLabel(confidence) {
+  const value = String(confidence ?? "unknown");
+  if (value === "fresh") return "Fresh";
+  if (value === "aging") return "Aging";
+  if (value === "stale") return "Stale";
+  return "Unknown";
+}
+
+function uniqueSourceRuns(sourceRuns) {
+  const seen = new Set();
+  const unique = [];
+  for (const run of sourceRuns) {
+    if (!run || typeof run !== "object" || !run.date) continue;
+    const key = sourceRunKey(run);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(run);
+  }
+  return unique;
+}
+
+function sourceRunKey(run) {
+  if (run.activity_id != null && run.activity_id !== "") {
+    return `activity:${run.activity_id}`;
+  }
+  return [
+    run.name ?? "",
+    run.date ?? "",
+    run.distance_m ?? "",
+    run.duration_s ?? "",
+  ].join("|");
+}
+
+function numberFrom(value) {
+  if (value == null || value === "") return Number.NaN;
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : Number.NaN;
+}
+
+function parseDate(value) {
+  if (value instanceof Date) return value;
+  if (typeof value !== "string" || !value.trim()) return null;
+  const dateValue = new Date(
+    value.includes("T") ? value : `${value}T00:00:00Z`,
+  );
+  return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+}
+
+function parseDateTime(value) {
+  if (value instanceof Date) return value;
+  if (typeof value !== "string" || !value.trim()) return null;
+  const candidate = new Date(value.replace(" ", "T"));
+  return Number.isNaN(candidate.getTime()) ? null : candidate;
+}
+
+function formatDisplayDate(value) {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value === "string") return value.replace(" ", "T").split("T")[0];
+  return "";
 }
