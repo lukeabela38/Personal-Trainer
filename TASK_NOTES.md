@@ -2,6 +2,11 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-16 Worktree Docs Sweep
+
+- Added worktree references to `REPO_MAP.md` and clarified in the handoff guide that the root checkout stays on `main`.
+- The worktree helper remains the operational source of truth; docs now point to it from both navigation and handoff context.
+
 ## 2026-07-16 Worktree Conversion
 
 - The main checkout is now backed by a shared gitdir at `.bare`, with `.git` pointing to it.
