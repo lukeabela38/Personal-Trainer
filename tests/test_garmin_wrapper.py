@@ -205,11 +205,13 @@ class GarminWrapperTests(TestCase):
             ):
                 payload = garmin.fetch()
 
-        self.assertEqual(len(_FakeGarmin.instances), 2)
-        self.assertEqual(_FakeGarmin.instances[0].login_calls, [str(tokenstore)])
-        self.assertEqual(_FakeGarmin.instances[1].login_calls, [None])
-        self.assertTrue(tokenstore.exists())
-        self.assertEqual(payload["current_vo2max"], 52.0)
+            self.assertEqual(len(_FakeGarmin.instances), 2)
+            self.assertEqual(_FakeGarmin.instances[0].login_calls, [str(tokenstore)])
+            self.assertEqual(_FakeGarmin.instances[1].login_calls, [None])
+            self.assertTrue(tokenstore.exists())
+            self.assertTrue((tokenstore / "oauth1_token.json").exists())
+            self.assertTrue((tokenstore / "oauth2_token.json").exists())
+            self.assertEqual(payload["current_vo2max"], 52.0)
 
     def test_uses_recent_runs_for_vo2max_when_summary_is_missing(self) -> None:
         class MissingSummaryGarmin(_FakeGarmin):
