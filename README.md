@@ -59,6 +59,12 @@ Pull live sources, build snapshot, and emit the site bundle in one pass:
 docker compose run --rm app python3 scripts/daily_snapshot_runner.py
 ```
 
+Run the full Python test suite through the repo wrapper:
+
+```bash
+./scripts/run_python_tests.sh
+```
+
 This also refreshes the dedicated `strength.json` and `speed.json` history artifacts used by the `/strength` and `/speed` pages.
 The live build path now widens the recent source windows so deploys can show a short live 30-day nutrition and workout history without adding a database.
 The speed artifact normalizes Garmin personal records into human-readable durations and distances before publishing them.

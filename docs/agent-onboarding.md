@@ -99,6 +99,7 @@ docker compose run --rm qr "<url>" /app/dist/qr.png     # generate QR code (save
 
 - `./scripts/serve_site.sh`
 - `./scripts/serve_site.sh --live`
+- `./scripts/run_python_tests.sh`
 - `docker compose run --rm app python3 scripts/build_site_artifacts.py`
 - `docker compose run --rm app python3 scripts/daily_snapshot_runner.py`
 - `python3 ./scripts/wrappers/fetch_garmin.py`
@@ -233,7 +234,7 @@ Before pushing a new wrapper, verify:
 - [ ] Snapshot normalization accepts the output
 - [ ] `.env.example` updated with any new env vars
 - [ ] `docs/mcp-integrations.md` updated with env var table
-- [ ] Tests still pass: `PYTHONPATH=src python3 -m unittest discover -s tests` from `personal_trainer/`
+- [ ] Tests still pass: `./scripts/run_python_tests.sh` from the repo root
 - [ ] No credentials, tokens, or personal data committed
 
 ## Handoff Notes

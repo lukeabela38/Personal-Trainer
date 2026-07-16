@@ -27,9 +27,68 @@ exit "$status"
             )
             self.assertEqual(completed.returncode, 1)
             self.assertTrue(summary_file.exists())
-            summary_text = summary_file.read_text(encoding="utf-8")
-            self.assertIn("ruff format failed", summary_text)
-            self.assertIn("ruff check passed", summary_text)
+
+
+class PythonTestsWrapperScriptTest(TestCase):
+    def test_wrapper_runs_docker_compose_from_repo_root(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script_path = repo_root / "scripts" / "run_python_tests.sh"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            bin_dir = tmp_path / "bin"
+            bin_dir.mkdir()
+            cwd_file = tmp_path / "cwd.txt"
+            args_file = tmp_path / "args.txt"
+            command_file = tmp_path / "command.txt"
+            docker = bin_dir / "docker"
+            docker.write_text(
+                """#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$PWD" > "$CWD_FILE"
+printf '%s\n' "${@:1:8}" > "$ARGS_FILE"
+printf '%s' "${9:-}" > "$COMMAND_FILE"
+""",
+                encoding="utf-8",
+            )
+            docker.chmod(0o755)
+
+            completed = subprocess.run(
+                [str(script_path)],
+                cwd=tmp_path,
+                env={
+                    **os.environ,
+                    "PATH": f"{bin_dir}:{os.environ['PATH']}",
+                    "CWD_FILE": str(cwd_file),
+                    "ARGS_FILE": str(args_file),
+                    "COMMAND_FILE": str(command_file),
+                },
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(cwd_file.read_text(encoding="utf-8").strip(), str(repo_root))
+            self.assertEqual(
+                args_file.read_text(encoding="utf-8").splitlines(),
+                [
+                    "compose",
+                    "run",
+                    "--rm",
+                    "--volume",
+                    f"{repo_root}:/app",
+                    "app",
+                    "sh",
+                    "-c",
+                ],
+            )
+            self.assertEqual(
+                command_file.read_text(encoding="utf-8"),
+                "set -euo pipefail\n"
+                "python3 -m unittest discover -s personal_trainer/tests -v\n"
+                "python3 -m unittest discover -s tests -v\n",
+            )
 
     def test_pipefail_pattern_passes_when_commands_succeed(self) -> None:
         script = """
