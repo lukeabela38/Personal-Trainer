@@ -103,12 +103,11 @@ docker compose run --rm qr "<url>" /app/dist/qr.png  # generate QR code (saves t
 # Prefer Docker for Python 3.12 runs. Use local Python only as a fallback if Docker is unavailable.
 
 # Run package tests in the Python 3.12 container
-docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s personal_trainer/tests -v"
+./scripts/run_python_tests.sh
 
-# Run a single test file in the Python 3.12 container
+# Fallbacks for debugging individual suites in the Python 3.12 container
 docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest personal_trainer.tests.test_recommendation -v"
-
-# Run root-level script tests in the Python 3.12 container
+docker compose run --rm app sh -c "PYTHONPATH=personal_trainer/src python3 -m unittest discover -s personal_trainer/tests -v"
 docker compose run --rm app sh -c "python3 -m unittest discover -s tests -v"
 
 # Serve the static site locally

@@ -31,6 +31,12 @@ This reads source exports from `PERSONAL_TRAINER_SOURCES_FILE` when set, otherwi
 ## Run Tests
 
 ```bash
+../scripts/run_python_tests.sh
+```
+
+If you need to debug a specific suite locally, fall back to:
+
+```bash
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
