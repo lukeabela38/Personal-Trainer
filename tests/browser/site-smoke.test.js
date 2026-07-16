@@ -52,7 +52,9 @@ const pages = [
       "#speed-last-synced",
       "#speed-summary",
       "#speed-analytics-toggle",
-      "#speed-run-limit",
+      "#speed-run-date-from",
+      "#speed-run-date-to",
+      "#speed-run-range-reset",
       "#speed-runs-note",
       "#speed-table",
       'a[href="./food.html"]',
@@ -227,25 +229,22 @@ test("speed run day cards reveal runs and open a detail modal", async ({
   await expect(page.locator(".speed-run-date-group-meta").first()).toHaveText(
     "2 workouts",
   );
-  await page.locator("#speed-run-limit").selectOption("1");
+  await page.locator("#speed-run-date-from").fill("2026-07-12");
+  await page.locator("#speed-run-date-to").fill("2026-07-12");
+  await page.locator("#speed-run-date-from").dispatchEvent("change");
+  await page.locator("#speed-run-date-to").dispatchEvent("change");
   await expect(page.locator("#speed-runs-note")).toHaveText(
-    "Showing 1 of 3 recent runs.",
+    "Showing 2 of 3 recent runs from 2026-07-12 to 2026-07-12.",
   );
-  await expect(page.locator(".speed-run-row-button")).toHaveCount(1);
-  await expect(
-    page.locator(".speed-run-date-group-action").first(),
-  ).toContainText("Show workouts");
+  await expect(page.locator(".speed-run-row-button")).toHaveCount(2);
   await expect(page.locator(".speed-run-date-group-list").first()).toBeHidden();
   await page.locator(".speed-run-date-group-summary").first().click();
   await expect(
     page.locator(".speed-run-date-group-list").first(),
   ).toBeVisible();
-  await expect(
-    page.locator(".speed-run-date-group-action").first(),
-  ).toContainText("Hide workouts");
   await page.locator(".speed-run-row-button").first().click();
 
-  const modal = page.locator(".modal-overlay");
+  const modal = page.locator(".speed-run-modal");
   await expect(modal).toBeVisible();
   await expect(modal).toContainText("Morning Intervals");
   await expect(modal).toContainText("5.00 km");

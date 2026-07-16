@@ -75,7 +75,7 @@ def build_report(raw: dict[str, Any], *, page_state: dict[str, Any] | None = Non
     records = _extract_records(raw, recent_runs)
     predictions = _build_predictions(recent_runs, raw.get("snapshot_date"))
     prediction_summary = _build_prediction_summary(predictions, recent_runs, raw.get("snapshot_date"))
-    source = raw.get("source") or "Garmin speed data"
+    source = raw.get("source") or "Garmin personal records"
     snapshot_date = raw.get("snapshot_date") or _today().isoformat()
     return {
         "source": source,
