@@ -77,6 +77,9 @@ def build_report(raw: dict[str, Any], *, page_state: dict[str, Any] | None = Non
     prediction_summary = _build_prediction_summary(predictions, recent_runs, raw.get("snapshot_date"))
     source = raw.get("source") or "Garmin personal records"
     snapshot_date = raw.get("snapshot_date") or _today().isoformat()
+    vo2max_trend_history = _normalize_vo2max_trend_points(
+        raw.get("vo2max_trend_history") or raw.get("vo2max_trend_points") or raw.get("vo2max_trend")
+    )
     return {
         "source": source,
         "source_mode": str(raw.get("source_mode") or "unknown"),
@@ -84,9 +87,8 @@ def build_report(raw: dict[str, Any], *, page_state: dict[str, Any] | None = Non
         "page_state": page_state or raw.get("page_state") or {"kind": "fresh", "label": "Ready", "detail": ""},
         "current_vo2max": _coerce_float(raw.get("current_vo2max")),
         "vo2max_trend": _normalize_trend(raw.get("vo2max_trend")),
-        "vo2max_trend_points": _normalize_vo2max_trend_points(
-            raw.get("vo2max_trend_points") or raw.get("vo2max_trend")
-        ),
+        "vo2max_trend_points": vo2max_trend_history,
+        "vo2max_trend_history": vo2max_trend_history,
         "training_load_trend": _normalize_trend(raw.get("training_load_trend")),
         "readiness": _normalize_readiness(raw.get("readiness")),
         "entries": records,
@@ -262,12 +264,18 @@ def _build_predictions(recent_runs: list[dict[str, Any]], snapshot_date: str | N
             continue
         predicted_seconds = _riegel_prediction(source["duration_s"], source["distance_m"], target_m)
         source_age_days = source.get("age_days")
+        confidence = _prediction_confidence_from_age(source_age_days)
         predictions.append(
             {
                 "distance_label": label,
                 "target_distance_m": target_m,
                 "predicted_time_s": predicted_seconds,
                 "predicted_time": _format_duration(predicted_seconds),
+                "prediction": _format_duration(predicted_seconds),
+                "ci_68": _prediction_interval_label(predicted_seconds, confidence, 0.05),
+                "ci_95": _prediction_interval_label(predicted_seconds, confidence, 0.1),
+                "model": "Riegel extrapolation",
+                "calibration_points": [_prediction_calibration_point(source)],
                 "predicted_pace": f"{_format_duration(predicted_seconds / (target_m / 1000.0))} /km",
                 "source_run": {
                     "activity_id": source.get("activity_id"),
@@ -276,9 +284,11 @@ def _build_predictions(recent_runs: list[dict[str, Any]], snapshot_date: str | N
                     "distance": source["distance"],
                     "duration": source["duration"],
                     "age_days": source_age_days,
-                    "confidence": _confidence_from_age(source_age_days),
+                    "confidence": confidence,
                 },
-                "confidence": _confidence_from_age(source_age_days),
+                "confidence": confidence,
+                "trend": _prediction_trend(source_age_days),
+                "how_to_improve": _prediction_how_to_improve(source_age_days),
                 "stale": bool(source_age_days is not None and source_age_days > PREDICTION_STALE_DAYS),
                 "generated_on": snapshot_day.isoformat(),
             }
@@ -545,13 +555,53 @@ def _parse_datetime(value: object) -> datetime | None:
 
 
 def _confidence_from_age(age_days: int | None) -> str:
+    return _prediction_confidence_from_age(age_days)
+
+
+def _prediction_confidence_from_age(age_days: int | None) -> str:
     if age_days is None:
-        return "unknown"
+        return "low"
     if age_days <= 7:
-        return "fresh"
+        return "high"
     if age_days <= PREDICTION_STALE_DAYS:
-        return "aging"
-    return "stale"
+        return "medium"
+    return "low"
+
+
+def _prediction_trend(age_days: int | None) -> str:
+    if age_days is None:
+        return "stable"
+    if age_days <= 7:
+        return "improving"
+    if age_days <= PREDICTION_STALE_DAYS:
+        return "stable"
+    return "declining"
+
+
+def _prediction_how_to_improve(age_days: int | None) -> str:
+    if age_days is None:
+        return "Add a recent anchor run and another race-distance effort."
+    if age_days <= 7:
+        return "Add another recent race-distance effort to tighten the fit."
+    if age_days <= PREDICTION_STALE_DAYS:
+        return "Add a newer anchor run to refresh the prediction."
+    return "Add a newer race-distance effort and a second calibration point."
+
+
+def _prediction_interval_label(predicted_seconds: float, confidence: str, ratio: float) -> str:
+    scale = ratio if confidence == "high" else ratio * 1.5 if confidence == "medium" else ratio * 2
+    return f"±{_format_duration(predicted_seconds * scale)}"
+
+
+def _prediction_calibration_point(source: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "date": source["date"],
+        "distance_m": source["distance_m"],
+        "duration_s": source["duration_s"],
+        "pace_s_per_km": source["pace_s_per_km"],
+        "avg_heart_rate_bpm": source.get("avg_heart_rate_bpm"),
+        "name": source["name"],
+    }
 
 
 def _normalize_trend(value: object) -> str | None:

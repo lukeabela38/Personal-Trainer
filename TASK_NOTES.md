@@ -2,6 +2,12 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-16 Speed Analytics Contract
+
+- Garmin speed payloads now preserve `vo2max_trend_history` alongside the existing trend points.
+- The speed prediction objects in `site/speed.js` and `scripts/speed_report.py` now carry the contract fields for prediction text, 68% and 95% ranges, model, calibration points, trend, and improvement guidance.
+- Browser and Python regression tests now cover the new fields.
+
 ## 2026-07-16 GitHub Pages Live Refresh
 
 - The Pages workflow already decrypts the repo-backed `.env` with `GIT_CRYPT_KEY` and runs the live source capture during the build.

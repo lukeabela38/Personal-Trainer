@@ -72,6 +72,52 @@ class SpeedReportTests(TestCase):
             "Sliema - LifeStar Malta Marathon (Half Marathon)",
         )
 
+    def test_build_report_includes_prediction_contract_and_trend_history(self) -> None:
+        raw = {
+            "source": "Garmin personal records",
+            "snapshot_date": "2026-07-09",
+            "current_vo2max": 52,
+            "vo2max_trend": "up",
+            "vo2max_trend_points": [
+                {"date": "2026-07-01", "vo2max": 50.5},
+                {"date": "2026-07-09", "vo2max": 52.0},
+            ],
+            "readiness": {
+                "sleep_score": 83,
+                "resting_heart_rate_bpm": 46,
+                "raw_hrv_ms": 61,
+            },
+            "recent_runs": [
+                {
+                    "activity_id": 42,
+                    "name": "Tempo Run",
+                    "date": "2026-07-09",
+                    "start_time": "2026-07-09T06:00:00Z",
+                    "distance_m": 10000.0,
+                    "distance": "10.00 km",
+                    "duration_s": 3600.0,
+                    "duration": "1:00:00",
+                    "pace_s_per_km": 360.0,
+                    "pace": "6:00 /km",
+                    "avg_heart_rate_bpm": 161.0,
+                    "age_days": 0,
+                }
+            ],
+            "recent_bests": [],
+        }
+
+        report = speed_report.build_report(raw)
+
+        self.assertEqual(report["vo2max_trend_history"][0]["vo2max"], 50.5)
+        self.assertEqual(report["predictions"][2]["confidence"], "high")
+        self.assertEqual(report["predictions"][2]["prediction"], report["predictions"][2]["predicted_time"])
+        self.assertEqual(report["predictions"][2]["model"], "Riegel extrapolation")
+        self.assertEqual(report["predictions"][2]["calibration_points"][0]["name"], "Tempo Run")
+        self.assertTrue(report["predictions"][2]["ci_68"].startswith("±"))
+        self.assertTrue(report["predictions"][2]["ci_95"].startswith("±"))
+        self.assertEqual(report["predictions"][2]["trend"], "improving")
+        self.assertTrue(report["predictions"][2]["how_to_improve"])
+
 
 if __name__ == "__main__":
     import unittest

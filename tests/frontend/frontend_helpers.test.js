@@ -772,7 +772,15 @@ test("speed helpers build predictions from recent runs", () => {
 
   assert.equal(predictions.length, 6);
   assert.equal(predictions[2].distance_label, "5K");
-  assert.equal(predictions[2].confidence, "fresh");
+  assert.equal(predictions[2].confidence, "high");
+  assert.equal(predictions[2].prediction, predictions[2].predicted_time);
+  assert.equal(predictions[2].model, "Riegel extrapolation");
+  assert.ok(Array.isArray(predictions[2].calibration_points));
+  assert.equal(predictions[2].calibration_points[0].name, "Tempo Run");
+  assert.match(predictions[2].ci_68, /^±/);
+  assert.match(predictions[2].ci_95, /^±/);
+  assert.equal(predictions[2].trend, "improving");
+  assert.ok(predictions[2].how_to_improve.length > 0);
   assert.equal(summary.stale, false);
   assert.equal(summary.latest_useful_run.distance, "10.00 km");
   assert.equal(summary.useful_run_count, 1);

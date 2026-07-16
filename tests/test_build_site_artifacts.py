@@ -241,6 +241,7 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertEqual(built_speed["readiness"]["resting_heart_rate_bpm"], 46)
             self.assertEqual(built_speed["readiness"]["raw_hrv_ms"], 61)
             self.assertEqual(built_speed["vo2max_trend_points"][0]["vo2max"], 50.5)
+            self.assertEqual(built_speed["vo2max_trend_history"][0]["vo2max"], 50.5)
             self.assertEqual(
                 [entry["value"] for entry in built_speed["entries"]],
                 ["3:36", "6:23", "20:51", "48:11", "1:43:39", "21.37 km"],
@@ -248,6 +249,12 @@ class BuildSiteArtifactsTest(TestCase):
             self.assertEqual(len(built_speed["recent_runs"]), 1)
             self.assertEqual(built_speed["recent_runs"][0]["distance"], "10.00 km")
             self.assertEqual(len(built_speed["predictions"]), 6)
+            self.assertEqual(built_speed["predictions"][2]["confidence"], "high")
+            self.assertEqual(
+                built_speed["predictions"][2]["prediction"],
+                built_speed["predictions"][2]["predicted_time"],
+            )
+            self.assertEqual(built_speed["predictions"][2]["model"], "Riegel extrapolation")
             self.assertFalse(built_speed["prediction_summary"]["stale"])
             self.assertEqual(built_speed["prediction_summary"]["useful_run_count"], 1)
 

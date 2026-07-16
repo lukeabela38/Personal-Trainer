@@ -35,6 +35,48 @@ class CheckInQuestion(TypedDict):
     options: list[str]
 
 
+class PredictionCalibrationPoint(TypedDict):
+    date: str
+    distance_m: float
+    duration_s: float
+    pace_s_per_km: float
+    avg_heart_rate_bpm: float | None
+    name: str
+
+
+class PredictionContract(TypedDict):
+    prediction: str
+    ci_68: str
+    ci_95: str
+    model: str
+    calibration_points: list[PredictionCalibrationPoint]
+    confidence: Literal["high", "medium", "low"]
+    trend: Literal["improving", "stable", "declining"]
+    how_to_improve: str
+
+
+class PredictionSourceRun(TypedDict):
+    activity_id: int | str | None
+    name: str
+    date: str
+    distance: str
+    duration: str
+    avg_heart_rate_bpm: float | None
+    age_days: int | None
+    confidence: Literal["high", "medium", "low"]
+
+
+class SpeedPrediction(PredictionContract):
+    distance_label: str
+    target_distance_m: float
+    predicted_time_s: float
+    predicted_time: str
+    predicted_pace: str
+    source_run: PredictionSourceRun
+    stale: bool
+    generated_on: str
+
+
 Recommendation = TypedDict(
     "Recommendation",
     {

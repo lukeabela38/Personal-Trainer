@@ -120,6 +120,7 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
         trend_points = _normalize_vo2max_trend_points(trend)
         if trend_points:
             payload["vo2max_trend_points"] = trend_points
+            payload["vo2max_trend_history"] = trend_points
             payload["vo2max_trend"] = _trend_label(trend_points)
     except Exception:
         pass
@@ -176,6 +177,8 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
                         payload["last_long_run"] = _summarize_activity(run)
             if run_trend_points and not payload.get("vo2max_trend_points"):
                 payload["vo2max_trend_points"] = run_trend_points
+            if run_trend_points and not payload.get("vo2max_trend_history"):
+                payload["vo2max_trend_history"] = run_trend_points
             if vo2_values:
                 payload["current_vo2max"] = vo2_values[0]
                 if len(vo2_values) > 1 and payload.get("vo2max_trend") in (None, "unknown"):
@@ -241,6 +244,7 @@ def _empty_payload() -> dict:
         "current_vo2max": None,
         "vo2max_trend": "unknown",
         "vo2max_trend_points": [],
+        "vo2max_trend_history": [],
         "training_status": None,
         "training_load_trend": None,
         "readiness": {},

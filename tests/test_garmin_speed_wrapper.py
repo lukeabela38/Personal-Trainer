@@ -154,6 +154,7 @@ class GarminSpeedWrapperTests(TestCase):
         self.assertEqual(merged["current_vo2max"], 52)
         self.assertEqual(merged["result"][0]["record_type"], "Fastest 5K")
         self.assertEqual(merged["vo2max_trend_points"][0]["vo2max"], 50.5)
+        self.assertEqual(merged["vo2max_trend_history"][0]["vo2max"], 50.5)
         self.assertEqual(merged["recent_runs"][0]["avg_heart_rate_bpm"], 161.0)
 
     def test_normalize_readiness_uses_sleep_data_for_raw_hrv(self) -> None:

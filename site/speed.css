@@ -693,16 +693,19 @@
   letter-spacing: 0.04em;
 }
 
+.prediction-confidence--high,
 .prediction-confidence--fresh {
   color: var(--green);
   background: rgba(127, 209, 185, 0.12);
 }
 
+.prediction-confidence--medium,
 .prediction-confidence--aging {
   color: var(--accent);
   background: rgba(93, 165, 255, 0.12);
 }
 
+.prediction-confidence--low,
 .prediction-confidence--stale,
 .prediction-confidence--unknown {
   color: var(--warning, #ffd27a);

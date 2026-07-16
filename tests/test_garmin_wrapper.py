@@ -140,6 +140,7 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(payload["recent_bests"][0]["record_type"], "Fastest 5K")
         self.assertEqual(payload["recent_runs"][0]["avg_heart_rate_bpm"], 164.0)
         self.assertEqual(payload["vo2max_trend_points"][0]["vo2max"], 50.0)
+        self.assertEqual(payload["vo2max_trend_history"][0]["vo2max"], 50.0)
 
     def test_password_login_persists_session_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -195,6 +196,7 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(payload["current_vo2max"], 52.0)
         self.assertEqual(payload["vo2max_trend"], "up")
         self.assertEqual(payload["recent_runs"][0]["avg_heart_rate_bpm"], 164.0)
+        self.assertEqual(payload["vo2max_trend_history"][0]["vo2max"], 52.0)
 
     def test_prefers_most_recent_run_vo2max_over_summary_value(self) -> None:
         class SummaryLagGarmin(_FakeGarmin):
@@ -222,6 +224,7 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(payload["vo2max_trend"], "up")
         self.assertEqual(payload["vo2max_trend_points"][0]["vo2max"], 50.0)
         self.assertEqual(payload["recent_runs"][0]["avg_heart_rate_bpm"], 164.0)
+        self.assertEqual(payload["vo2max_trend_history"][0]["vo2max"], 50.0)
 
 
 if __name__ == "__main__":

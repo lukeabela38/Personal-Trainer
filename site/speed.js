@@ -1059,11 +1059,17 @@ export function buildPredictions(recentRuns, snapshotDate = null) {
       sourceRun.distance_m,
       target.distanceMeters,
     );
+    const confidence = predictionConfidenceFromAge(sourceRun.age_days);
     predictions.push({
       distance_label: target.label,
       target_distance_m: target.distanceMeters,
       predicted_time_s: predictedSeconds,
       predicted_time: formatDuration(predictedSeconds),
+      prediction: formatDuration(predictedSeconds),
+      ci_68: predictionRangeLabel(predictedSeconds, confidence, 0.05),
+      ci_95: predictionRangeLabel(predictedSeconds, confidence, 0.1),
+      model: "Riegel extrapolation",
+      calibration_points: [buildCalibrationPoint(sourceRun)],
       predicted_pace: formatPace(
         predictedSeconds / (target.distanceMeters / 1000),
       ),
@@ -1074,9 +1080,11 @@ export function buildPredictions(recentRuns, snapshotDate = null) {
         duration: sourceRun.duration,
         avg_heart_rate_bpm: sourceRun.avg_heart_rate_bpm,
         age_days: sourceRun.age_days,
-        confidence: confidenceFromAge(sourceRun.age_days),
+        confidence,
       },
-      confidence: confidenceFromAge(sourceRun.age_days),
+      confidence,
+      trend: predictionTrendFromAge(sourceRun.age_days),
+      how_to_improve: predictionHowToImprove(sourceRun),
       stale: Boolean(
         sourceRun.age_days != null &&
           sourceRun.age_days > PREDICTION_STALE_DAYS,
@@ -1318,11 +1326,55 @@ function riegelPrediction(
   return sourceSeconds * (targetDistanceMeters / sourceDistanceMeters) ** 1.06;
 }
 
-function confidenceFromAge(ageDays) {
-  if (ageDays == null) return "unknown";
-  if (ageDays <= 7) return "fresh";
-  if (ageDays <= PREDICTION_STALE_DAYS) return "aging";
-  return "stale";
+function predictionConfidenceFromAge(ageDays) {
+  if (ageDays == null) return "low";
+  if (ageDays <= 7) return "high";
+  if (ageDays <= PREDICTION_STALE_DAYS) return "medium";
+  return "low";
+}
+
+function predictionTrendFromAge(ageDays) {
+  if (ageDays == null) return "stable";
+  if (ageDays <= 7) return "improving";
+  if (ageDays <= PREDICTION_STALE_DAYS) return "stable";
+  return "declining";
+}
+
+function predictionHowToImprove(sourceRun) {
+  if (!sourceRun || typeof sourceRun !== "object") {
+    return "Add a recent anchor run and another race-distance effort.";
+  }
+  if (sourceRun.age_days == null) {
+    return "Add a recent anchor run and another race-distance effort.";
+  }
+  if (sourceRun.age_days <= 7) {
+    return "Add another recent race-distance effort to tighten the fit.";
+  }
+  if (sourceRun.age_days <= PREDICTION_STALE_DAYS) {
+    return "Add a newer anchor run to refresh the prediction.";
+  }
+  return "Add a newer race-distance effort and a second calibration point.";
+}
+
+function predictionRangeLabel(predictedSeconds, confidence, ratio) {
+  const scale =
+    confidence === "high"
+      ? ratio
+      : confidence === "medium"
+      ? ratio * 1.5
+      : ratio * 2;
+  return `±${formatDuration(predictedSeconds * scale)}`;
+}
+
+function buildCalibrationPoint(sourceRun) {
+  return {
+    date: sourceRun.date,
+    distance_m: sourceRun.distance_m,
+    duration_s: sourceRun.duration_s,
+    pace_s_per_km: sourceRun.pace_s_per_km,
+    avg_heart_rate_bpm: sourceRun.avg_heart_rate_bpm ?? null,
+    name: sourceRun.name,
+  };
 }
 
 export function normalizeReadiness(readiness) {
@@ -1460,6 +1512,9 @@ function formatSleepDuration(seconds) {
 
 function formatConfidenceLabel(confidence) {
   const value = String(confidence ?? "unknown");
+  if (value === "high") return "High";
+  if (value === "medium") return "Medium";
+  if (value === "low") return "Low";
   if (value === "fresh") return "Fresh";
   if (value === "aging") return "Aging";
   if (value === "stale") return "Stale";
