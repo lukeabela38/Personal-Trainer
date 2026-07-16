@@ -800,11 +800,30 @@ test("speed helpers format Garmin analytics", () => {
     ci_90: "±2:10",
     trend: "improving",
     confidence: "high",
+    model: "Critical Speed",
+    source_run: {
+      name: "Tempo Run",
+      date: "2026-07-09",
+      duration: "1:00:00",
+      pace: "6:00 /km",
+      avg_heart_rate_bpm: 162,
+    },
+    calibration_points: [{ name: "Tempo Run" }, { name: "10K effort" }],
+    training_paces_summary: "Easy 5:03-6:02 /km · Threshold 4:17-4:26 /km",
+    how_to_improve: "Add a 1K effort plus one longer run to stabilize CS.",
+    supporting_models: [{}, {}, {}],
   });
+  assert.match(detail.heroMeta, /Critical Speed/);
+  assert.match(detail.heroMeta, /High confidence/);
   assert.match(detail.beforeGrid, /data-prediction-interval-select/);
-  assert.equal(detail.items.length, 3);
+  assert.ok(detail.items.length >= 7);
   assert.match(detail.items[0], /60% CI/);
   assert.match(detail.items[1], /90% CI/);
+  assert.ok(detail.items.some((item) => item.includes("Model")));
+  assert.ok(detail.items.some((item) => item.includes("Source run")));
+  assert.ok(detail.items.some((item) => item.includes("Calibration")));
+  assert.ok(detail.items.some((item) => item.includes("Training paces")));
+  assert.ok(detail.items.some((item) => item.includes("How to improve")));
   assert.match(
     speed.buildAnalyticsNotice(
       {

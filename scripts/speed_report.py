@@ -7,14 +7,20 @@ import math
 import os
 import subprocess
 import sys
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-try:
-    from datetime import UTC
-except ImportError:  # pragma: no cover - compatibility for older local interpreters
-    UTC = UTC
+_PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "personal_trainer" / "src"
+if str(_PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PACKAGE_ROOT))
+
+from personal_trainer.speed_predictions import (  # noqa: E402
+    build_speed_prediction_summary as build_speed_prediction_summary_from_module,
+)
+from personal_trainer.speed_predictions import (  # noqa: E402
+    build_speed_predictions as build_speed_predictions_from_module,
+)
 
 RUN_RECORD_TYPES = {
     "Fastest 1K",
@@ -73,8 +79,12 @@ def _load_source(path: Path | None) -> dict[str, Any]:
 def build_report(raw: dict[str, Any], *, page_state: dict[str, Any] | None = None) -> dict[str, Any]:
     recent_runs = _extract_recent_runs(raw)
     records = _extract_records(raw, recent_runs)
-    predictions = _build_predictions(recent_runs, raw.get("snapshot_date"))
-    prediction_summary = _build_prediction_summary(predictions, recent_runs, raw.get("snapshot_date"))
+    predictions = build_speed_predictions_from_module(recent_runs, raw.get("snapshot_date"))
+    prediction_summary = build_speed_prediction_summary_from_module(
+        predictions,
+        recent_runs,
+        raw.get("snapshot_date"),
+    )
     source = raw.get("source") or "Garmin personal records"
     snapshot_date = raw.get("snapshot_date") or _today().isoformat()
     vo2max_trend_history = _normalize_vo2max_trend_points(

@@ -218,6 +218,13 @@ Follow-up for the strength UI polish branch:
 ## GitHub Agent Note
 
 - `gh` can be authenticated locally but still fail against `api.github.com` in this environment.
+
+## 2026-07-16 Speed Prediction Engine Split
+
+- `personal_trainer/speed_predictions.py` now owns the prediction algorithms, including the fit-based multi-model path and training-pace derivation.
+- `scripts/speed_report.py` now delegates to that shared module so the build artifact and browser payload stay aligned.
+- The speed page detail modal now reads the precomputed prediction payload instead of recomputing predictions only in JavaScript.
+- Local Python 3.9 needed a small compatibility fallback for `UTC` and a custom linear-regression helper so the new code could be verified outside the Docker 3.12 path.
 - When that happens, use the GitHub app/MCP tools for PR metadata, check runs, and workflow logs instead of blocking on `gh`.
 - Keep `gh auth status` as the quick local auth sanity check, but treat MCP as the reliable fallback for GitHub Actions inspection here.
 

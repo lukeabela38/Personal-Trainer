@@ -141,16 +141,17 @@ function renderSpeedView() {
     selectedRunDateRange,
   );
   const visibleRuns = filteredRuns;
-  const predictions = buildPredictions(
-    recentRuns,
-    currentSpeedPayload.snapshotDate,
-  );
+  const predictions =
+    currentSpeedPayload.predictions ??
+    buildPredictions(recentRuns, currentSpeedPayload.snapshotDate);
   const analyticsPredictions = filterAnalyticsPredictions(predictions);
-  const predictionSummary = buildPredictionSummary(
-    predictions,
-    recentRuns,
-    currentSpeedPayload.snapshotDate,
-  );
+  const predictionSummary =
+    currentSpeedPayload.prediction_summary ??
+    buildPredictionSummary(
+      predictions,
+      recentRuns,
+      currentSpeedPayload.snapshotDate,
+    );
 
   statusBanner.textContent =
     currentSpeedPayload.pageState?.kind === "fresh"
@@ -819,7 +820,7 @@ export function buildPredictionDetail(prediction) {
     kicker: "Prediction details",
     title: prediction?.distance_label ?? "Run prediction",
     heroValue: prediction?.predicted_time ?? "—",
-    heroMeta: "Confidence intervals and trend",
+    heroMeta: formatPredictionHeroMeta(prediction),
     beforeGrid: `
       <div class="speed-prediction-selector">
         <label class="speed-prediction-selector-label" for="speed-prediction-interval-select">
@@ -859,7 +860,12 @@ export function buildPredictionDetail(prediction) {
         "90% CI",
         prediction?.ci_90 ?? prediction?.ci_95,
       ),
+      renderPredictionModelItem(prediction),
+      renderPredictionSourceRunItem(prediction?.source_run),
+      renderPredictionCalibrationItem(prediction?.calibration_points),
+      renderPredictionTrainingPacesItem(prediction?.training_paces_summary),
       renderPredictionTrendItem(prediction?.trend),
+      renderPredictionHowToImproveItem(prediction?.how_to_improve),
     ],
     onMount(panel) {
       const select = panel.querySelector("[data-prediction-interval-select]");
@@ -1031,6 +1037,105 @@ function renderPredictionTrendItem(trend) {
       )}</span>
     </div>
   `;
+}
+
+function renderPredictionModelItem(prediction) {
+  return renderDetailItem("Model", formatPredictionModelSummary(prediction));
+}
+
+function renderPredictionSourceRunItem(sourceRun) {
+  return renderDetailItem(
+    "Source run",
+    formatPredictionSourceRunSummary(sourceRun),
+  );
+}
+
+function renderPredictionCalibrationItem(calibrationPoints) {
+  return renderDetailItem(
+    "Calibration",
+    formatPredictionCalibrationSummary(calibrationPoints),
+  );
+}
+
+function renderPredictionTrainingPacesItem(trainingPacesSummary) {
+  return renderDetailItem(
+    "Training paces",
+    formatPredictionTrainingPacesSummary(trainingPacesSummary),
+  );
+}
+
+function renderPredictionHowToImproveItem(howToImprove) {
+  return renderDetailItem(
+    "How to improve",
+    formatPredictionHowToImproveSummary(howToImprove),
+  );
+}
+
+function formatPredictionHeroMeta(prediction) {
+  const model = prediction?.model ? String(prediction.model) : "";
+  const confidence = formatPredictionConfidenceLabel(prediction?.confidence);
+  const parts = [];
+  if (model) parts.push(model);
+  if (confidence) parts.push(confidence);
+  return parts.length ? parts.join(" · ") : "Confidence intervals and trend";
+}
+
+function formatPredictionConfidenceLabel(confidence) {
+  if (!confidence) return "";
+  return `${formatTrendLabel(confidence)} confidence`;
+}
+
+function formatPredictionModelSummary(prediction) {
+  if (!prediction) return "—";
+  const parts = [];
+  if (prediction.model) parts.push(String(prediction.model));
+  const confidence = formatPredictionConfidenceLabel(prediction.confidence);
+  if (confidence) parts.push(confidence);
+  const supportingModels = Array.isArray(prediction.supporting_models)
+    ? prediction.supporting_models.length
+    : 0;
+  if (supportingModels > 1) {
+    parts.push(`${supportingModels} models considered`);
+  }
+  return parts.length ? parts.join(" · ") : "—";
+}
+
+function formatPredictionSourceRunSummary(sourceRun) {
+  if (!sourceRun) return "—";
+  const parts = [];
+  if (sourceRun.name) parts.push(String(sourceRun.name));
+  if (sourceRun.date) parts.push(String(sourceRun.date));
+  if (sourceRun.duration) parts.push(String(sourceRun.duration));
+  if (sourceRun.pace) parts.push(String(sourceRun.pace));
+  if (sourceRun.avg_heart_rate_bpm != null) {
+    parts.push(formatHeartRate(sourceRun.avg_heart_rate_bpm));
+  }
+  return parts.length ? parts.join(" · ") : "—";
+}
+
+function formatPredictionCalibrationSummary(calibrationPoints) {
+  if (!Array.isArray(calibrationPoints) || calibrationPoints.length === 0) {
+    return "—";
+  }
+  const names = calibrationPoints
+    .map((point) => point?.name)
+    .filter((value) => typeof value === "string" && value.trim().length > 0)
+    .slice(0, 3);
+  const countLabel =
+    calibrationPoints.length === 1
+      ? "1 anchor"
+      : `${calibrationPoints.length} anchors`;
+  return names.length ? `${countLabel} · ${names.join(", ")}` : countLabel;
+}
+
+function formatPredictionTrainingPacesSummary(trainingPacesSummary) {
+  if (!trainingPacesSummary) return "—";
+  return String(trainingPacesSummary);
+}
+
+function formatPredictionHowToImproveSummary(howToImprove) {
+  if (!howToImprove) return "—";
+  return String(howToImprove);
 }
 
 function formatConfidenceIntervalSummary(interval, value) {
