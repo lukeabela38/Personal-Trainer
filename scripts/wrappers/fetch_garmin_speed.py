@@ -65,7 +65,9 @@ async def fetch() -> dict:
             )
             logger.warning("[garmin-speed] direct fetch failed, falling back to MCP: %s", e)
     logger.info("[garmin-speed] fetching via MCP")
-    return await _fetch_via_mcp()
+    payload = await _fetch_via_mcp()
+    _log_payload_summary("mcp", payload)
+    return payload
 
 
 async def _fetch_direct(email: str, password: str) -> dict:
@@ -179,7 +181,7 @@ async def _fetch_direct(email: str, password: str) -> dict:
     if isinstance(raw, dict) and "error" in raw:
         print(f"[garmin-speed] {raw['error']}", file=sys.stderr)
         logger.warning("[garmin-speed] %s", raw["error"])
-        return {
+        payload = {
             "result": [],
             "recent_runs": [],
             "current_vo2max": None,
@@ -189,10 +191,12 @@ async def _fetch_direct(email: str, password: str) -> dict:
             "training_load_trend": None,
             "readiness": {},
         }
+        _log_payload_summary("direct-empty", payload)
+        return payload
 
     records = _extract_records(raw.get("records", []))
     recent_runs = _extract_runs([entry for entry in raw.get("activities", []) if _is_running_activity(entry)])
-    return _merge_live_metrics(
+    payload = _merge_live_metrics(
         {
             "result": records,
             "recent_runs": recent_runs,
@@ -208,6 +212,8 @@ async def _fetch_direct(email: str, password: str) -> dict:
             "readiness": _normalize_readiness(raw.get("readiness"), raw.get("sleep_data")),
         }
     )
+    _log_payload_summary("direct", payload)
+    return payload
 
 
 async def _fetch_via_mcp() -> dict:
@@ -281,7 +287,7 @@ async def _fetch_via_mcp() -> dict:
     except McpError as e:
         print(f"[garmin-speed] recent running activities unavailable: {e}", file=sys.stderr)
         logger.warning("[garmin-speed] recent running activities unavailable: %s", e)
-    return _merge_live_metrics(
+    payload = _merge_live_metrics(
         {
             "result": records,
             "recent_runs": recent_runs,
@@ -293,6 +299,8 @@ async def _fetch_via_mcp() -> dict:
             "readiness": readiness,
         }
     )
+    _log_payload_summary("mcp-fallback", payload)
+    return payload
 
 
 def _speed_lookback_days() -> int:
@@ -372,6 +380,18 @@ def _merge_live_metrics(payload: dict) -> dict:
     elif not payload.get("recent_runs") and live_runs:
         payload["recent_runs"] = live_runs
     return payload
+
+
+def _log_payload_summary(source: str, payload: dict) -> None:
+    logger.info(
+        "[garmin-speed] payload summary source=%s records=%d runs=%d vo2max=%s trend=%s readiness=%s",
+        source,
+        len(payload.get("result") or []),
+        len(payload.get("recent_runs") or []),
+        "present" if payload.get("current_vo2max") is not None else "missing",
+        payload.get("vo2max_trend") or "unknown",
+        "present" if payload.get("readiness") else "empty",
+    )
 
 
 def _normalize_activity_page(page: object) -> list[dict]:

@@ -510,3 +510,8 @@ Garmin auth/session caching card from the project board.
 - History filtering is now date-range only; predictions and analytics still use the full recent-runs set.
 - Empty date ranges now show a stronger inline message with a direct clear-filter action.
 - The speed page now opens on the latest 7 days by default and resets back to that same 7-day window.
+
+## 2026-07-16 CI Site Smoke
+
+- Added a dedicated CI site-smoke job that builds the deploy artifact path in Docker from example source payloads, serves the generated `dist`, and runs Playwright against the built site.
+- Garmin wrapper logging now emits concise payload summaries for cached, password, MCP, and empty fallback paths so auth-related failures are easier to triage without dumping payloads.

@@ -49,6 +49,7 @@ def fetch() -> dict:
             cached_payload = _fetch_cached(tokenstore, today, month_ago)
             logger.info("[garmin] auth status_code=200 mode=cached tokenstore=%s", tokenstore)
             if not _payload_needs_refresh(cached_payload) or not (garmin_email and garmin_password):
+                _log_payload_summary("cached", cached_payload)
                 return cached_payload
             logger.warning("[garmin] cached session returned no usable data, retrying with password")
         except Exception as e:
@@ -62,6 +63,7 @@ def fetch() -> dict:
             logger.info("[garmin] using direct credential login")
             payload = _fetch_direct(garmin_email, garmin_password, tokenstore, today, month_ago)
             logger.info("[garmin] auth status_code=200 mode=password")
+            _log_payload_summary("password", payload)
             return payload
         except Exception as e:
             logger.warning("[garmin] direct fetch failed status_code=%s: %s", _status_code(e), e)
@@ -72,6 +74,7 @@ def fetch() -> dict:
                     logger.info("[garmin] retrying direct credential login")
                     payload = _fetch_direct(garmin_email, garmin_password, tokenstore, today, month_ago)
                     logger.info("[garmin] auth status_code=200 mode=password-retry")
+                    _log_payload_summary("password-retry", payload)
                     return payload
                 except Exception as retry_exc:
                     logger.warning(
@@ -79,7 +82,9 @@ def fetch() -> dict:
                     )
 
     logger.warning("[garmin] credentials unavailable or unusable; returning empty payload status_code=401")
-    return _empty_payload()
+    payload = _empty_payload()
+    _log_payload_summary("empty", payload)
+    return payload
 
 
 def _tokenstore_path() -> Path:
@@ -249,6 +254,18 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
         pass
 
     return payload
+
+
+def _log_payload_summary(path: str, payload: dict) -> None:
+    logger.info(
+        "[garmin] payload summary path=%s vo2max=%s runs=%d activities=%d bests=%d readiness=%s",
+        path,
+        "present" if payload.get("current_vo2max") is not None else "missing",
+        len(payload.get("recent_runs") or []),
+        len(payload.get("recent_activities") or []),
+        len(payload.get("recent_bests") or []),
+        "present" if payload.get("readiness") else "empty",
+    )
 
 
 def _payload_needs_refresh(payload: dict) -> bool:

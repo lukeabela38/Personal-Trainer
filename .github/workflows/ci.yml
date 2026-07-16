@@ -130,6 +130,107 @@ jobs:
       - name: Run browser smoke tests
         run: npm run test:browser
 
+  site-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install git-crypt
+        run: sudo apt-get update && sudo apt-get install -y git-crypt
+      - name: Unlock git-crypt
+        if: github.actor != 'dependabot[bot]'
+        env:
+          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="$RUNNER_TEMP/git-crypt.key"
+          printf '%s' "$GIT_CRYPT_KEY" | base64 --decode > "$key_file"
+          git-crypt unlock "$key_file"
+      - name: Audit git-crypt coverage
+        if: github.actor != 'dependabot[bot]'
+        run: python3 scripts/audit_git_crypt.py
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install JS tools
+        run: npm ci
+      - name: Build app image
+        run: docker compose build app
+      - name: Prepare dist directory
+        run: |
+          mkdir -p dist/data
+          chmod -R 777 dist
+      - name: Prepare Docker smoke payloads
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          chmod 777 "$tmpdir"
+          echo "$tmpdir" > "$RUNNER_TEMP/site-smoke-dir"
+          docker compose run --rm --no-deps -v "$tmpdir:/tmp/out" app python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          snapshot = json.loads(
+              Path("/app/personal_trainer/examples/snapshot-ready.json").read_text(encoding="utf-8")
+          )
+
+          hevy_rows = []
+          for row in snapshot["hevy"]["recent_bests"]:
+              hevy_rows.append(
+                  {
+                      "exerciseTemplateId": row["exercise_template_id"],
+                      "weight": row["weight_kg"],
+                      "reps": row["reps"],
+                      "workoutStartTime": f"{row['workout_start_date']}T07:00:00Z",
+                  }
+              )
+          Path("/tmp/out/hevy_strength_source.json").write_text(
+              json.dumps(hevy_rows, indent=2),
+              encoding="utf-8",
+          )
+
+          garmin_rows = [
+              {
+                  "record_type": row["record_type"],
+                  "value": row["value"],
+                  "date": row["date"],
+              }
+              for row in snapshot["garmin"]["recent_bests"]
+          ]
+          Path("/tmp/out/garmin_speed_source.json").write_text(
+              json.dumps({"result": garmin_rows}, indent=2),
+              encoding="utf-8",
+          )
+          PY
+      - name: Build site artifact bundle
+        env:
+          PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND: cat /tmp/out/hevy_strength_source.json
+          PERSONAL_TRAINER_GARMIN_SPEED_COMMAND: cat /tmp/out/garmin_speed_source.json
+        run: |
+          set -euo pipefail
+          tmpdir="$(cat "$RUNNER_TEMP/site-smoke-dir")"
+          docker compose run --rm --no-deps \
+            -v "$tmpdir:/tmp/out" \
+            -e PERSONAL_TRAINER_HEVY_STRENGTH_COMMAND \
+            -e PERSONAL_TRAINER_GARMIN_SPEED_COMMAND \
+            app python3 scripts/daily_snapshot_runner.py \
+            --sources-file personal_trainer/examples/sources-ready.json \
+            --snapshot-output dist/data/snapshot.json \
+            --site-output dist \
+            --deploy-log-output /tmp/out/deploy-log.txt
+      - name: Serve built site
+        run: docker compose up -d site
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke tests against built site
+        env:
+          PLAYWRIGHT_USE_EXTERNAL_SERVER: "1"
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+        run: npm run test:browser
+      - name: Tear down built site server
+        if: always()
+        run: docker compose down --remove-orphans
+
   docker:
     runs-on: ubuntu-latest
     permissions:
