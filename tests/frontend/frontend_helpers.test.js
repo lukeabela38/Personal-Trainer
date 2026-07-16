@@ -772,7 +772,15 @@ test("speed helpers build predictions from recent runs", () => {
 
   assert.equal(predictions.length, 6);
   assert.equal(predictions[2].distance_label, "5K");
-  assert.equal(predictions[2].confidence, "fresh");
+  assert.equal(predictions[2].confidence, "high");
+  assert.equal(predictions[2].prediction, predictions[2].predicted_time);
+  assert.equal(predictions[2].model, "Riegel extrapolation");
+  assert.ok(Array.isArray(predictions[2].calibration_points));
+  assert.equal(predictions[2].calibration_points[0].name, "Tempo Run");
+  assert.match(predictions[2].ci_60, /^±/);
+  assert.match(predictions[2].ci_90, /^±/);
+  assert.equal(predictions[2].trend, "improving");
+  assert.ok(predictions[2].how_to_improve.length > 0);
   assert.equal(summary.stale, false);
   assert.equal(summary.latest_useful_run.distance, "10.00 km");
   assert.equal(summary.useful_run_count, 1);
@@ -785,6 +793,18 @@ test("speed helpers format Garmin analytics", () => {
   assert.equal(speed.formatSleepMetric(26100), "7h 15m");
   assert.equal(speed.formatHeartRate(162), "162 bpm");
   assert.equal(speed.formatMilliseconds(61), "61 ms");
+  const detail = speed.buildPredictionDetail({
+    distance_label: "5K",
+    predicted_time: "20:45",
+    ci_60: "±1:05",
+    ci_90: "±2:10",
+    trend: "improving",
+    confidence: "high",
+  });
+  assert.match(detail.beforeGrid, /data-prediction-interval-select/);
+  assert.equal(detail.items.length, 3);
+  assert.match(detail.items[0], /60% CI/);
+  assert.match(detail.items[1], /90% CI/);
   assert.match(
     speed.buildAnalyticsNotice(
       {

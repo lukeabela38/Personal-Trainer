@@ -25,6 +25,12 @@ class _FakeGarth:
         (path / "oauth2_token.json").write_text(json.dumps({"token": "oauth2"}), encoding="utf-8")
 
 
+class _AuthError(Exception):
+    def __init__(self, status_code: int) -> None:
+        super().__init__(f"status_code={status_code}")
+        self.response = type("Response", (), {"status_code": status_code})()
+
+
 class _FakeGarmin:
     instances: list[_FakeGarmin] = []
 
@@ -140,6 +146,7 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(payload["recent_bests"][0]["record_type"], "Fastest 5K")
         self.assertEqual(payload["recent_runs"][0]["avg_heart_rate_bpm"], 164.0)
         self.assertEqual(payload["vo2max_trend_points"][0]["vo2max"], 50.0)
+        self.assertEqual(payload["vo2max_trend_history"][0]["vo2max"], 50.0)
 
     def test_password_login_persists_session_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -166,6 +173,45 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(client.login_calls, [None])
         self.assertEqual(client.garth.dump_calls, [str(tokenstore)])
         self.assertEqual(payload["current_vo2max"], 52.0)
+
+    def test_cached_401_clears_tokenstore_before_password_retry(self) -> None:
+        class StaleTokenstoreGarmin(_FakeGarmin):
+            def login(self, tokenstore: str | None = None) -> bool:
+                self.login_calls.append(tokenstore)
+                if tokenstore is not None:
+                    raise _AuthError(401)
+                return True
+
+            def get_stats(self, today: str) -> dict:
+                return {"vO2MaxValue": 52}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tokenstore = Path(tmp) / "garmin-cache"
+            tokenstore.mkdir(parents=True, exist_ok=True)
+            (tokenstore / "oauth1_token.json").write_text("{}", encoding="utf-8")
+            (tokenstore / "oauth2_token.json").write_text("{}", encoding="utf-8")
+
+            with (
+                patch.object(garmin, "Garmin", StaleTokenstoreGarmin),
+                patch.dict(
+                    os.environ,
+                    {
+                        "GARMINTOKENS": str(tokenstore),
+                        "GARMIN_EMAIL": "person@example.com",
+                        "GARMIN_PASSWORD": "secret",
+                    },
+                    clear=False,
+                ),
+            ):
+                payload = garmin.fetch()
+
+            self.assertEqual(len(_FakeGarmin.instances), 2)
+            self.assertEqual(_FakeGarmin.instances[0].login_calls, [str(tokenstore)])
+            self.assertEqual(_FakeGarmin.instances[1].login_calls, [None])
+            self.assertTrue(tokenstore.exists())
+            self.assertTrue((tokenstore / "oauth1_token.json").exists())
+            self.assertTrue((tokenstore / "oauth2_token.json").exists())
+            self.assertEqual(payload["current_vo2max"], 52.0)
 
     def test_uses_recent_runs_for_vo2max_when_summary_is_missing(self) -> None:
         class MissingSummaryGarmin(_FakeGarmin):
@@ -195,6 +241,7 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(payload["current_vo2max"], 52.0)
         self.assertEqual(payload["vo2max_trend"], "up")
         self.assertEqual(payload["recent_runs"][0]["avg_heart_rate_bpm"], 164.0)
+        self.assertEqual(payload["vo2max_trend_history"][0]["vo2max"], 52.0)
 
     def test_prefers_most_recent_run_vo2max_over_summary_value(self) -> None:
         class SummaryLagGarmin(_FakeGarmin):
@@ -222,6 +269,7 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(payload["vo2max_trend"], "up")
         self.assertEqual(payload["vo2max_trend_points"][0]["vo2max"], 50.0)
         self.assertEqual(payload["recent_runs"][0]["avg_heart_rate_bpm"], 164.0)
+        self.assertEqual(payload["vo2max_trend_history"][0]["vo2max"], 50.0)
 
 
 if __name__ == "__main__":

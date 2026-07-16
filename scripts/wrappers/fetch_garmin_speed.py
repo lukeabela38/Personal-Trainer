@@ -185,6 +185,7 @@ async def _fetch_direct(email: str, password: str) -> dict:
             "current_vo2max": None,
             "vo2max_trend": None,
             "vo2max_trend_points": [],
+            "vo2max_trend_history": [],
             "training_load_trend": None,
             "readiness": {},
         }
@@ -200,6 +201,9 @@ async def _fetch_direct(email: str, password: str) -> dict:
             "vo2max_trend_points": _normalize_vo2max_trend_points(
                 raw.get("vo2max_trend_points") or raw.get("vo2max_trend")
             ),
+            "vo2max_trend_history": _normalize_vo2max_trend_points(
+                raw.get("vo2max_trend_history") or raw.get("vo2max_trend_points") or raw.get("vo2max_trend")
+            ),
             "training_load_trend": _normalize_trend(raw.get("training_load_trend")),
             "readiness": _normalize_readiness(raw.get("readiness"), raw.get("sleep_data")),
         }
@@ -213,6 +217,7 @@ async def _fetch_via_mcp() -> dict:
     current_vo2max = None
     vo2max_trend = None
     vo2max_trend_points = []
+    vo2max_trend_history = []
     training_load_trend = None
     readiness = {}
     try:
@@ -283,6 +288,7 @@ async def _fetch_via_mcp() -> dict:
             "current_vo2max": current_vo2max,
             "vo2max_trend": vo2max_trend,
             "vo2max_trend_points": vo2max_trend_points,
+            "vo2max_trend_history": vo2max_trend_history,
             "training_load_trend": training_load_trend,
             "readiness": readiness,
         }
@@ -353,6 +359,9 @@ def _merge_live_metrics(payload: dict) -> dict:
     payload["current_vo2max"] = payload.get("current_vo2max") or live.get("current_vo2max")
     payload["vo2max_trend"] = payload.get("vo2max_trend") or live.get("vo2max_trend")
     payload["vo2max_trend_points"] = payload.get("vo2max_trend_points") or live.get("vo2max_trend_points") or []
+    payload["vo2max_trend_history"] = (
+        payload.get("vo2max_trend_history") or live.get("vo2max_trend_history") or payload["vo2max_trend_points"] or []
+    )
     payload["training_load_trend"] = payload.get("training_load_trend") or live.get("training_load_trend")
     payload["readiness"] = payload.get("readiness") or live.get("readiness") or {}
     if not payload.get("result") and live.get("recent_bests"):

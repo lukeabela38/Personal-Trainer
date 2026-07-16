@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shutil
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -52,6 +53,9 @@ def fetch() -> dict:
             logger.warning("[garmin] cached session returned no usable data, retrying with password")
         except Exception as e:
             logger.warning("[garmin] cached session fetch failed status_code=%s: %s", _status_code(e), e)
+            if _status_code(e) == 401:
+                _clear_tokenstore(tokenstore)
+                logger.warning("[garmin] cleared stale token store after cached auth failure")
 
     if garmin_email and garmin_password and Garmin is not None:
         try:
@@ -61,6 +65,18 @@ def fetch() -> dict:
             return payload
         except Exception as e:
             logger.warning("[garmin] direct fetch failed status_code=%s: %s", _status_code(e), e)
+            if _status_code(e) == 401:
+                _clear_tokenstore(tokenstore)
+                logger.warning("[garmin] cleared stale token store after password auth failure")
+                try:
+                    logger.info("[garmin] retrying direct credential login")
+                    payload = _fetch_direct(garmin_email, garmin_password, tokenstore, today, month_ago)
+                    logger.info("[garmin] auth status_code=200 mode=password-retry")
+                    return payload
+                except Exception as retry_exc:
+                    logger.warning(
+                        "[garmin] password retry failed status_code=%s: %s", _status_code(retry_exc), retry_exc
+                    )
 
     logger.warning("[garmin] credentials unavailable or unusable; returning empty payload status_code=401")
     return _empty_payload()
@@ -77,6 +93,15 @@ def _tokenstore_is_populated(tokenstore: Path) -> bool:
     return tokenstore.is_dir() and all(
         (tokenstore / filename).is_file() for filename in ("oauth1_token.json", "oauth2_token.json")
     )
+
+
+def _clear_tokenstore(tokenstore: Path) -> None:
+    try:
+        shutil.rmtree(tokenstore)
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        logger.warning("[garmin] unable to clear token store %s: %s", tokenstore, exc)
 
 
 def _fetch_cached(tokenstore: Path, today: str, month_ago: str) -> dict:
@@ -120,6 +145,7 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
         trend_points = _normalize_vo2max_trend_points(trend)
         if trend_points:
             payload["vo2max_trend_points"] = trend_points
+            payload["vo2max_trend_history"] = trend_points
             payload["vo2max_trend"] = _trend_label(trend_points)
     except Exception:
         pass
@@ -176,6 +202,8 @@ def _build_payload(client, today: str, month_ago: str) -> dict:
                         payload["last_long_run"] = _summarize_activity(run)
             if run_trend_points and not payload.get("vo2max_trend_points"):
                 payload["vo2max_trend_points"] = run_trend_points
+            if run_trend_points and not payload.get("vo2max_trend_history"):
+                payload["vo2max_trend_history"] = run_trend_points
             if vo2_values:
                 payload["current_vo2max"] = vo2_values[0]
                 if len(vo2_values) > 1 and payload.get("vo2max_trend") in (None, "unknown"):
@@ -241,6 +269,7 @@ def _empty_payload() -> dict:
         "current_vo2max": None,
         "vo2max_trend": "unknown",
         "vo2max_trend_points": [],
+        "vo2max_trend_history": [],
         "training_status": None,
         "training_load_trend": None,
         "readiness": {},
