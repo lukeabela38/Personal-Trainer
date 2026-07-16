@@ -113,6 +113,13 @@ docker compose run --rm app sh -c "python3 -m unittest discover -s tests -v"
 # Serve the static site locally
 ./scripts/serve_site.sh
 
+# Worktree workflow for parallel cards
+./scripts/worktree.sh new <issue-number> [branch-slug]
+./scripts/worktree.sh list
+./scripts/worktree.sh remove <issue-number>
+
+Use one worktree per issue for parallel cards. Keep the main checkout on `main` for review and merging only, and remove stale worktrees after the PR merges.
+
 # Build site artifacts from example data in the Python 3.12 container
 docker compose run --rm app python3 scripts/build_site_artifacts.py
 

@@ -36,6 +36,7 @@ Agents should optimize for small, independent cards that can be completed withou
 - `./scripts/serve_site.sh` builds the same `dist/` bundle used by Pages before serving it; use `--live` to preview the unlocked secret-backed pipeline.
 - `.github/workflows/pages.yml` publishes the static site.
 - `.github/workflows/security.yml` runs the weekly Trivy security scan and uploads SARIF to GitHub Security.
+- `scripts/worktree.sh` creates, lists, and removes issue-scoped git worktrees for parallel cards.
 
 ## Board Strategy
 
@@ -58,6 +59,7 @@ Wave order:
 - Unless explicitly told otherwise, create a feature branch and open a PR for reviewable work.
 - Do not combine contract changes with UI work unless the card is explicitly about integration.
 - Avoid duplicate cards; if scope overlaps, keep the sharper card and archive the broader one.
+- Any card that introduces or depends on production backend/deployment work must explicitly name its IaC prerequisite, usually `#201` or the current infra foundation card, in the issue body and acceptance criteria.
 
 ## Live Data Reporting
 
@@ -99,6 +101,9 @@ docker compose run --rm qr "<url>" /app/dist/qr.png     # generate QR code (save
 
 - `./scripts/serve_site.sh`
 - `./scripts/serve_site.sh --live`
+- `./scripts/worktree.sh new <issue-number> [branch-slug]`
+- `./scripts/worktree.sh list`
+- `./scripts/worktree.sh remove <issue-number>`
 - `./scripts/run_python_tests.sh`
 - `docker compose run --rm app python3 scripts/build_site_artifacts.py`
 - `docker compose run --rm app python3 scripts/daily_snapshot_runner.py`
