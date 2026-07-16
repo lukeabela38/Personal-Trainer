@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -172,6 +173,19 @@ class GarminSpeedWrapperTests(TestCase):
     def test_speed_lookback_days_falls_back_to_default(self) -> None:
         with patch.dict(os.environ, {"PERSONAL_TRAINER_GARMIN_SPEED_LOOKBACK_DAYS": "invalid"}, clear=False):
             self.assertEqual(garmin_speed._speed_lookback_days(), 30)
+
+    def test_fetch_returns_empty_payload_when_mcp_fails(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            with (
+                patch.object(garmin_speed, "_fetch_via_mcp", side_effect=RuntimeError("boom")),
+            ):
+                payload = asyncio.run(garmin_speed.fetch())
+
+        self.assertEqual(payload["current_vo2max"], None)
+        self.assertEqual(payload["recent_runs"], [])
+        self.assertEqual(payload["result"], [])
+        self.assertEqual(payload["vo2max_trend_history"], [])
+        self.assertEqual(payload["readiness"], {})
 
 
 if __name__ == "__main__":

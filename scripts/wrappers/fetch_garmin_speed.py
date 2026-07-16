@@ -65,7 +65,11 @@ async def fetch() -> dict:
             )
             logger.warning("[garmin-speed] direct fetch failed, falling back to MCP: %s", e)
     logger.info("[garmin-speed] fetching via MCP")
-    return await _fetch_via_mcp()
+    try:
+        return await _fetch_via_mcp()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[garmin-speed] MCP fetch failed, returning empty payload: %s", exc)
+        return _empty_payload()
 
 
 async def _fetch_direct(email: str, password: str) -> dict:
@@ -372,6 +376,19 @@ def _merge_live_metrics(payload: dict) -> dict:
     elif not payload.get("recent_runs") and live_runs:
         payload["recent_runs"] = live_runs
     return payload
+
+
+def _empty_payload() -> dict:
+    return {
+        "result": [],
+        "recent_runs": [],
+        "current_vo2max": None,
+        "vo2max_trend": None,
+        "vo2max_trend_points": [],
+        "vo2max_trend_history": [],
+        "training_load_trend": None,
+        "readiness": {},
+    }
 
 
 def _normalize_activity_page(page: object) -> list[dict]:
