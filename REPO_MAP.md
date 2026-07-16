@@ -12,6 +12,7 @@
 - `docs/app-blueprint.md` — app-level blueprint; derives from the global vision
 - `docs/milestone-roadmap.md` — short milestone sequence derived from the blueprint
 - `docs/working-conventions.md` — lightweight repository working rules
+- `scripts/worktree.sh` — helper for creating, listing, and removing issue-scoped git worktrees
 - `.env.example` — all environment variables documented
 - `pyproject.toml` (in `personal_trainer/`) — hatchling build config, entrypoints, dependencies, ruff config
 - `.github/workflows/pages.yml` — GitHub Pages deployment
@@ -75,6 +76,7 @@ Purpose: Operational scripts for live data capture, site building, and reporting
 - `live_sources.py` — merge per-source commands into one payload JSON
 - `build_site_artifacts.py` — copy site shell + emit data JSONs into generated `dist/`
 - `mcp_client.py` — reusable async MCP stdio client
+- `worktree.sh` — standard helper for creating, listing, and removing issue-scoped git worktrees
 - `strength_report.py` — standalone strength PB report from Hevy history; can also merge discovered Hevy exercises into `history/exercises/index.json`
 - `speed_report.py` — standalone speed PB report from Garmin records
 - `test_strength_report.py` — tests for `strength_report.py`
@@ -120,7 +122,7 @@ Purpose: Static browser UI.
 - `daily-recommendation-contract.md` — priority options, decision rules, check-in triggers
 - `mcp-integrations.md` — MCP server setup, env vars, credential rules
 - `agent-onboarding.md` — card rules, MCP wrapper testing protocol, commit checklist
-- `handoff-guide.md` — current architecture overview, where to start
+- `handoff-guide.md` — current architecture overview, where to start, and the parallel-card worktree workflow
 - `board-execution-order.md` — wave execution order for project board
 
 ## Feature Areas

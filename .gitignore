@@ -13,5 +13,7 @@ dist/
 .cache/
 test-results/
 playwright-report/
+.bare/
+/Personal-Trainer-worktrees/
 /.docdex/
 /.docdex-state/

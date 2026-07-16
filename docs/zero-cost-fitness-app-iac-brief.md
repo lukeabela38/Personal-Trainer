@@ -50,6 +50,7 @@ This document captures the zero-cost toolchain and infrastructure path for makin
 - This is not the app itself.
 - This is the repeatable, low-cost tooling and IaC path for making the app live.
 - The repo can use this brief to decide where to take things next without drifting into paid infrastructure by accident.
+- Any ticket that is intended to ship to production and needs backend execution should explicitly depend on the IaC foundation card (`#201`) or its successor before implementation starts.
 
 ## Suggested Follow-Up Work
 

@@ -40,3 +40,4 @@ All five waves are complete. The project board now contains additional items bey
 - Wave 3 depends on the snapshot shape being stable.
 - Wave 4 depends on the data shape and recommendation semantics being mostly settled.
 - Wave 5 should stay last unless deployment work blocks verification.
+- Backend or deployment tickets should call out their IaC dependency explicitly instead of assuming it is implied by the board links.

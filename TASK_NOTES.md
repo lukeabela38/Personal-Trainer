@@ -2,6 +2,29 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-16 Worktree Docs Sweep
+
+- Added worktree references to `REPO_MAP.md` and clarified in the handoff guide that the root checkout stays on `main`.
+- The worktree helper remains the operational source of truth; docs now point to it from both navigation and handoff context.
+
+## 2026-07-16 Worktree Conversion
+
+- The main checkout is now backed by a shared gitdir at `.bare`, with `.git` pointing to it.
+- `scripts/worktree.sh` is the standard entrypoint for creating, listing, and removing issue-scoped worktrees.
+- The repo now treats the root checkout as the main worktree for review and merge, and future parallel agent cards should use separate worktrees.
+
+## 2026-07-16 Worktree Workflow Helper
+
+- Added `scripts/worktree.sh` with `new`, `list`, and `remove` commands for issue-scoped git worktrees.
+- The helper bootstraps new worktrees with `python3 -m pip install -e personal_trainer/` after creation.
+- Added unittest coverage for the helper with stubbed `git` and `python3` commands.
+
+## 2026-07-16 Backend IaC Dependency Clarity
+
+- Backend or production deployment tickets should explicitly mention the IaC foundation dependency instead of relying only on indirect board links.
+- Use `#201` as the reference point unless a newer infra foundation card replaces it.
+- This keeps production-ready work from starting before the infra path is acknowledged in the ticket itself.
+
 ## 2026-07-16 Python Test Wrapper
 
 - Added `scripts/run_python_tests.sh` as the repo-standard Docker-backed command for the full Python test suite.
