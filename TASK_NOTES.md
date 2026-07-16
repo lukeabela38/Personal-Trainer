@@ -2,6 +2,11 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-16 Python Test Wrapper
+
+- Added `scripts/run_python_tests.sh` as the repo-standard Docker-backed command for the full Python test suite.
+- The new smoke test stubs `docker` to verify the wrapper resolves the repo root and forwards the expected `docker compose run --rm app ...` command.
+
 ## 2026-07-16 GitHub Pages Live Refresh
 
 - The Pages workflow already decrypts the repo-backed `.env` with `GIT_CRYPT_KEY` and runs the live source capture during the build.
