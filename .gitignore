@@ -7,6 +7,7 @@ __pycache__/
 site/data/
 data/
 node_modules/
+.npm/
 dist/
 .venv/
 .cache/

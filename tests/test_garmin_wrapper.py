@@ -174,6 +174,26 @@ class GarminWrapperTests(TestCase):
         self.assertEqual(client.garth.dump_calls, [str(tokenstore)])
         self.assertEqual(payload["current_vo2max"], 52.0)
 
+    def test_empty_fallback_logs_payload_summary(self) -> None:
+        with (
+            patch.object(garmin, "_log_payload_summary") as log_payload_summary,
+            patch.dict(
+                os.environ,
+                {
+                    "GARMIN_EMAIL": "",
+                    "GARMIN_PASSWORD": "",
+                    "GC_EMAIL": "",
+                    "GC_PASSWORD": "",
+                },
+                clear=False,
+            ),
+        ):
+            payload = garmin.fetch()
+
+        log_payload_summary.assert_called_once_with("empty", payload)
+        self.assertEqual(payload["recent_runs"], [])
+        self.assertEqual(payload["recent_bests"], [])
+
     def test_cached_401_clears_tokenstore_before_password_retry(self) -> None:
         class StaleTokenstoreGarmin(_FakeGarmin):
             def login(self, tokenstore: str | None = None) -> bool:

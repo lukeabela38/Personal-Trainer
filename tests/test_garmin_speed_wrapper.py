@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "wrappers"))
 
@@ -156,6 +157,27 @@ class GarminSpeedWrapperTests(TestCase):
         self.assertEqual(merged["vo2max_trend_points"][0]["vo2max"], 50.5)
         self.assertEqual(merged["vo2max_trend_history"][0]["vo2max"], 50.5)
         self.assertEqual(merged["recent_runs"][0]["avg_heart_rate_bpm"], 161.0)
+
+    def test_fetch_logs_mcp_payload_summary(self) -> None:
+        payload = {
+            "result": [{"record_type": "Fastest 5K"}],
+            "recent_runs": [{"name": "Tempo Run"}],
+            "current_vo2max": 52,
+            "vo2max_trend": "up",
+            "vo2max_trend_points": [],
+            "vo2max_trend_history": [],
+            "training_load_trend": "21",
+            "readiness": {"sleep_score": 83},
+        }
+
+        with (
+            patch.object(garmin_speed, "_fetch_via_mcp", new=AsyncMock(return_value=payload)),
+            patch.object(garmin_speed, "_log_payload_summary") as log_payload_summary,
+        ):
+            result = asyncio.run(garmin_speed.fetch())
+
+        self.assertIs(result, payload)
+        log_payload_summary.assert_called_once_with("mcp", payload)
 
     def test_normalize_readiness_uses_sleep_data_for_raw_hrv(self) -> None:
         readiness = garmin_speed._normalize_readiness(
