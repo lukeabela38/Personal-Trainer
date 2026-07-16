@@ -113,8 +113,8 @@ class SpeedReportTests(TestCase):
         self.assertEqual(report["predictions"][2]["prediction"], report["predictions"][2]["predicted_time"])
         self.assertEqual(report["predictions"][2]["model"], "Riegel extrapolation")
         self.assertEqual(report["predictions"][2]["calibration_points"][0]["name"], "Tempo Run")
-        self.assertTrue(report["predictions"][2]["ci_68"].startswith("±"))
-        self.assertTrue(report["predictions"][2]["ci_95"].startswith("±"))
+        self.assertTrue(report["predictions"][2]["ci_60"].startswith("±"))
+        self.assertTrue(report["predictions"][2]["ci_90"].startswith("±"))
         self.assertEqual(report["predictions"][2]["trend"], "improving")
         self.assertTrue(report["predictions"][2]["how_to_improve"])
 

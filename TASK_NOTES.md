@@ -8,6 +8,17 @@ This file is for temporary task-specific findings. It can be cleared between tas
 - The speed prediction objects in `site/speed.js` and `scripts/speed_report.py` now carry the contract fields for prediction text, 68% and 95% ranges, model, calibration points, trend, and improvement guidance.
 - Browser and Python regression tests now cover the new fields.
 
+## 2026-07-16 Speed Prediction Popup
+
+- Speed prediction cards now act as click targets and open the shared inline detail panel.
+- The popup includes the prediction time, confidence, trend, CI ranges, model, guidance, and source-run context so the card itself stays compact.
+
+## 2026-07-16 Garmin Auth Retry
+
+- `scripts/wrappers/fetch_garmin.py` now clears a stale token store when Garmin returns a 401 during cached or password-based auth.
+- After clearing the token store, the wrapper retries the direct password login once so a fresh CI runner can recover from stale session state.
+- A regression smoke check now confirms the cached 401 path still reaches the password login and successfully recreates the token store.
+
 ## 2026-07-16 GitHub Pages Live Refresh
 
 - The Pages workflow already decrypts the repo-backed `.env` with `GIT_CRYPT_KEY` and runs the live source capture during the build.

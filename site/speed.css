@@ -597,6 +597,88 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.3fr) auto;
 }
 
+.speed-prediction-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.speed-prediction-card-button {
+  width: 100%;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+
+.speed-prediction-card-button:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.speed-prediction-card-button:focus-visible {
+  outline: 2px solid rgba(93, 165, 255, 0.5);
+  outline-offset: -2px;
+  position: relative;
+  z-index: 1;
+}
+
+.speed-prediction-card + .speed-prediction-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.speed-prediction-details {
+  display: grid;
+  gap: 10px;
+}
+
+.speed-prediction-meta {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.speed-prediction-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.speed-prediction-stat {
+  display: grid;
+  gap: 2px;
+  min-width: 7.2rem;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.speed-prediction-stat-label {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.speed-prediction-stat-value {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.speed-prediction-guidance {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .speed-run-modal {
   display: grid;
   gap: 16px;
@@ -682,6 +764,80 @@
   font-variant-numeric: tabular-nums;
 }
 
+.speed-prediction-interval-card {
+  gap: 6px;
+}
+
+.speed-prediction-interval-card:first-child {
+  border: 1px solid rgba(127, 209, 185, 0.18);
+  background: rgba(127, 209, 185, 0.08);
+}
+
+.speed-prediction-interval-card:nth-child(2) {
+  border: 1px solid rgba(93, 165, 255, 0.18);
+  background: rgba(93, 165, 255, 0.08);
+}
+
+.speed-prediction-interval-card--trend {
+  border: 1px solid rgba(255, 210, 122, 0.18);
+  background: rgba(255, 210, 122, 0.08);
+}
+
+.speed-prediction-interval-value,
+.speed-prediction-trend-chip {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.speed-prediction-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 0 0;
+}
+
+.speed-prediction-selector-label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.speed-prediction-interval-select {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 7px 11px;
+  min-width: 6.5rem;
+  text-align: center;
+}
+
+.speed-prediction-interval-select:focus-visible {
+  outline: 2px solid rgba(93, 165, 255, 0.45);
+  outline-offset: 2px;
+}
+
+.speed-prediction-selected-interval {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.speed-prediction-selected-interval-value {
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .prediction-confidence {
   display: inline-flex;
   align-items: center;
@@ -742,6 +898,16 @@
   .speed-run-row,
   .speed-prediction-row {
     grid-template-columns: 1fr auto;
+  }
+  .speed-prediction-card {
+    padding: 12px 14px;
+  }
+  .speed-prediction-card-button {
+    text-align: left;
+  }
+  .speed-prediction-stat {
+    min-width: 0;
+    flex: 1 1 8rem;
   }
   .speed-run-modal-grid {
     grid-template-columns: 1fr;

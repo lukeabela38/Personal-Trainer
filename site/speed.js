@@ -32,10 +32,13 @@ const PREDICTION_MIN_DISTANCE_RATIO = 0.75;
 const PREDICTION_STALE_DAYS = 14;
 const SCROLL_STORAGE_KEY = "personal-trainer:speed-scroll-y";
 const ANALYTICS_STORAGE_KEY = "personal-trainer:speed-show-analytics";
+const PREDICTION_INTERVAL_STORAGE_KEY =
+  "personal-trainer:speed-prediction-confidence-interval";
 const RUN_DATE_RANGE_STORAGE_KEY = "personal-trainer:speed-run-date-range";
 
 let showAnalytics = readStoredAnalyticsVisibility();
 let selectedRunDateRange = readStoredRunDateRange();
+let selectedPredictionInterval = readStoredPredictionInterval();
 let currentSpeedPayload = null;
 let activeRunDetailPanel = null;
 let activeRunDetailCleanup = null;
@@ -264,6 +267,28 @@ function readStoredAnalyticsVisibility() {
   }
 }
 
+function readStoredPredictionInterval() {
+  try {
+    if (!window?.localStorage) return "95";
+    const raw = window.localStorage.getItem(PREDICTION_INTERVAL_STORAGE_KEY);
+    return normalizePredictionInterval(raw);
+  } catch {
+    return "95";
+  }
+}
+
+function saveStoredPredictionInterval(value) {
+  try {
+    if (!window?.localStorage) return;
+    window.localStorage.setItem(
+      PREDICTION_INTERVAL_STORAGE_KEY,
+      normalizePredictionInterval(value),
+    );
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 function setupRecentRunDateRangeControl() {
   applyRunDateRangeControls(selectedRunDateRange, { persist: false });
   if (runsDateFromInput) {
@@ -308,6 +333,12 @@ function setupRunDateRangeUiPersistence() {
 
   window.addEventListener("load", syncUi, { once: true });
   window.addEventListener("pageshow", syncUi);
+}
+
+function normalizePredictionInterval(value) {
+  const text = String(value ?? "").trim();
+  if (text === "60" || text === "90" || text === "95") return text;
+  return "95";
 }
 
 function saveStoredAnalyticsVisibility(visible) {
@@ -770,6 +801,86 @@ function openPersonalBestDetailsModal(entry, anchorButton = null) {
   openInlineDetailPanel(buildPersonalBestDetail(entry), anchorButton);
 }
 
+function openPredictionDetailsModal(prediction, anchorButton = null) {
+  openInlineDetailPanel(buildPredictionDetail(prediction), anchorButton);
+}
+
+export function buildPredictionDetail(prediction) {
+  const selectedInterval = normalizePredictionInterval(
+    selectedPredictionInterval,
+  );
+  const intervalValueMap = {
+    60: prediction?.ci_60 ?? prediction?.ci_68,
+    90: prediction?.ci_90 ?? prediction?.ci_95,
+    95: prediction?.ci_95 ?? prediction?.ci_90,
+  };
+  const selectedIntervalValue = intervalValueMap[selectedInterval] ?? "—";
+  return {
+    kicker: "Prediction details",
+    title: prediction?.distance_label ?? "Run prediction",
+    heroValue: prediction?.predicted_time ?? "—",
+    heroMeta: "Confidence intervals and trend",
+    beforeGrid: `
+      <div class="speed-prediction-selector">
+        <label class="speed-prediction-selector-label" for="speed-prediction-interval-select">
+          Confidence interval
+        </label>
+        <select
+          class="speed-prediction-interval-select"
+          id="speed-prediction-interval-select"
+          data-prediction-interval-select
+        >
+          <option value="60">60%</option>
+          <option value="90">90%</option>
+          <option value="95">95%</option>
+        </select>
+      </div>
+      <div class="speed-prediction-selected-interval">
+        <span class="speed-run-detail-label">Selected interval</span>
+        <span
+          class="speed-prediction-selected-interval-value"
+          data-prediction-selected-interval-value
+        >
+          ${escapeHtml(
+            formatConfidenceIntervalSummary(
+              selectedInterval,
+              selectedIntervalValue,
+            ),
+          )}
+        </span>
+      </div>
+    `,
+    items: [
+      renderPredictionIntervalItem(
+        "60% CI",
+        prediction?.ci_60 ?? prediction?.ci_68,
+      ),
+      renderPredictionIntervalItem(
+        "90% CI",
+        prediction?.ci_90 ?? prediction?.ci_95,
+      ),
+      renderPredictionTrendItem(prediction?.trend),
+    ],
+    onMount(panel) {
+      const select = panel.querySelector("[data-prediction-interval-select]");
+      const selectedValue = panel.querySelector(
+        "[data-prediction-selected-interval-value]",
+      );
+      if (!select || !selectedValue) return;
+      select.value = selectedInterval;
+      select.addEventListener("change", () => {
+        const normalized = normalizePredictionInterval(select.value);
+        selectedPredictionInterval = normalized;
+        saveStoredPredictionInterval(normalized);
+        selectedValue.textContent = formatConfidenceIntervalSummary(
+          normalized,
+          intervalValueMap[normalized] ?? "—",
+        );
+      });
+    },
+  };
+}
+
 export function buildPersonalBestDetail(entry) {
   const rawValue = entry?.context?.raw_value ?? null;
   const sourceRunDate = entry?.context?.source_run_date ?? entry?.date ?? "—";
@@ -841,9 +952,11 @@ function openInlineDetailPanel(detail, anchorButton = null) {
           detail.heroMeta ?? "",
         )}</span>
       </div>
+      ${detail.beforeGrid ?? ""}
       <div class="speed-run-modal-grid">
         ${(detail.items ?? []).join("")}
       </div>
+      ${detail.afterGrid ?? ""}
     </div>
   `;
 
@@ -873,6 +986,7 @@ function openInlineDetailPanel(detail, anchorButton = null) {
   activeRunDetailPanel = panel;
   activeRunDetailCleanup = cleanup;
   activeRunDetailAnchor = anchorButton ?? null;
+  detail.onMount?.(panel);
   panel.querySelector(".modal-close")?.focus();
 }
 
@@ -895,6 +1009,32 @@ function renderDetailItem(label, value) {
       <span class="speed-run-detail-value">${escapeHtml(value)}</span>
     </div>
   `;
+}
+
+function renderPredictionIntervalItem(label, value) {
+  return `
+    <div class="speed-run-detail-item speed-prediction-interval-card">
+      <span class="speed-run-detail-label">${escapeHtml(label)}</span>
+      <span class="speed-prediction-interval-value">${escapeHtml(
+        value ?? "—",
+      )}</span>
+    </div>
+  `;
+}
+
+function renderPredictionTrendItem(trend) {
+  return `
+    <div class="speed-run-detail-item speed-prediction-interval-card speed-prediction-interval-card--trend">
+      <span class="speed-run-detail-label">Trend</span>
+      <span class="speed-prediction-trend-chip">${escapeHtml(
+        formatTrendLabel(trend),
+      )}</span>
+    </div>
+  `;
+}
+
+function formatConfidenceIntervalSummary(interval, value) {
+  return `${normalizePredictionInterval(interval)}% CI ${value}`;
 }
 
 function formatRunGroupLabel(dateText) {
@@ -959,39 +1099,39 @@ function renderPredictions(predictions, predictionSummary) {
   }
 
   predictionsContainer.innerHTML = predictions
-    .map((prediction) => {
-      const confidenceClass = `prediction-confidence--${
-        prediction.confidence ?? "unknown"
-      }`;
-      const source = prediction.source_run ?? {};
+    .map((prediction, index) => {
       return `
-        <div class="speed-row speed-prediction-row">
-          <span class="speed-row-name">${escapeHtml(
+        <button
+          class="speed-prediction-card speed-prediction-card-button"
+          type="button"
+          data-prediction-index="${index}"
+          aria-expanded="false"
+          aria-label="Open prediction details for ${escapeHtml(
             prediction.distance_label ?? "Distance",
-          )}</span>
-          <span class="speed-row-value">${escapeHtml(
-            prediction.predicted_time ?? "-",
-          )}</span>
-          <span class="speed-row-meta">
-            ${escapeHtml(
-              `${source.distance ?? "Unknown source"} · ${
-                source.date ?? "No date"
-              }${
-                prediction.predicted_pace
-                  ? ` · ${prediction.predicted_pace}`
-                  : ""
-              }`,
-            )}
-          </span>
-          <span class="speed-row-date">
-            <span class="prediction-confidence ${confidenceClass}">
-              ${escapeHtml(formatConfidenceLabel(prediction.confidence))}
-            </span>
-          </span>
-        </div>
+          )}"
+        >
+          <div class="speed-row speed-prediction-row">
+            <span class="speed-row-name">${escapeHtml(
+              prediction.distance_label ?? "Distance",
+            )}</span>
+            <span class="speed-row-value">${escapeHtml(
+              prediction.predicted_time ?? "-",
+            )}</span>
+          </div>
+        </button>
       `;
     })
     .join("");
+
+  predictionsContainer
+    .querySelectorAll(".speed-prediction-card-button")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.predictionIndex);
+        const prediction = Number.isInteger(index) ? predictions[index] : null;
+        if (prediction) openPredictionDetailsModal(prediction, button);
+      });
+    });
 
   if (!predictionNote) return;
   if (predictionSummary?.warning) {
@@ -1066,6 +1206,8 @@ export function buildPredictions(recentRuns, snapshotDate = null) {
       predicted_time_s: predictedSeconds,
       predicted_time: formatDuration(predictedSeconds),
       prediction: formatDuration(predictedSeconds),
+      ci_60: predictionRangeLabel(predictedSeconds, confidence, 0.04),
+      ci_90: predictionRangeLabel(predictedSeconds, confidence, 0.08),
       ci_68: predictionRangeLabel(predictedSeconds, confidence, 0.05),
       ci_95: predictionRangeLabel(predictedSeconds, confidence, 0.1),
       model: "Riegel extrapolation",
@@ -1508,17 +1650,6 @@ function formatSleepDuration(seconds) {
   if (hours <= 0) return `${minutes}m`;
   if (minutes <= 0) return `${hours}h`;
   return `${hours}h ${minutes}m`;
-}
-
-function formatConfidenceLabel(confidence) {
-  const value = String(confidence ?? "unknown");
-  if (value === "high") return "High";
-  if (value === "medium") return "Medium";
-  if (value === "low") return "Low";
-  if (value === "fresh") return "Fresh";
-  if (value === "aging") return "Aging";
-  if (value === "stale") return "Stale";
-  return "Unknown";
 }
 
 function uniqueSourceRuns(sourceRuns) {
