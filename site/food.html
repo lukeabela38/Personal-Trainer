@@ -104,6 +104,37 @@
           <div id="food-manual-macros" class="food-live-grid"></div>
         </div>
 
+        <div class="food-day-header">
+          <div>
+            <p class="label" id="food-day-label">Today</p>
+            <h3 class="food-day-title">Logged food for the day</h3>
+          </div>
+          <div class="food-day-nav">
+            <button
+              id="food-day-prev"
+              class="button secondary food-day-btn"
+              type="button"
+            >
+              &larr;
+            </button>
+            <span id="food-day-display" class="food-day-display"></span>
+            <button
+              id="food-day-next"
+              class="button secondary food-day-btn"
+              type="button"
+            >
+              &rarr;
+            </button>
+            <input
+              id="food-day-picker"
+              class="food-day-picker"
+              type="date"
+              hidden
+            />
+            <span class="rec-badge" id="food-day-count">0 entries</span>
+          </div>
+        </div>
+
         <div class="food-shell-header">
           <div>
             <p class="label">Food</p>
@@ -206,37 +237,6 @@
         </div>
 
         <div id="food-scan-preview" class="food-scan-preview hidden"></div>
-
-        <div class="food-day-header">
-          <div>
-            <p class="label" id="food-day-label">Today</p>
-            <h3 class="food-day-title">Logged food for the day</h3>
-          </div>
-          <div class="food-day-nav">
-            <button
-              id="food-day-prev"
-              class="button secondary food-day-btn"
-              type="button"
-            >
-              &larr;
-            </button>
-            <span id="food-day-display" class="food-day-display"></span>
-            <button
-              id="food-day-next"
-              class="button secondary food-day-btn"
-              type="button"
-            >
-              &rarr;
-            </button>
-            <input
-              id="food-day-picker"
-              class="food-day-picker"
-              type="date"
-              hidden
-            />
-            <span class="rec-badge" id="food-day-count">0 entries</span>
-          </div>
-        </div>
 
         <div id="food-list" class="food-log"></div>
       </section>
