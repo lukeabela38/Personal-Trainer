@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -195,16 +196,24 @@ class BuildSiteArtifactsTest(TestCase):
                     },
                 },
             )
-            exit_code = build_site_artifacts.main(
-                [
-                    "--snapshot",
-                    str(snapshot),
-                    "--site-dir",
-                    str(site_dir),
-                    "--output-dir",
-                    str(output_dir),
-                ]
-            )
+            original = os.environ.get("PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED")
+            os.environ["PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED"] = "1"
+            try:
+                exit_code = build_site_artifacts.main(
+                    [
+                        "--snapshot",
+                        str(snapshot),
+                        "--site-dir",
+                        str(site_dir),
+                        "--output-dir",
+                        str(output_dir),
+                    ]
+                )
+            finally:
+                if original is None:
+                    os.environ.pop("PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED", None)
+                else:
+                    os.environ["PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED"] = original
 
             self.assertEqual(exit_code, 0)
             built_snapshot = json.loads((output_dir / "data" / "snapshot.json").read_text(encoding="utf-8"))
@@ -254,7 +263,7 @@ class BuildSiteArtifactsTest(TestCase):
                 built_speed["predictions"][2]["prediction"],
                 built_speed["predictions"][2]["predicted_time"],
             )
-            self.assertEqual(built_speed["predictions"][2]["model"], "Riegel extrapolation")
+            self.assertEqual(built_speed["predictions"][2]["model"], "Critical Speed")
             self.assertFalse(built_speed["prediction_summary"]["stale"])
             self.assertEqual(built_speed["prediction_summary"]["useful_run_count"], 1)
 

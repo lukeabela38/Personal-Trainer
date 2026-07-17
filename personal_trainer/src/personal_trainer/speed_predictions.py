@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from itertools import combinations
 from math import exp, floor, log, sqrt
 from typing import Any
 
 PREDICTION_STALE_DAYS = 14
 PREDICTION_MIN_DISTANCE_RATIO = 0.75
+DISTANCE_BUCKET_METERS = 500.0
 
 RUN_TARGETS = (
     ("1K", 1000.0),
@@ -357,7 +359,10 @@ def _build_training_paces(source_run: dict[str, Any] | None) -> dict[str, Any] |
         )
     return {
         "vdot": round(vdot, 1),
-        "source_run": _prediction_source_run(source_run, "high" if source_run.get("age_days", 0) <= 7 else "medium"),
+        "source_run": _prediction_source_run(
+            source_run,
+            "high" if (source_run.get("age_days") or 0) <= 7 else "medium",
+        ),
         "bands": bands,
     }
 
@@ -377,67 +382,152 @@ def _build_race_prediction_for_target(
 
 
 def _build_training_paces_source(runs: list[dict[str, Any]]) -> dict[str, Any] | None:
-    if not runs:
-        return None
-    return max(
-        runs,
-        key=lambda run: (
-            _coerce_float(run.get("distance_m")) or 0.0,
-            -(_coerce_float(run.get("age_days")) or 0.0),
-            _parse_date(run.get("date")) or date.min,
-        ),
-    )
+    return _select_source_run(runs, 10000.0)
 
 
 def _select_vdot_source_run(anchors: list[dict[str, Any]]) -> dict[str, Any] | None:
     return _build_training_paces_source(anchors)
 
 
+def _anchor_rank_key(anchor: dict[str, Any], target_distance_m: float) -> tuple[float, float, float, int, float]:
+    age_days = anchor.get("age_days") if anchor.get("age_days") is not None else 9999
+    pace_s_per_km = anchor.get("pace_s_per_km") if anchor.get("pace_s_per_km") is not None else float("inf")
+    duration_s = anchor.get("duration_s") if anchor.get("duration_s") is not None else float("inf")
+    return (
+        abs(anchor["distance_m"] - target_distance_m) / target_distance_m,
+        pace_s_per_km,
+        duration_s,
+        age_days,
+        -anchor["distance_m"],
+    )
+
+
+def _anchor_fit_rank_key(anchor: dict[str, Any]) -> tuple[float, float, float, float, float]:
+    pace_s_per_km = anchor.get("pace_s_per_km") if anchor.get("pace_s_per_km") is not None else float("inf")
+    duration_s = anchor.get("duration_s") if anchor.get("duration_s") is not None else float("inf")
+    age_days = anchor.get("age_days") if anchor.get("age_days") is not None else 9999
+    return (
+        pace_s_per_km,
+        duration_s,
+        age_days,
+        _parse_date(anchor.get("date")) or date.max,
+        -anchor["distance_m"],
+    )
+
+
+def _distance_bucket(distance_m: float) -> int:
+    return int(round(distance_m / DISTANCE_BUCKET_METERS))
+
+
+def _collapse_distance_buckets(anchors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    best_by_bucket: dict[int, dict[str, Any]] = {}
+    for anchor in sorted(anchors, key=_anchor_fit_rank_key):
+        bucket = _distance_bucket(anchor["distance_m"])
+        if bucket not in best_by_bucket:
+            best_by_bucket[bucket] = anchor
+    return list(best_by_bucket.values())
+
+
+def _rank_anchor_candidates(
+    anchors: list[dict[str, Any]],
+    target_distance_m: float,
+) -> list[dict[str, Any]]:
+    return sorted(anchors, key=lambda anchor: _anchor_rank_key(anchor, target_distance_m))
+
+
+def _anchor_subset_score(
+    combo: tuple[dict[str, Any], ...],
+    fit_kind: str,
+    target_distance_m: float,
+) -> tuple[float, float, float, float] | None:
+    if len(combo) < 2:
+        return None
+    if fit_kind == "log":
+        xs = [log(anchor["distance_m"]) for anchor in combo]
+        ys = [log(anchor["duration_s"]) for anchor in combo]
+        try:
+            slope, intercept = linear_regression(xs, ys)
+        except ValueError:
+            return None
+        predicted_seconds = exp(intercept + slope * log(target_distance_m))
+        residual_sigma = _log_residual_sigma(xs, ys, slope, intercept)
+    elif fit_kind == "linear":
+        xs = [anchor["duration_s"] for anchor in combo]
+        ys = [anchor["distance_m"] for anchor in combo]
+        try:
+            slope, intercept = linear_regression(xs, ys)
+        except ValueError:
+            return None
+        if slope <= 0:
+            return None
+        predicted_seconds = (target_distance_m - intercept) / slope
+        if predicted_seconds <= 0:
+            return None
+        residual_sigma = _linear_residual_sigma(xs, ys, slope, intercept) / slope
+    else:
+        return None
+
+    if predicted_seconds <= 0:
+        return None
+
+    span = max(anchor["distance_m"] for anchor in combo) / min(anchor["distance_m"] for anchor in combo)
+    average_age = sum(anchor.get("age_days") if anchor.get("age_days") is not None else 9999 for anchor in combo) / len(
+        combo
+    )
+    size_penalty = 0.0 if len(combo) >= 3 else 0.01
+    return (residual_sigma, -span, average_age, size_penalty)
+
+
+def _best_anchor_subset(
+    anchors: list[dict[str, Any]],
+    target_distance_m: float,
+    fit_kind: str,
+    min_size: int = 2,
+    max_size: int = 3,
+) -> list[dict[str, Any]]:
+    ranked = _rank_anchor_candidates(_collapse_distance_buckets(anchors), target_distance_m)
+    if len(ranked) <= min_size:
+        return ranked[:max_size]
+
+    pool = ranked[: min(len(ranked), 10)]
+    best_combo: tuple[dict[str, Any], ...] | None = None
+    best_score: tuple[float, float, float, float] | None = None
+    for size in range(min(max_size, len(pool)), min_size - 1, -1):
+        for combo in combinations(pool, size):
+            score = _anchor_subset_score(combo, fit_kind, target_distance_m)
+            if score is None:
+                continue
+            if best_score is None or score < best_score:
+                best_score = score
+                best_combo = combo
+    if best_combo is not None:
+        return list(best_combo)
+    return pool[:max_size]
+
+
 def _calibration_points_for_target(
     anchors: list[dict[str, Any]],
     target_distance_m: float,
 ) -> list[dict[str, Any]]:
-    ordered = sorted(
-        anchors,
-        key=lambda anchor: (
-            abs(anchor["distance_m"] - target_distance_m),
-            anchor.get("age_days") if anchor.get("age_days") is not None else 9999,
-            _parse_date(anchor.get("date")) or date.min,
-        ),
-    )
-    usable = ordered[:3]
-    if not usable:
-        return []
-    if len(usable) == 1:
-        return usable
-    spread = max(anchor["distance_m"] for anchor in usable) / min(anchor["distance_m"] for anchor in usable)
-    if spread < 1.25 and len(anchors) > 1:
-        return sorted(
-            anchors,
-            key=lambda anchor: (
-                anchor.get("age_days") if anchor.get("age_days") is not None else 9999,
-                _parse_date(anchor.get("date")) or date.min,
-            ),
-        )[:3]
-    return usable
+    selected = _best_anchor_subset(anchors, target_distance_m, "log")
+    if selected:
+        return selected
+    return _rank_anchor_candidates(anchors, target_distance_m)[:3]
 
 
 def _critical_speed_points(
     anchors: list[dict[str, Any]],
     target_distance_m: float,
 ) -> list[dict[str, Any]]:
-    usable = [anchor for anchor in anchors if anchor["distance_m"] >= target_distance_m * 0.5]
+    usable = [
+        anchor for anchor in _collapse_distance_buckets(anchors) if anchor["distance_m"] >= target_distance_m * 0.5
+    ]
     if len(usable) < 2:
-        usable = anchors
-    ordered = sorted(
-        usable,
-        key=lambda anchor: (
-            abs(anchor["distance_m"] - target_distance_m),
-            anchor.get("age_days") if anchor.get("age_days") is not None else 9999,
-            _parse_date(anchor.get("date")) or date.min,
-        ),
-    )
-    return ordered[:3]
+        usable = _collapse_distance_buckets(anchors)
+    selected = _best_anchor_subset(usable, target_distance_m, "linear")
+    if selected:
+        return selected
+    return _rank_anchor_candidates(usable, target_distance_m)[:3]
 
 
 def _predictions_agree(

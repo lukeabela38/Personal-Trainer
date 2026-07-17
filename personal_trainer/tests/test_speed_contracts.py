@@ -26,7 +26,8 @@ class SpeedContractTests(unittest.TestCase):
                         "averageHeartRate": 162,
                     }
                 ],
-            }
+            },
+            speed_predictions_enabled=True,
         )
 
         prediction = report["predictions"][0]

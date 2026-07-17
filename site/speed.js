@@ -27,9 +27,16 @@ const PREDICTION_TARGETS = [
   { label: "Marathon", distanceMeters: 42195 },
 ];
 
-const ANALYTICS_TARGETS = new Set(["5K", "10K"]);
+const PREDICTION_MODEL_ORDER = [
+  "Critical Speed",
+  "Calibrated Riegel",
+  "Riegel extrapolation",
+];
+
+const ANALYTICS_TARGETS = new Set(["5K", "10K", "Half Marathon", "Marathon"]);
 const PREDICTION_MIN_DISTANCE_RATIO = 0.75;
 const PREDICTION_STALE_DAYS = 14;
+const DISTANCE_BUCKET_METERS = 500;
 const SCROLL_STORAGE_KEY = "personal-trainer:speed-scroll-y";
 const ANALYTICS_STORAGE_KEY = "personal-trainer:speed-show-analytics";
 const PREDICTION_INTERVAL_STORAGE_KEY =
@@ -72,6 +79,9 @@ async function loadSpeed() {
     currentSpeedPayload = {
       entries,
       recentRuns,
+      featureFlags: {
+        speedPredictions: Boolean(payload.feature_flags?.speed_predictions),
+      },
       analytics: {
         currentVo2max: toNumber(payload.current_vo2max),
         vo2maxTrend: toText(payload.vo2max_trend),
@@ -90,7 +100,7 @@ async function loadSpeed() {
       payload.snapshot_date ?? "unknown date"
     }`;
     sourceLabel.classList.remove("skeleton");
-    renderLastSynced(payload.snapshot_date, payload.source);
+    renderLastSynced(payload.snapshot_date);
     selectedRunDateRange = resolveInitialRunDateRange(
       recentRuns,
       payload.snapshot_date,
@@ -141,9 +151,13 @@ function renderSpeedView() {
     selectedRunDateRange,
   );
   const visibleRuns = filteredRuns;
-  const predictions =
-    currentSpeedPayload.predictions ??
-    buildPredictions(recentRuns, currentSpeedPayload.snapshotDate);
+  const predictionsEnabled = Boolean(
+    currentSpeedPayload.featureFlags?.speedPredictions,
+  );
+  const predictions = predictionsEnabled
+    ? currentSpeedPayload.predictions ??
+      buildPredictions(recentRuns, currentSpeedPayload.snapshotDate)
+    : [];
   const analyticsPredictions = filterAnalyticsPredictions(predictions);
   const predictionSummary =
     currentSpeedPayload.prediction_summary ??
@@ -155,13 +169,7 @@ function renderSpeedView() {
 
   statusBanner.textContent =
     currentSpeedPayload.pageState?.kind === "fresh"
-      ? `${entries.length} bests · ${formatRecentRunWindowLabel(
-          visibleRuns.length,
-          recentRuns.length,
-          selectedRunDateRange,
-        )} · ${
-          predictionSummary.useful_run_count ?? 0
-        } useful runs${buildCompletenessSuffix(analytics, recentRuns)}`
+      ? `${entries.length} bests · ${visibleRuns.length} runs`
       : `${entries.length} bests · ${formatRecentRunWindowLabel(
           visibleRuns.length,
           recentRuns.length,
@@ -169,11 +177,25 @@ function renderSpeedView() {
         )} · ${currentSpeedPayload.pageState?.label ?? "Ready"}`;
   statusBanner.classList.remove("skeleton");
 
-  renderSummary(entries, recentRuns, analytics, predictionSummary);
-  renderAnalyticsNotice(analytics, recentRuns, predictionSummary);
+  renderSummary(
+    entries,
+    recentRuns,
+    analytics,
+    predictionSummary,
+    predictionsEnabled,
+  );
+  renderAnalyticsNotice(
+    analytics,
+    recentRuns,
+    predictionsEnabled ? predictionSummary : null,
+  );
   renderReadiness(analytics.readiness);
   renderRecentRuns(visibleRuns, recentRuns.length, selectedRunDateRange);
-  renderPredictions(analyticsPredictions, predictionSummary);
+  renderPredictions(
+    analyticsPredictions,
+    predictionSummary,
+    predictionsEnabled,
+  );
   renderTable(entries);
 }
 
@@ -464,18 +486,25 @@ function isMobileViewport() {
   return Boolean(window?.matchMedia?.("(max-width: 768px)")?.matches);
 }
 
-function renderLastSynced(snapshotDate, source) {
+function renderLastSynced(snapshotDate) {
   if (!lastSyncedEl) return;
-  const sourceLabelText = source ? String(source) : "Garmin";
   lastSyncedEl.textContent = snapshotDate
-    ? `Last synced: ${snapshotDate} · ${sourceLabelText}`
-    : `Last synced: unavailable · ${sourceLabelText}`;
+    ? `Synced ${snapshotDate}`
+    : "Synced unavailable";
   lastSyncedEl.classList.remove("skeleton");
 }
 
-function renderSummary(entries, recentRuns, analytics, predictionSummary) {
+function renderSummary(
+  entries,
+  recentRuns,
+  analytics,
+  predictionSummary,
+  predictionsEnabled = true,
+) {
   if (!summaryEl) return;
-  const coverageTile = renderPredictionCoverage(predictionSummary);
+  const coverageTile = predictionsEnabled
+    ? renderPredictionCoverage(predictionSummary)
+    : "";
   const tiles = [
     {
       label: "VO2 max",
@@ -531,13 +560,13 @@ function renderPredictionCoverage(predictionSummary) {
   const latestUsefulRun = predictionSummary?.latest_useful_run ?? null;
   return `
     <div class="summary-tile summary-tile-coverage">
-      <span class="summary-tile-label">Prediction coverage</span>
+      <span class="summary-tile-label">Prediction set</span>
       <span class="summary-tile-value">${escapeHtml(
-        `${predictionSummary?.useful_run_count ?? 0} runs`,
+        `${predictionSummary?.useful_run_count ?? 0} useful runs`,
       )}</span>
       <span class="summary-tile-subvalue">${escapeHtml(
         latestUsefulRun?.date && latestUsefulRun?.distance
-          ? `Last useful run ${latestUsefulRun.distance} on ${latestUsefulRun.date}`
+          ? `Latest anchor ${latestUsefulRun.distance} · ${latestUsefulRun.date}`
           : predictionSummary?.warning ||
               "Runs that can anchor prediction targets",
       )}</span>
@@ -599,6 +628,9 @@ export function buildAnalyticsNotice(analytics, recentRuns, predictionSummary) {
       return predictionSummary.warning;
     }
     return null;
+  }
+  if (missing.length === 1 && missing[0] === "training load") {
+    return "Garmin did not return training load for this snapshot. The other live analytics are shown where available.";
   }
   return `Some Garmin metrics are missing from this snapshot: ${formatMissingList(
     missing,
@@ -861,8 +893,7 @@ export function buildPredictionDetail(prediction) {
         prediction?.ci_90 ?? prediction?.ci_95,
       ),
       renderPredictionModelItem(prediction),
-      renderPredictionSourceRunItem(prediction?.source_run),
-      renderPredictionCalibrationItem(prediction?.calibration_points),
+      renderPredictionModelBreakdownItem(prediction),
       renderPredictionTrainingPacesItem(prediction?.training_paces_summary),
       renderPredictionTrendItem(prediction?.trend),
       renderPredictionHowToImproveItem(prediction?.how_to_improve),
@@ -1043,25 +1074,66 @@ function renderPredictionModelItem(prediction) {
   return renderDetailItem("Model", formatPredictionModelSummary(prediction));
 }
 
-function renderPredictionSourceRunItem(sourceRun) {
-  return renderDetailItem(
-    "Source run",
-    formatPredictionSourceRunSummary(sourceRun),
+function renderPredictionModelBreakdownItem(prediction) {
+  const models = Array.isArray(prediction?.supporting_models)
+    ? prediction.supporting_models
+    : [];
+  const modelRows = PREDICTION_MODEL_ORDER.map((modelName) =>
+    renderPredictionModelBreakdownRow(
+      modelName,
+      models.find((model) => model?.model === modelName) ?? null,
+      prediction?.model ?? null,
+    ),
   );
-}
-
-function renderPredictionCalibrationItem(calibrationPoints) {
-  return renderDetailItem(
-    "Calibration",
-    formatPredictionCalibrationSummary(calibrationPoints),
-  );
+  return `
+    <div class="speed-run-detail-item speed-run-detail-item--stacked">
+      <span class="speed-run-detail-label">Model breakdown</span>
+      <div class="speed-prediction-model-breakdown">
+        ${modelRows.join("")}
+      </div>
+    </div>
+  `;
 }
 
 function renderPredictionTrainingPacesItem(trainingPacesSummary) {
-  return renderDetailItem(
-    "Training paces",
-    formatPredictionTrainingPacesSummary(trainingPacesSummary),
-  );
+  const trainingPaces =
+    typeof trainingPacesSummary === "object" && trainingPacesSummary
+      ? trainingPacesSummary
+      : null;
+  const bands = Array.isArray(trainingPaces?.bands) ? trainingPaces.bands : [];
+  if (!trainingPaces || !bands.length) {
+    return renderDetailItem(
+      "Training paces",
+      formatPredictionTrainingPacesSummary(trainingPacesSummary),
+    );
+  }
+
+  const metaParts = [];
+  if (trainingPaces.vdot != null) {
+    metaParts.push(`VDOT ${Number(trainingPaces.vdot).toFixed(1)}`);
+  }
+  const sourceRunName = trainingPaces?.source_run?.name
+    ? String(trainingPaces.source_run.name)
+    : "";
+  if (sourceRunName) metaParts.push(`Source run ${sourceRunName}`);
+
+  return `
+    <div class="speed-run-detail-item speed-run-detail-item--stacked">
+      <span class="speed-run-detail-label">Training paces</span>
+      <div class="speed-prediction-training-paces">
+        ${
+          metaParts.length
+            ? `<p class="speed-prediction-training-paces-meta">${escapeHtml(
+                metaParts.join(" · "),
+              )}</p>`
+            : ""
+        }
+        <div class="speed-prediction-training-paces-list">
+          ${bands.map((band) => renderPredictionTrainingPaceRow(band)).join("")}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderPredictionHowToImproveItem(howToImprove) {
@@ -1100,32 +1172,88 @@ function formatPredictionModelSummary(prediction) {
   return parts.length ? parts.join(" · ") : "—";
 }
 
-function formatPredictionSourceRunSummary(sourceRun) {
-  if (!sourceRun) return "—";
-  const parts = [];
-  if (sourceRun.name) parts.push(String(sourceRun.name));
-  if (sourceRun.date) parts.push(String(sourceRun.date));
-  if (sourceRun.duration) parts.push(String(sourceRun.duration));
-  if (sourceRun.pace) parts.push(String(sourceRun.pace));
-  if (sourceRun.avg_heart_rate_bpm != null) {
-    parts.push(formatHeartRate(sourceRun.avg_heart_rate_bpm));
-  }
-  return parts.length ? parts.join(" · ") : "—";
+function renderPredictionModelBreakdownRow(
+  modelName,
+  model,
+  selectedModelName,
+) {
+  const isSelected = Boolean(
+    selectedModelName && modelName === selectedModelName,
+  );
+  const confidence = model?.confidence
+    ? formatPredictionConfidenceLabel(model.confidence)
+    : "";
+  const predictedTime = model?.predicted_time
+    ? String(model.predicted_time)
+    : "—";
+  const ci68 = model?.ci_68 ?? "—";
+  const ci95 = model?.ci_95 ?? "—";
+  const metaParts = [
+    model
+      ? isSelected
+        ? "Selected model"
+        : "Comparison model"
+      : "No valid fit",
+  ];
+  if (confidence) metaParts.push(confidence);
+  return `
+    <div class="speed-prediction-model-row ${isSelected ? "is-selected" : ""}">
+      <div class="speed-prediction-model-copy">
+        <span class="speed-prediction-model-name">${escapeHtml(
+          modelName,
+        )}</span>
+        <span class="speed-prediction-model-meta">${escapeHtml(
+          metaParts.join(" · "),
+        )}</span>
+      </div>
+      <div class="speed-prediction-model-stats">
+        <span class="speed-prediction-model-stat">${escapeHtml(
+          `Predicted ${predictedTime}`,
+        )}</span>
+        <span class="speed-prediction-model-stat">${escapeHtml(
+          `68% ${ci68} · 95% ${ci95}`,
+        )}</span>
+      </div>
+    </div>
+  `;
 }
 
-function formatPredictionCalibrationSummary(calibrationPoints) {
-  if (!Array.isArray(calibrationPoints) || calibrationPoints.length === 0) {
-    return "—";
-  }
-  const names = calibrationPoints
-    .map((point) => point?.name)
-    .filter((value) => typeof value === "string" && value.trim().length > 0)
-    .slice(0, 3);
-  const countLabel =
-    calibrationPoints.length === 1
-      ? "1 anchor"
-      : `${calibrationPoints.length} anchors`;
-  return names.length ? `${countLabel} · ${names.join(", ")}` : countLabel;
+function renderPredictionTrainingPaceRow(band) {
+  const bandName = band?.name ? String(band.name) : "Pace";
+  const paceLabel = band?.label ? String(band.label) : "—";
+  const minFraction =
+    typeof band?.min_fraction === "number"
+      ? Math.round(band.min_fraction * 100)
+      : null;
+  const maxFraction =
+    typeof band?.max_fraction === "number"
+      ? Math.round(band.max_fraction * 100)
+      : null;
+  const fractionLabel =
+    minFraction != null && maxFraction != null
+      ? `${minFraction}%–${maxFraction}%`
+      : minFraction != null
+      ? `${minFraction}%`
+      : "";
+  return `
+    <div class="speed-prediction-training-paces-row">
+      <div class="speed-prediction-training-paces-copy">
+        <span class="speed-prediction-training-paces-name">${escapeHtml(
+          bandName,
+        )}</span>
+        ${
+          fractionLabel
+            ? `<span class="speed-prediction-training-paces-meta">${escapeHtml(
+                fractionLabel,
+              )}</span>`
+            : ""
+        }
+      </div>
+      <span class="speed-prediction-training-paces-value">${escapeHtml(
+        paceLabel,
+      )}</span>
+    </div>
+  `;
 }
 
 function formatPredictionTrainingPacesSummary(trainingPacesSummary) {
@@ -1192,8 +1320,25 @@ function parseIsoDate(dateText) {
   return date;
 }
 
-function renderPredictions(predictions, predictionSummary) {
+function renderPredictions(
+  predictions,
+  predictionSummary,
+  predictionsEnabled = true,
+) {
   if (!predictionsContainer) return;
+  if (!predictionsEnabled) {
+    predictionsContainer.innerHTML = `
+      <div class="speed-empty">
+        <div class="speed-empty-copy">Speed predictions are currently disabled.</div>
+        <div class="speed-empty-copy">The rest of the speed page remains active.</div>
+      </div>
+    `;
+    if (predictionNote) {
+      predictionNote.textContent = "";
+      predictionNote.setAttribute("hidden", "");
+    }
+    return;
+  }
   if (!predictions.length) {
     predictionsContainer.innerHTML = `<div class="speed-empty">No predicted times yet.</div>`;
     if (predictionNote) {
@@ -1296,47 +1441,18 @@ function renderTable(entries) {
 export function buildPredictions(recentRuns, snapshotDate = null) {
   const runs = normalizeRuns(recentRuns, snapshotDate);
   const predictions = [];
+  const trainingPacesSource = selectVdotSourceRun(runs);
+  const trainingPaces = buildTrainingPaces(trainingPacesSource);
   for (const target of PREDICTION_TARGETS) {
-    const sourceRun = selectSourceRun(runs, target.distanceMeters);
-    if (!sourceRun) continue;
-    const predictedSeconds = riegelPrediction(
-      sourceRun.duration_s,
-      sourceRun.distance_m,
+    const candidates = buildPredictionCandidates(runs, target.distanceMeters);
+    const selectedCandidate = selectPredictionCandidate(
+      target.label,
       target.distanceMeters,
+      candidates,
     );
-    const confidence = predictionConfidenceFromAge(sourceRun.age_days);
-    predictions.push({
-      distance_label: target.label,
-      target_distance_m: target.distanceMeters,
-      predicted_time_s: predictedSeconds,
-      predicted_time: formatDuration(predictedSeconds),
-      prediction: formatDuration(predictedSeconds),
-      ci_60: predictionRangeLabel(predictedSeconds, confidence, 0.04),
-      ci_90: predictionRangeLabel(predictedSeconds, confidence, 0.08),
-      ci_68: predictionRangeLabel(predictedSeconds, confidence, 0.05),
-      ci_95: predictionRangeLabel(predictedSeconds, confidence, 0.1),
-      model: "Riegel extrapolation",
-      calibration_points: [buildCalibrationPoint(sourceRun)],
-      predicted_pace: formatPace(
-        predictedSeconds / (target.distanceMeters / 1000),
-      ),
-      source_run: {
-        name: sourceRun.name,
-        date: sourceRun.date,
-        distance: sourceRun.distance,
-        duration: sourceRun.duration,
-        avg_heart_rate_bpm: sourceRun.avg_heart_rate_bpm,
-        age_days: sourceRun.age_days,
-        confidence,
-      },
-      confidence,
-      trend: predictionTrendFromAge(sourceRun.age_days),
-      how_to_improve: predictionHowToImprove(sourceRun),
-      stale: Boolean(
-        sourceRun.age_days != null &&
-          sourceRun.age_days > PREDICTION_STALE_DAYS,
-      ),
-    });
+    if (!selectedCandidate) continue;
+    const selected = applyAgreementRules(selectedCandidate, candidates);
+    predictions.push(buildPredictionRecord(selected, target, trainingPaces));
   }
   return predictions;
 }
@@ -1558,11 +1674,656 @@ function selectSourceRun(runs, targetDistanceMeters) {
     (run) =>
       run.distance_m >= targetDistanceMeters * PREDICTION_MIN_DISTANCE_RATIO,
   );
-  if (eligible.length) return eligible[0];
+  if (eligible.length)
+    return rankAnchorCandidates(eligible, targetDistanceMeters)[0];
   return runs.reduce((best, run) => {
     if (!best) return run;
     return run.distance_m > best.distance_m ? run : best;
   }, null);
+}
+
+function selectVdotSourceRun(runs) {
+  return selectSourceRun(runs, 10000);
+}
+
+function rankAnchorCandidates(runs, targetDistanceMeters) {
+  return [...runs].sort((a, b) => {
+    const distanceDeltaA =
+      Math.abs(a.distance_m - targetDistanceMeters) / targetDistanceMeters;
+    const distanceDeltaB =
+      Math.abs(b.distance_m - targetDistanceMeters) / targetDistanceMeters;
+    if (distanceDeltaA !== distanceDeltaB)
+      return distanceDeltaA - distanceDeltaB;
+    const paceA = a.pace_s_per_km ?? Number.POSITIVE_INFINITY;
+    const paceB = b.pace_s_per_km ?? Number.POSITIVE_INFINITY;
+    if (paceA !== paceB) return paceA - paceB;
+    const durationA = a.duration_s ?? Number.POSITIVE_INFINITY;
+    const durationB = b.duration_s ?? Number.POSITIVE_INFINITY;
+    if (durationA !== durationB) return durationA - durationB;
+    const ageA = a.age_days ?? 9999;
+    const ageB = b.age_days ?? 9999;
+    if (ageA !== ageB) return ageA - ageB;
+    return b.distance_m - a.distance_m;
+  });
+}
+
+function anchorFitRankKey(anchor) {
+  return [
+    anchor.pace_s_per_km ?? Number.POSITIVE_INFINITY,
+    anchor.duration_s ?? Number.POSITIVE_INFINITY,
+    anchor.age_days ?? 9999,
+    parseDate(anchor.date) ?? new Date("9999-12-31T00:00:00Z"),
+    -anchor.distance_m,
+  ];
+}
+
+function distanceBucket(distanceMeters) {
+  return Math.round(distanceMeters / DISTANCE_BUCKET_METERS);
+}
+
+function collapseDistanceBuckets(runs) {
+  const bestByBucket = new Map();
+  const sorted = [...runs].sort((a, b) =>
+    compareKeys(anchorFitRankKey(a), anchorFitRankKey(b)),
+  );
+  for (const run of sorted) {
+    const bucket = distanceBucket(run.distance_m);
+    if (!bestByBucket.has(bucket)) {
+      bestByBucket.set(bucket, run);
+    }
+  }
+  return [...bestByBucket.values()];
+}
+
+function compareKeys(left, right) {
+  for (let index = 0; index < left.length; index += 1) {
+    const a = left[index];
+    const b = right[index];
+    if (a < b) return -1;
+    if (a > b) return 1;
+  }
+  return 0;
+}
+
+function anchorSubsetScore(combo, fitKind, targetDistanceMeters) {
+  if (combo.length < 2) return null;
+  let slope;
+  let intercept;
+  let predictedSeconds;
+  let residualSigma;
+  if (fitKind === "log") {
+    const xs = combo.map((anchor) => Math.log(anchor.distance_m));
+    const ys = combo.map((anchor) => Math.log(anchor.duration_s));
+    try {
+      [slope, intercept] = linearRegression(xs, ys);
+    } catch {
+      return null;
+    }
+    predictedSeconds = Math.exp(
+      intercept + slope * Math.log(targetDistanceMeters),
+    );
+    residualSigma = logResidualSigma(xs, ys, slope, intercept);
+  } else if (fitKind === "linear") {
+    const xs = combo.map((anchor) => anchor.duration_s);
+    const ys = combo.map((anchor) => anchor.distance_m);
+    try {
+      [slope, intercept] = linearRegression(xs, ys);
+    } catch {
+      return null;
+    }
+    if (slope <= 0) return null;
+    predictedSeconds = (targetDistanceMeters - intercept) / slope;
+    if (predictedSeconds <= 0) return null;
+    residualSigma = linearResidualSigma(xs, ys, slope, intercept) / slope;
+  } else {
+    return null;
+  }
+  if (predictedSeconds <= 0) return null;
+  const distances = combo.map((anchor) => anchor.distance_m);
+  const span = Math.max(...distances) / Math.min(...distances);
+  const averageAge =
+    combo.reduce((sum, anchor) => sum + (anchor.age_days ?? 9999), 0) /
+    combo.length;
+  const sizePenalty = combo.length >= 3 ? 0.0 : 0.01;
+  return [residualSigma, -span, averageAge, sizePenalty];
+}
+
+function bestAnchorSubset(
+  runs,
+  targetDistanceMeters,
+  fitKind,
+  minSize = 2,
+  maxSize = 3,
+) {
+  const ranked = rankAnchorCandidates(
+    collapseDistanceBuckets(runs),
+    targetDistanceMeters,
+  );
+  if (ranked.length <= minSize) return ranked.slice(0, maxSize);
+  const pool = ranked.slice(0, Math.min(ranked.length, 10));
+  let bestCombo = null;
+  let bestScore = null;
+
+  const choose = (start, combo, size) => {
+    if (combo.length === size) {
+      const score = anchorSubsetScore(combo, fitKind, targetDistanceMeters);
+      if (!score) return;
+      if (
+        !bestScore ||
+        score[0] < bestScore[0] ||
+        (score[0] === bestScore[0] &&
+          (score[1] < bestScore[1] ||
+            (score[1] === bestScore[1] &&
+              (score[2] < bestScore[2] ||
+                (score[2] === bestScore[2] && score[3] < bestScore[3])))))
+      ) {
+        bestScore = score;
+        bestCombo = combo.slice();
+      }
+      return;
+    }
+    for (let index = start; index < pool.length; index += 1) {
+      combo.push(pool[index]);
+      choose(index + 1, combo, size);
+      combo.pop();
+    }
+  };
+
+  for (let size = Math.min(maxSize, pool.length); size >= minSize; size -= 1) {
+    choose(0, [], size);
+  }
+
+  if (bestCombo) return bestCombo;
+  return pool.slice(0, maxSize);
+}
+
+function buildPredictionCandidates(runs, targetDistanceMeters) {
+  const candidates = [];
+  const riegelCandidate = buildRiegelCandidate(runs, targetDistanceMeters);
+  if (riegelCandidate) candidates.push(riegelCandidate);
+  const calibratedCandidate = buildCalibratedRiegelCandidate(
+    runs,
+    targetDistanceMeters,
+  );
+  if (calibratedCandidate) candidates.push(calibratedCandidate);
+  const criticalSpeedCandidate = buildCriticalSpeedCandidate(
+    runs,
+    targetDistanceMeters,
+  );
+  if (criticalSpeedCandidate) candidates.push(criticalSpeedCandidate);
+  return candidates;
+}
+
+function buildRiegelCandidate(runs, targetDistanceMeters) {
+  const source = selectSourceRun(runs, targetDistanceMeters);
+  if (!source) return null;
+  const predictedSeconds = riegelPrediction(
+    source.duration_s,
+    source.distance_m,
+    targetDistanceMeters,
+  );
+  const sigmaSeconds = baselineSigma(
+    predictedSeconds,
+    source.age_days,
+    targetDistanceMeters / source.distance_m,
+  );
+  const confidence = confidenceFromSigmaAndAge(
+    predictedSeconds,
+    sigmaSeconds,
+    source.age_days,
+  );
+  return {
+    model: "Riegel extrapolation",
+    predicted_seconds: predictedSeconds,
+    sigma_seconds: sigmaSeconds,
+    confidence,
+    calibration_points: [buildCalibrationPoint(source)],
+    source_run: buildPredictionSourceRun(source, confidence),
+    trend: predictionTrendFromAge(source.age_days),
+    how_to_improve: predictionHowToImprove(source),
+    stale: Boolean(
+      source.age_days != null && source.age_days > PREDICTION_STALE_DAYS,
+    ),
+    flags: [],
+    supporting_models: [],
+  };
+}
+
+function buildCalibratedRiegelCandidate(runs, targetDistanceMeters) {
+  const usable = calibrationPointsForTarget(runs, targetDistanceMeters);
+  if (usable.length < 2) return null;
+  const xs = usable.map((anchor) => Math.log(anchor.distance_m));
+  const ys = usable.map((anchor) => Math.log(anchor.duration_s));
+  let slope;
+  let intercept;
+  try {
+    [slope, intercept] = linearRegression(xs, ys);
+  } catch {
+    return null;
+  }
+  const predictedSeconds = Math.exp(
+    intercept + slope * Math.log(targetDistanceMeters),
+  );
+  const residualSigma = logResidualSigma(xs, ys, slope, intercept);
+  const sigmaSeconds = Math.max(
+    predictedSeconds * 0.03,
+    predictedSeconds * residualSigma,
+  );
+  const source = usable[0];
+  const confidence = confidenceFromFit(usable, sigmaSeconds, predictedSeconds);
+  return {
+    model: "Calibrated Riegel",
+    predicted_seconds: predictedSeconds,
+    sigma_seconds: sigmaSeconds,
+    confidence,
+    calibration_points: usable.map((anchor) => buildCalibrationPoint(anchor)),
+    source_run: buildPredictionSourceRun(source, confidence),
+    trend: predictionTrendFromAge(source.age_days),
+    how_to_improve: predictionHowToImprove(source),
+    stale: Boolean(
+      source.age_days != null && source.age_days > PREDICTION_STALE_DAYS,
+    ),
+    flags: [],
+    supporting_models: [],
+    fit: { slope, intercept },
+  };
+}
+
+function buildCriticalSpeedCandidate(runs, targetDistanceMeters) {
+  const usable = criticalSpeedPoints(runs, targetDistanceMeters);
+  if (usable.length < 2) return null;
+  const xs = usable.map((anchor) => anchor.duration_s);
+  const ys = usable.map((anchor) => anchor.distance_m);
+  let slope;
+  let intercept;
+  try {
+    [slope, intercept] = linearRegression(xs, ys);
+  } catch {
+    return null;
+  }
+  if (slope <= 0) return null;
+  const predictedSeconds = (targetDistanceMeters - intercept) / slope;
+  if (predictedSeconds <= 0) return null;
+  const sigmaSeconds = Math.max(
+    linearResidualSigma(xs, ys, slope, intercept) / slope,
+    predictedSeconds * 0.025,
+  );
+  const source = usable[0];
+  const confidence = confidenceFromFit(usable, sigmaSeconds, predictedSeconds);
+  return {
+    model: "Critical Speed",
+    predicted_seconds: predictedSeconds,
+    sigma_seconds: sigmaSeconds,
+    confidence,
+    calibration_points: usable.map((anchor) => buildCalibrationPoint(anchor)),
+    source_run: buildPredictionSourceRun(source, confidence),
+    trend: predictionTrendFromAge(source.age_days),
+    how_to_improve: predictionHowToImprove(source),
+    stale: Boolean(
+      source.age_days != null && source.age_days > PREDICTION_STALE_DAYS,
+    ),
+    flags: [],
+    supporting_models: [],
+    fit: {
+      cs_m_per_s: slope,
+      d_prime_m: intercept,
+    },
+  };
+}
+
+function selectPredictionCandidate(label, targetDistanceMeters, candidates) {
+  if (!candidates.length) return null;
+  const priority = predictionPriorityForTarget(label, targetDistanceMeters);
+  const byModel = new Map(
+    candidates.map((candidate) => [candidate.model, candidate]),
+  );
+  for (const modelName of priority) {
+    const candidate = byModel.get(modelName);
+    if (candidate) return candidate;
+  }
+  return candidates[0] ?? null;
+}
+
+function applyAgreementRules(selected, candidates) {
+  const updated = { ...selected };
+  updated.supporting_models = candidates.map((candidate) => ({
+    model: candidate.model,
+    predicted_time: formatDuration(candidate.predicted_seconds),
+    ci_68: predictionIntervalLabelForSigma(
+      candidate.predicted_seconds,
+      candidate.sigma_seconds,
+      candidate.confidence,
+      1.0,
+    ),
+    ci_95: predictionIntervalLabelForSigma(
+      candidate.predicted_seconds,
+      candidate.sigma_seconds,
+      candidate.confidence,
+      1.96,
+    ),
+    confidence: candidate.confidence,
+  }));
+  if (candidates.length < 2) return updated;
+  const agreeing = candidates.filter(
+    (candidate) =>
+      candidate !== selected &&
+      predictionsAgree(
+        selected.predicted_seconds,
+        selected.sigma_seconds,
+        candidate,
+      ),
+  );
+  let confidence = updated.confidence;
+  if (agreeing.length > 0) {
+    confidence = upgradeConfidence(confidence);
+  }
+  if (agreeing.length === 0 && candidates.length >= 2) {
+    const spread = Math.max(
+      ...candidates
+        .filter((candidate) => candidate !== selected)
+        .map((candidate) =>
+          Math.abs(selected.predicted_seconds - candidate.predicted_seconds),
+        ),
+    );
+    if (spread > selected.sigma_seconds * 2) {
+      confidence = downgradeConfidence(confidence);
+      const flags = Array.isArray(updated.flags) ? [...updated.flags] : [];
+      if (!flags.includes("model_disagreement")) {
+        flags.push("model_disagreement");
+      }
+      updated.flags = flags;
+    }
+  }
+  updated.confidence = confidence;
+  return updated;
+}
+
+function buildPredictionRecord(candidate, target, trainingPaces) {
+  const predictedSeconds = candidate.predicted_seconds;
+  const confidence = candidate.confidence;
+  const record = {
+    distance_label: target.label,
+    target_distance_m: target.distanceMeters,
+    predicted_time_s: predictedSeconds,
+    predicted_time: formatDuration(predictedSeconds),
+    prediction: formatDuration(predictedSeconds),
+    ci_60: predictionIntervalLabelForSigma(
+      predictedSeconds,
+      candidate.sigma_seconds,
+      confidence,
+      0.84,
+    ),
+    ci_90: predictionIntervalLabelForSigma(
+      predictedSeconds,
+      candidate.sigma_seconds,
+      confidence,
+      1.645,
+    ),
+    ci_68: predictionIntervalLabelForSigma(
+      predictedSeconds,
+      candidate.sigma_seconds,
+      confidence,
+      1.0,
+    ),
+    ci_95: predictionIntervalLabelForSigma(
+      predictedSeconds,
+      candidate.sigma_seconds,
+      confidence,
+      1.96,
+    ),
+    model: candidate.model,
+    calibration_points: candidate.calibration_points,
+    predicted_pace: formatPace(
+      predictedSeconds / (target.distanceMeters / 1000),
+    ),
+    source_run: candidate.source_run,
+    confidence,
+    trend: candidate.trend,
+    how_to_improve: candidate.how_to_improve,
+    stale: candidate.stale,
+    generated_on: new Date().toISOString().slice(0, 10),
+    supporting_models: candidate.supporting_models ?? [],
+    flags: candidate.flags ?? [],
+  };
+  if (trainingPaces) {
+    record.training_paces = trainingPaces;
+    record.training_paces_summary = trainingPacesSummary(trainingPaces);
+  }
+  return record;
+}
+
+function buildPredictionSourceRun(sourceRun, confidence) {
+  return {
+    name: sourceRun.name,
+    date: sourceRun.date,
+    distance: sourceRun.distance,
+    duration: sourceRun.duration,
+    avg_heart_rate_bpm: sourceRun.avg_heart_rate_bpm,
+    age_days: sourceRun.age_days,
+    confidence,
+  };
+}
+
+function predictionPriorityForTarget(label, targetDistanceMeters) {
+  if (targetDistanceMeters >= 42195) {
+    return ["Calibrated Riegel", "Critical Speed", "Riegel extrapolation"];
+  }
+  if (targetDistanceMeters >= 5000) {
+    return ["Critical Speed", "Calibrated Riegel", "Riegel extrapolation"];
+  }
+  if (targetDistanceMeters >= 1000) {
+    return ["Critical Speed", "Calibrated Riegel", "Riegel extrapolation"];
+  }
+  return ["Calibrated Riegel", "Critical Speed", "Riegel extrapolation"];
+}
+
+function calibrationPointsForTarget(runs, targetDistanceMeters) {
+  if (!runs.length) return [];
+  const selected = bestAnchorSubset(runs, targetDistanceMeters, "log");
+  if (selected.length) return selected;
+  return rankAnchorCandidates(
+    collapseDistanceBuckets(runs),
+    targetDistanceMeters,
+  ).slice(0, 3);
+}
+
+function criticalSpeedPoints(runs, targetDistanceMeters) {
+  const collapsed = collapseDistanceBuckets(runs);
+  const usable = collapsed.filter(
+    (run) => run.distance_m >= targetDistanceMeters * 0.5,
+  );
+  const selected = bestAnchorSubset(
+    usable.length >= 2 ? usable : collapsed,
+    targetDistanceMeters,
+    "linear",
+  );
+  if (selected.length) return selected;
+  return rankAnchorCandidates(
+    usable.length >= 2 ? usable : collapsed,
+    targetDistanceMeters,
+  ).slice(0, 3);
+}
+
+function trainingPacesSummary(trainingPaces) {
+  const bands = Array.isArray(trainingPaces?.bands) ? trainingPaces.bands : [];
+  if (!bands.length) return "No pace bands available";
+  return bands.map((band) => `${band.name} ${band.label}`).join(" · ");
+}
+
+function buildTrainingPaces(sourceRun) {
+  if (!sourceRun) return null;
+  const vdot = vdotFromRacePerformance(
+    sourceRun.distance_m,
+    sourceRun.duration_s,
+  );
+  if (vdot == null) return null;
+  const bands = [];
+  const paceBands = [
+    { name: "Easy", low: 0.6, high: 0.75 },
+    { name: "Marathon", low: 0.8, high: 0.87 },
+    { name: "Threshold", low: 0.88, high: 0.92 },
+    { name: "Interval", low: 0.95, high: 1.0 },
+    { name: "Repetition", low: 1.03, high: 1.08 },
+  ];
+  for (const band of paceBands) {
+    const fast = paceSecondsPerKmFromFraction(vdot, band.high);
+    const slow = paceSecondsPerKmFromFraction(vdot, band.low);
+    if (fast == null || slow == null) continue;
+    bands.push({
+      name: band.name,
+      min_fraction: band.low,
+      max_fraction: band.high,
+      min_seconds_per_km: slow,
+      max_seconds_per_km: fast,
+      label: `${formatDuration(fast)}-${formatDuration(slow)} /km`,
+    });
+  }
+  return {
+    vdot: Number(vdot.toFixed(1)),
+    source_run: buildPredictionSourceRun(
+      sourceRun,
+      sourceRun.age_days != null && sourceRun.age_days <= 7 ? "high" : "medium",
+    ),
+    bands,
+  };
+}
+
+function vdotFromRacePerformance(distanceM, durationS) {
+  if (!(distanceM > 0) || !(durationS > 0)) return null;
+  const velocityMPerMin = (distanceM / durationS) * 60;
+  const oxygenCost =
+    -4.6 + 0.182258 * velocityMPerMin + 0.000104 * velocityMPerMin ** 2;
+  const minutes = durationS / 60;
+  const fraction =
+    0.8 +
+    0.1894393 * Math.exp(-0.012778 * minutes) +
+    0.2989558 * Math.exp(-0.1932605 * minutes);
+  if (!(fraction > 0)) return null;
+  return oxygenCost / fraction;
+}
+
+function paceSecondsPerKmFromFraction(vdot, fraction) {
+  const desiredOxygen = vdot * fraction;
+  const a = 0.000104;
+  const b = 0.182258;
+  const c = -4.6 - desiredOxygen;
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < 0) return null;
+  const velocityMPerMin = (-b + Math.sqrt(discriminant)) / (2 * a);
+  if (!(velocityMPerMin > 0)) return null;
+  return 60000 / velocityMPerMin;
+}
+
+function linearRegression(xs, ys) {
+  if (
+    !Array.isArray(xs) ||
+    !Array.isArray(ys) ||
+    xs.length !== ys.length ||
+    xs.length < 2
+  ) {
+    throw new Error("linear regression requires at least two points");
+  }
+  const xMean = xs.reduce((sum, value) => sum + value, 0) / xs.length;
+  const yMean = ys.reduce((sum, value) => sum + value, 0) / ys.length;
+  const numerator = xs.reduce(
+    (sum, x, index) => sum + (x - xMean) * (ys[index] - yMean),
+    0,
+  );
+  const denominator = xs.reduce((sum, x) => sum + (x - xMean) ** 2, 0);
+  if (denominator === 0) {
+    throw new Error("linear regression requires distinct x values");
+  }
+  return [numerator / denominator, yMean - (numerator / denominator) * xMean];
+}
+
+function predictionsAgree(selectedSeconds, selectedSigma, candidate) {
+  const delta = Math.abs(selectedSeconds - candidate.predicted_seconds);
+  const sigma = Math.sqrt(selectedSigma ** 2 + candidate.sigma_seconds ** 2);
+  return delta <= sigma * 2;
+}
+
+function upgradeConfidence(confidence) {
+  const order = ["low", "medium", "high"];
+  const index = order.indexOf(confidence);
+  if (index < 0) return confidence;
+  return order[Math.min(index + 1, order.length - 1)];
+}
+
+function downgradeConfidence(confidence) {
+  const order = ["low", "medium", "high"];
+  const index = order.indexOf(confidence);
+  if (index < 0) return confidence;
+  return order[Math.max(index - 1, 0)];
+}
+
+function confidenceFromFit(anchors, sigmaSeconds, predictedSeconds) {
+  let relativeSigma = sigmaSeconds / predictedSeconds;
+  const ageDays = Math.max(...anchors.map((anchor) => anchor.age_days ?? 0));
+  if (ageDays > PREDICTION_STALE_DAYS) {
+    relativeSigma *= 1.2;
+  }
+  if (anchors.length >= 3 && relativeSigma <= 0.04) return "high";
+  if (relativeSigma <= 0.08) return "medium";
+  return "low";
+}
+
+function confidenceFromSigmaAndAge(predictedSeconds, sigmaSeconds, ageDays) {
+  let relativeSigma = sigmaSeconds / predictedSeconds;
+  if (ageDays != null && ageDays > PREDICTION_STALE_DAYS) {
+    relativeSigma *= 1.2;
+  }
+  if (relativeSigma <= 0.035) return "high";
+  if (relativeSigma <= 0.075) return "medium";
+  return "low";
+}
+
+function baselineSigma(predictedSeconds, ageDays, extrapolationRatio) {
+  let dayFactor = 0.04;
+  if (ageDays == null) {
+    dayFactor = 0.04;
+  } else if (ageDays <= 7) {
+    dayFactor = 0.015;
+  } else if (ageDays <= PREDICTION_STALE_DAYS) {
+    dayFactor = 0.025;
+  }
+  const extrapolationFactor =
+    0.01 * Math.max(0, Math.log(Math.max(extrapolationRatio, 1)));
+  return (
+    predictedSeconds * Math.sqrt(dayFactor ** 2 + extrapolationFactor ** 2)
+  );
+}
+
+function logResidualSigma(xs, ys, slope, intercept) {
+  if (xs.length < 3) return 0.035;
+  const residuals = xs.map((x, index) => ys[index] - (intercept + slope * x));
+  const variance =
+    residuals.reduce((sum, residual) => sum + residual ** 2, 0) /
+    Math.max(residuals.length - 2, 1);
+  return Math.sqrt(variance);
+}
+
+function linearResidualSigma(xs, ys, slope, intercept) {
+  if (xs.length < 3) return Math.max(...ys) * 0.03;
+  const residuals = xs.map((x, index) => ys[index] - (intercept + slope * x));
+  const variance =
+    residuals.reduce((sum, residual) => sum + residual ** 2, 0) /
+    Math.max(residuals.length - 2, 1);
+  return Math.sqrt(variance);
+}
+
+function predictionIntervalLabelForSigma(
+  predictedSeconds,
+  sigmaSeconds,
+  confidence,
+  multiplier,
+) {
+  let scale = sigmaSeconds * multiplier;
+  if (confidence === "medium") {
+    scale *= 1.1;
+  } else if (confidence === "low") {
+    scale *= 1.25;
+  }
+  return `±${formatDuration(scale)}`;
 }
 
 function riegelPrediction(
@@ -1571,13 +2332,6 @@ function riegelPrediction(
   targetDistanceMeters,
 ) {
   return sourceSeconds * (targetDistanceMeters / sourceDistanceMeters) ** 1.06;
-}
-
-function predictionConfidenceFromAge(ageDays) {
-  if (ageDays == null) return "low";
-  if (ageDays <= 7) return "high";
-  if (ageDays <= PREDICTION_STALE_DAYS) return "medium";
-  return "low";
 }
 
 function predictionTrendFromAge(ageDays) {
@@ -1601,16 +2355,6 @@ function predictionHowToImprove(sourceRun) {
     return "Add a newer anchor run to refresh the prediction.";
   }
   return "Add a newer race-distance effort and a second calibration point.";
-}
-
-function predictionRangeLabel(predictedSeconds, confidence, ratio) {
-  const scale =
-    confidence === "high"
-      ? ratio
-      : confidence === "medium"
-      ? ratio * 1.5
-      : ratio * 2;
-  return `±${formatDuration(predictedSeconds * scale)}`;
 }
 
 function buildCalibrationPoint(sourceRun) {

@@ -88,6 +88,40 @@ class SitePreviewTest(TestCase):
         build_call = run.call_args_list[1]
         self.assertNotIn("--sources-file", build_call.args[0])
 
+    def test_main_fast_mode_skips_build_before_serving(self) -> None:
+        site_output = site_preview.DEFAULT_SITE_OUTPUT
+
+        with patch.object(
+            site_preview.subprocess,
+            "run",
+            side_effect=lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0),
+        ) as run:
+            exit_code = site_preview.main(
+                [
+                    "--fast",
+                    "--site-output",
+                    str(site_output),
+                    "--snapshot-output",
+                    str(site_output / "data" / "snapshot.json"),
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(run.call_count, 1)
+        serve_call = run.call_args_list[0]
+        self.assertEqual(
+            serve_call.args[0],
+            [
+                site_preview.sys.executable,
+                "-m",
+                "http.server",
+                "4173",
+                "--bind",
+                "127.0.0.1",
+            ],
+        )
+        self.assertEqual(serve_call.kwargs["cwd"], site_output)
+
     def test_cloudflared_not_installed_returns_false(self) -> None:
         with patch.object(site_preview.subprocess, "run", side_effect=FileNotFoundError):
             self.assertFalse(site_preview._cloudflared_installed())

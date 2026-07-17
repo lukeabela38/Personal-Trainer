@@ -7,6 +7,7 @@ services:
     environment:
       CRONOMETER_SESSION_FILE: /app/.cronometer_session/session.json
       GARMINTOKENS: /app/.garminconnect
+      PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED: ${PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED:-0}
     volumes:
       - ./personal_trainer:/app/personal_trainer:ro
       - ./scripts:/app/scripts:ro

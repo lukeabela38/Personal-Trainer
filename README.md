@@ -47,6 +47,14 @@ Add `--live` if you want the preview to pull from your unlocked `.env` and run t
 ./scripts/serve_site.sh --live
 ```
 
+When you are only iterating on the browser UI and already have a fresh `dist/`, use the fast serve-only path instead of rebuilding live sources:
+
+```bash
+./scripts/reload_site.sh --fast
+```
+
+That skips the live source capture and serves the existing `dist/` tree after killing the old preview server.
+
 Build the static artifact set from one captured snapshot:
 
 ```bash

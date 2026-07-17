@@ -42,6 +42,7 @@ RUN_TARGETS = (
 
 PREDICTION_STALE_DAYS = 14
 PREDICTION_MIN_DISTANCE_RATIO = 0.75
+SPEED_PREDICTIONS_FLAG_ENV = "PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -76,15 +77,41 @@ def _load_source(path: Path | None) -> dict[str, Any]:
     return data
 
 
-def build_report(raw: dict[str, Any], *, page_state: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_report(
+    raw: dict[str, Any],
+    *,
+    page_state: dict[str, Any] | None = None,
+    speed_predictions_enabled: bool | None = None,
+) -> dict[str, Any]:
     recent_runs = _extract_recent_runs(raw)
     records = _extract_records(raw, recent_runs)
-    predictions = build_speed_predictions_from_module(recent_runs, raw.get("snapshot_date"))
-    prediction_summary = build_speed_prediction_summary_from_module(
-        predictions,
+    prediction_runs = _build_prediction_anchors(
         recent_runs,
+        records,
         raw.get("snapshot_date"),
     )
+    predictions_enabled = (
+        _speed_predictions_enabled() if speed_predictions_enabled is None else speed_predictions_enabled
+    )
+    if predictions_enabled:
+        predictions = build_speed_predictions_from_module(
+            prediction_runs,
+            raw.get("snapshot_date"),
+        )
+        prediction_summary = build_speed_prediction_summary_from_module(
+            predictions,
+            recent_runs,
+            raw.get("snapshot_date"),
+        )
+    else:
+        predictions = []
+        prediction_summary = {
+            "snapshot_date": raw.get("snapshot_date") or _today().isoformat(),
+            "latest_useful_run": None,
+            "stale": False,
+            "warning": "Speed predictions are currently disabled.",
+            "useful_run_count": 0,
+        }
     source = raw.get("source") or "Garmin personal records"
     snapshot_date = raw.get("snapshot_date") or _today().isoformat()
     vo2max_trend_history = _normalize_vo2max_trend_points(
@@ -105,6 +132,9 @@ def build_report(raw: dict[str, Any], *, page_state: dict[str, Any] | None = Non
         "recent_runs": recent_runs,
         "predictions": predictions,
         "prediction_summary": prediction_summary,
+        "feature_flags": {
+            "speed_predictions": predictions_enabled,
+        },
     }
 
 
@@ -159,6 +189,59 @@ def _extract_recent_runs(raw: dict[str, Any]) -> list[dict[str, Any]]:
         if run is not None:
             normalized.append(run)
     return normalized
+
+
+def _build_prediction_anchors(
+    recent_runs: list[dict[str, Any]],
+    records: list[dict[str, Any]],
+    snapshot_date: str | None,
+) -> list[dict[str, Any]]:
+    anchors = list(recent_runs)
+    for record in records:
+        anchor = _record_prediction_anchor(record, snapshot_date)
+        if anchor is not None:
+            anchors.append(anchor)
+    return anchors
+
+
+def _record_prediction_anchor(
+    record: dict[str, Any],
+    snapshot_date: str | None,
+) -> dict[str, Any] | None:
+    target_distance_m = _record_target_distance_m(record.get("name"))
+    if target_distance_m is None:
+        return None
+    raw_value = None
+    context = record.get("context") if isinstance(record.get("context"), dict) else {}
+    if isinstance(context, dict):
+        raw_value = context.get("raw_value")
+    duration_s = _coerce_float(raw_value)
+    if duration_s is None or duration_s <= 0:
+        return None
+    record_date = _parse_date(record.get("date")) or _parse_date(snapshot_date) or _today()
+    snapshot_day = _parse_date(snapshot_date) or _today()
+    age_days = (snapshot_day - record_date).days
+    source_name = str(record.get("name") or "Run record")
+    context_name = context.get("source_run_name")
+    return {
+        "activity_id": context.get("source_run_activity_id") or context.get("activity_id"),
+        "name": context_name or source_name,
+        "activity_type": context.get("source_run_activity_type") or "running",
+        "date": _format_display_date(record_date),
+        "distance_m": target_distance_m,
+        "distance": _format_distance_km(target_distance_m),
+        "duration_s": duration_s,
+        "duration": _format_duration(duration_s),
+        "pace_s_per_km": duration_s / (target_distance_m / 1000.0),
+        "pace": f"{_format_duration(duration_s / (target_distance_m / 1000.0))} /km",
+        "avg_heart_rate_bpm": _coerce_float(context.get("source_run_avg_heart_rate_bpm")),
+        "age_days": max(age_days, 0),
+    }
+
+
+def _speed_predictions_enabled() -> bool:
+    value = os.environ.get(SPEED_PREDICTIONS_FLAG_ENV, "")
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _normalize_run(entry: dict[str, Any], snapshot_date: date) -> dict[str, Any] | None:
@@ -413,11 +496,16 @@ def _match_recent_run(
 ) -> dict[str, Any] | None:
     entry_date = _record_date_text(entry)
     target_distance_m = _record_target_distance_m(_record_type_for_entry(entry))
+    target_duration_s = _coerce_float(entry.get("value"))
 
     if entry_date:
         same_day_runs = [run for run in recent_runs if _run_date_text(run) == entry_date]
         if same_day_runs:
-            return _best_recent_run_match(same_day_runs, target_distance_m)
+            return _best_recent_run_match(same_day_runs, target_distance_m, target_duration_s)
+
+    best_overall = _best_recent_run_match(recent_runs, target_distance_m, target_duration_s)
+    if best_overall is not None:
+        return best_overall
 
     activity_id = entry.get("activity_id") or entry.get("activityId") or entry.get("activityIdGarmin")
     if activity_id in (None, ""):
@@ -425,14 +513,23 @@ def _match_recent_run(
     return recent_run_index.get(f"activity:{activity_id}")
 
 
-def _best_recent_run_match(runs: list[dict[str, Any]], target_distance_m: float | None) -> dict[str, Any] | None:
+def _best_recent_run_match(
+    runs: list[dict[str, Any]],
+    target_distance_m: float | None,
+    target_duration_s: float | None,
+) -> dict[str, Any] | None:
     if not runs:
         return None
-    if target_distance_m is None:
+    if target_distance_m is None and target_duration_s is None:
         return runs[0]
     return min(
         runs,
-        key=lambda run: abs((_coerce_float(run.get("distance_m")) or 0.0) - target_distance_m),
+        key=lambda run: (
+            _relative_delta(_coerce_float(run.get("distance_m")), target_distance_m),
+            _relative_delta(_coerce_float(run.get("duration_s")), target_duration_s),
+            _coerce_float(run.get("age_days")) if run.get("age_days") is not None else 9999,
+            _coerce_float(run.get("duration_s")) if run.get("duration_s") is not None else float("inf"),
+        ),
     )
 
 
@@ -531,6 +628,12 @@ def _coerce_float(value: object) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _relative_delta(value: float | None, target: float | None) -> float:
+    if value is None or target is None or target <= 0:
+        return float("inf")
+    return abs(value - target) / target
 
 
 def _parse_date(value: object) -> date | None:
