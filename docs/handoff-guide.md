@@ -40,6 +40,10 @@ This repository builds a personal performance system for Luke.
 - `site/` contains the static browser viewer plus dedicated `/strength` and `/speed` pages.
 - `site/progress.html` provides the progress comparison view.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
+- `docker-compose.yml` includes a `tofu` service for containerized OpenTofu runs.
+- `terraform/` is the root-level OpenTofu scaffold for future Cloudflare resources.
+- `.github/workflows/terraform.yml` validates the Terraform/OpenTofu foundation and security scan.
+- `scripts/run_tofu.sh` is the supported host-side wrapper for the Dockerized Terraform/OpenTofu workflow.
 - `personal_trainer/examples/snapshot-ready.json` is the fallback snapshot input used when live secrets are unavailable.
 - `scripts/mcp_client.py` is the reusable async MCP stdio client for calling tools on Garmin, Hevy, and Cronometer MCP servers.
 - `scripts/wrappers/` contains per-source wrapper scripts that each call MCP tools and emit source payload JSON to stdout.

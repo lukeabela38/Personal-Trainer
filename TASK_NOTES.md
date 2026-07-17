@@ -30,6 +30,13 @@ This file is for temporary task-specific findings. It can be cleared between tas
 - Use `#201` as the reference point unless a newer infra foundation card replaces it.
 - This keeps production-ready work from starting before the infra path is acknowledged in the ticket itself.
 
+## 2026-07-17 IaC Foundation Worktree
+
+- Issue `#201` is being handled in the isolated worktree `/private/tmp/Personal-Trainer-worktrees/issue-201` on branch `feature/issue-201-iac-foundation`.
+- The first pass is a minimal root-level `terraform/` scaffold plus a CI workflow that runs OpenTofu format, validate, plan, and a security scan.
+- Dockerized OpenTofu is exposed through `terraform/Dockerfile`, the `tofu` compose service, and `scripts/run_tofu.sh`.
+- The scaffold is intentionally local-state-only for now; follow-up tickets can add real Cloudflare resources once the account design is confirmed.
+
 ## 2026-07-16 Python Test Wrapper
 
 - Added `scripts/run_python_tests.sh` as the repo-standard Docker-backed command for the full Python test suite.

@@ -41,6 +41,19 @@ services:
       - ./personal_trainer/examples:/app/personal_trainer/examples
     command: python3 scripts/generate_history.py
 
+  tofu:
+    build:
+      context: .
+      dockerfile: terraform/Dockerfile
+    image: personal-trainer-tofu:latest
+    container_name: personal-trainer-tofu
+    working_dir: /workspace/terraform
+    environment:
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+    volumes:
+      - ./:/workspace
+
   tunnel:
     image: cloudflare/cloudflared:latest
     container_name: personal-trainer-tunnel
