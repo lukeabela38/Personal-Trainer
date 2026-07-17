@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  tofu:
+  plan:
     runs-on: ubuntu-latest
 
     defaults:
@@ -42,13 +42,49 @@ jobs:
         run: tofu validate
 
       - name: Plan
-        run: tofu plan -input=false -lock=false -no-color
+        run: tofu plan -input=false -lock=false -no-color -out=tfplan
 
-      - name: Apply
-        run: tofu apply -auto-approve -input=false -lock=false -no-color
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform/tfplan
+          if-no-files-found: error
 
       - name: Security scan
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install checkov
           checkov -d .
+
+  apply:
+    needs:
+      - plan
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: terraform-apply
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.9.0
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform
+
+      - name: Init
+        run: tofu init -backend=false -input=false
+
+      - name: Apply
+        run: tofu apply -input=false -lock=false -no-color tfplan

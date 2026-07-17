@@ -34,11 +34,12 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 - Issue `#201` is being handled in the isolated worktree `/private/tmp/Personal-Trainer-worktrees/issue-201` on branch `feature/issue-201-iac-foundation`.
 - The first pass is a minimal root-level `terraform/` scaffold plus a CI workflow that runs OpenTofu format, validate, plan, and a security scan.
-- Dockerized OpenTofu is exposed through `terraform/Dockerfile`, the `tofu` compose service, and `scripts/run_tofu.sh`.
+- Dockerized OpenTofu is exposed through `terraform/Dockerfile` and `scripts/run_tofu.sh`; it no longer rides on the app's Docker Compose file.
 - The workflow now includes `tofu apply -auto-approve` so CI exercises the full lifecycle, while the local wrapper still supports `init`, `plan`, and `apply` from Docker.
 - The scaffold is intentionally local-state-only for now; follow-up tickets can add real Cloudflare resources once the account design is confirmed.
 - The remote-state sketch uses Cloudflare R2 through OpenTofu's `s3` backend, with `terraform/backend.r2.hcl.example` and `.env.example` carrying the non-secret configuration shape.
 - `tofu init` generated `terraform/.terraform.lock.hcl`; keep that lockfile committed so provider selection stays stable.
+- The Dockerized infra runner is separate from the app compose file; `scripts/run_tofu.sh` now builds and runs its own container, while the GitHub Actions `apply` job is gated by the `terraform-apply` environment.
 
 ## 2026-07-16 Python Test Wrapper
 

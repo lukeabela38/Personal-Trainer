@@ -8,7 +8,7 @@ from unittest import TestCase
 
 
 class RunTofuScriptTests(TestCase):
-    def test_script_invokes_docker_compose_tofu_service(self) -> None:
+    def test_script_builds_and_runs_dedicated_tofu_container(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         script_path = repo_root / "scripts" / "run_tofu.sh"
 
@@ -35,6 +35,13 @@ printf '%s\n' "$PWD | $*" >> "$DOCKER_LOG"
                     **os.environ,
                     "PATH": f"{bin_dir}:{os.environ['PATH']}",
                     "DOCKER_LOG": str(log_file),
+                    "CLOUDFLARE_ACCOUNT_ID": "test-account",
+                    "CLOUDFLARE_API_TOKEN": "test-token",
+                    "TF_STATE_BUCKET": "test-bucket",
+                    "TF_STATE_KEY": "terraform.tfstate",
+                    "TF_STATE_ENDPOINT": "https://example.r2.cloudflarestorage.com",
+                    "R2_ACCESS_KEY_ID": "r2-access",
+                    "R2_SECRET_ACCESS_KEY": "r2-secret",
                 },
                 capture_output=True,
                 text=True,
@@ -44,5 +51,15 @@ printf '%s\n' "$PWD | $*" >> "$DOCKER_LOG"
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertEqual(
                 log_file.read_text(encoding="utf-8").splitlines(),
-                [f"{repo_root} | compose run --rm tofu fmt -check -recursive"],
+                [
+                    f"{repo_root} | build -f terraform/Dockerfile -t personal-trainer-tofu:latest {repo_root}",
+                    (
+                        f"{repo_root} | run --rm --volume {repo_root}:/workspace --workdir /workspace/terraform "
+                        "--env CLOUDFLARE_ACCOUNT_ID=test-account --env CLOUDFLARE_API_TOKEN=test-token "
+                        "--env TF_STATE_BUCKET=test-bucket --env TF_STATE_KEY=terraform.tfstate "
+                        "--env TF_STATE_ENDPOINT=https://example.r2.cloudflarestorage.com "
+                        "--env AWS_ACCESS_KEY_ID=r2-access --env AWS_SECRET_ACCESS_KEY=r2-secret "
+                        "personal-trainer-tofu:latest fmt -check -recursive"
+                    ),
+                ],
             )

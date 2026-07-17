@@ -40,7 +40,8 @@ This repository builds a personal performance system for Luke.
 - `site/` contains the static browser viewer plus dedicated `/strength` and `/speed` pages.
 - `site/progress.html` provides the progress comparison view.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
-- `docker-compose.yml` includes a `tofu` service for containerized OpenTofu runs.
+- `docker-compose.yml` covers the app, site, and optional tunnel services.
+- Run `docker compose --profile tunnel up tunnel` when you want the Cloudflare Tunnel locally; it stays off by default.
 - `terraform/` is the root-level OpenTofu scaffold for future Cloudflare resources.
 - `.github/workflows/terraform.yml` validates the Terraform/OpenTofu foundation and security scan.
 - `scripts/run_tofu.sh` is the supported host-side wrapper for the Dockerized Terraform/OpenTofu workflow.
