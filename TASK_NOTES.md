@@ -18,6 +18,11 @@ This file is for temporary task-specific findings. It can be cleared between tas
 - Added worktree references to `REPO_MAP.md` and clarified in the handoff guide that the root checkout stays on `main`.
 - The worktree helper remains the operational source of truth; docs now point to it from both navigation and handoff context.
 
+## 2026-07-17 Terraform Remote State CI
+
+- GitHub Actions now passes `TF_STATE_KEY` into the Terraform wrapper so the R2 backend key is explicit in CI.
+- OpenTofu rejected `use_lockfile` in the generated R2 backend config, so the remote-state config now stays on the supported S3-compatible fields plus `use_path_style`.
+
 ## 2026-07-16 Worktree Conversion
 
 - The main checkout is now backed by a shared gitdir at `.bare`, with `.git` pointing to it.

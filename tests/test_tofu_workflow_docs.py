@@ -47,8 +47,8 @@ class TofuWorkflowDocsTests(TestCase):
         content = backend.read_text(encoding="utf-8")
         self.assertIn('bucket = "personal-trainer-terraform-state"', content)
         self.assertIn('endpoint = "https://<ACCOUNT_ID>.r2.cloudflarestorage.com"', content)
-        self.assertIn("use_lockfile                = true", content)
         self.assertIn("use_path_style              = true", content)
+        self.assertNotIn("use_lockfile", content)
 
     def test_security_workflow_scans_terraform_with_trivy(self) -> None:
         workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "security.yml"
