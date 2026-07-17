@@ -425,16 +425,22 @@ function renderScanPreview(product) {
   const hasNutrition = rows.length > 0;
 
   const rawPortion = foodPortion ? parseFloat(foodPortion.value) : NaN;
-  const portion = Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0;
+  const portion =
+    Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0;
   const scale = portion > 0 ? portion / 100 : 0;
-  const estRows = portion > 0
-    ? [
-        product.kcal_per_100g != null && `${Math.round(product.kcal_per_100g * scale)} kcal`,
-        product.protein_per_100g != null && `${(product.protein_per_100g * scale).toFixed(1)}g protein`,
-        product.carbs_per_100g != null && `${(product.carbs_per_100g * scale).toFixed(1)}g carbs`,
-        product.fat_per_100g != null && `${(product.fat_per_100g * scale).toFixed(1)}g fat`,
-      ].filter(Boolean)
-    : [];
+  const estRows =
+    portion > 0
+      ? [
+          product.kcal_per_100g != null &&
+            `${Math.round(product.kcal_per_100g * scale)} kcal`,
+          product.protein_per_100g != null &&
+            `${(product.protein_per_100g * scale).toFixed(1)}g protein`,
+          product.carbs_per_100g != null &&
+            `${(product.carbs_per_100g * scale).toFixed(1)}g carbs`,
+          product.fat_per_100g != null &&
+            `${(product.fat_per_100g * scale).toFixed(1)}g fat`,
+        ].filter(Boolean)
+      : [];
 
   el.innerHTML = `
     <div class="food-scan-header">
@@ -495,11 +501,7 @@ function renderFoodList(entries) {
           </div>
           <div class="food-entry-meta">
             <span>${escapeHtml(formatFoodTimeLabel(entry.time))}</span>
-            ${
-              entry.serving_g
-                ? `<span>${entry.serving_g}g</span>`
-                : ""
-            }
+            ${entry.serving_g ? `<span>${entry.serving_g}g</span>` : ""}
             ${
               entry.barcode
                 ? `<span>Barcode: ${escapeHtml(entry.barcode)}</span>`
