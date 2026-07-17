@@ -38,17 +38,18 @@ const foodDayPicker = document.getElementById("food-day-picker");
 const foodDayPrev = document.getElementById("food-day-prev");
 const foodDayNext = document.getElementById("food-day-next");
 
+const addButton = document.getElementById("add-food-entry");
+
 const state = {
   liveSnapshot: null,
   liveStatus: "Loading live snapshot",
   foodEntries: readFoodEntries(),
   foodTiming: readFoodTiming(),
   selectedDate: readSelectedDate(),
+  editingEntryId: null,
 };
 
-document
-  .getElementById("add-food-entry")
-  ?.addEventListener("click", addFoodEntry);
+addButton?.addEventListener("click", addFoodEntry);
 document
   .getElementById("reset-food-form")
   ?.addEventListener("click", resetFoodForm);
@@ -56,10 +57,16 @@ document
   .getElementById("scan-barcode")
   ?.addEventListener("click", handleScanBarcode);
 foodList?.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-action='delete-entry']");
-  if (btn) {
-    const id = btn.dataset.entryId;
+  const delBtn = e.target.closest("[data-action='delete-entry']");
+  if (delBtn) {
+    const id = delBtn.dataset.entryId;
     if (id) deleteFoodEntry(id);
+    return;
+  }
+  const editBtn = e.target.closest("[data-action='edit-entry']");
+  if (editBtn) {
+    const id = editBtn.dataset.entryId;
+    if (id) editFoodEntry(id);
   }
 });
 let lastScannedProduct = null;
@@ -432,6 +439,7 @@ function addFoodEntry() {
   const product = scanProductPer100g();
   const scale = portion > 0 && product ? portion / 100 : 0;
   const entry = normalizeFoodEntry({
+    id: state.editingEntryId,
     item,
     time: foodTime?.value || defaultFoodEntryTime(),
     barcode: foodBarcode?.value.trim() ?? "",
@@ -454,20 +462,44 @@ function addFoodEntry() {
         ? Math.round(product.fat_per_100g * scale * 10) / 10
         : 0,
   });
-  state.foodEntries = [...state.foodEntries, entry].slice(-50);
+  if (state.editingEntryId) {
+    const idx = state.foodEntries.findIndex((e) => e.id === state.editingEntryId);
+    if (idx !== -1) state.foodEntries[idx] = entry;
+  } else {
+    state.foodEntries = [...state.foodEntries, entry].slice(-50);
+  }
   persistFoodEntries(state.foodEntries);
-  resetFoodForm(false);
+  resetFoodForm(!!state.editingEntryId);
   renderFoodShell();
 }
 
 function deleteFoodEntry(id) {
   state.foodEntries = state.foodEntries.filter((e) => e.id !== id);
   persistFoodEntries(state.foodEntries);
+  if (state.editingEntryId === id) state.editingEntryId = null;
   renderFoodShell();
   renderLiveSnapshotShell();
 }
 
+function editFoodEntry(id) {
+  const entry = state.foodEntries.find((e) => e.id === id);
+  if (!entry) return;
+  state.editingEntryId = id;
+  if (foodItem) foodItem.value = entry.item;
+  if (foodPortion) foodPortion.value = entry.serving_g || "";
+  if (foodTime) foodTime.value = entry.time || defaultFoodEntryTime();
+  if (foodBarcode) foodBarcode.value = entry.barcode || "";
+  state.foodTiming = entry.timing || "flexible";
+  document.querySelectorAll("[data-food-timing]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.foodTiming === state.foodTiming);
+  });
+  if (addButton) addButton.textContent = "Update entry";
+  foodItem?.focus();
+}
+
 function resetFoodForm(clearTiming = true) {
+  state.editingEntryId = null;
+  if (addButton) addButton.textContent = "Add food entry";
   if (foodItem) foodItem.value = "";
   if (foodPortion) foodPortion.value = "";
   if (foodBarcode) foodBarcode.value = "";
@@ -615,14 +647,24 @@ function renderFoodList(entries) {
                 : ""
             }
           </div>
-          <button
-            class="button secondary food-entry-delete"
-            data-action="delete-entry"
-            data-entry-id="${escapeHtml(entry.id)}"
-            title="Delete entry"
-          >
-            &times;
-          </button>
+          <div class="food-entry-actions">
+            <button
+              class="button secondary food-entry-edit"
+              data-action="edit-entry"
+              data-entry-id="${escapeHtml(entry.id)}"
+              title="Edit entry"
+            >
+              &#9998;
+            </button>
+            <button
+              class="button secondary food-entry-delete"
+              data-action="delete-entry"
+              data-entry-id="${escapeHtml(entry.id)}"
+              title="Delete entry"
+            >
+              &times;
+            </button>
+          </div>
         </div>
       `,
     )

@@ -687,14 +687,21 @@ input[type="file"] {
   grid-row: 2;
 }
 
-.food-entry-delete {
+.food-entry-actions {
   grid-column: 2;
   grid-row: 1 / -1;
   align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.food-entry-edit,
+.food-entry-delete {
   width: 32px;
   height: 32px;
   padding: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
   border-radius: 50%;
   display: flex;
@@ -706,6 +713,13 @@ input[type="file"] {
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--muted);
   cursor: pointer;
+}
+
+.food-entry-edit:hover {
+  opacity: 1;
+  background: rgba(66, 153, 225, 0.15);
+  border-color: rgba(66, 153, 225, 0.4);
+  color: #63b3ed;
 }
 
 .food-entry-delete:hover {
