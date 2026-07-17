@@ -1,0 +1,5 @@
+name = "personal-trainer-weather"
+main = "src/index.ts"
+compatibility_date = "2025-03-10"
+
+workers_dev = true

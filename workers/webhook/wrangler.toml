@@ -1,0 +1,10 @@
+name = "personal-trainer-webhook"
+main = "src/index.ts"
+compatibility_date = "2025-03-10"
+
+# workers_dev = true gives a *.workers.dev subdomain.
+# To switch to a custom domain:
+#   1. Set workers_dev = false
+#   2. Add route(s) matching terraform/workers.tf cloudflare_worker_route
+#   3. Example: route = { pattern = "workers.example.com/webhook/*", zone_id = "<zone>" }
+workers_dev = true
