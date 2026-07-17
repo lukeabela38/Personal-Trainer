@@ -14,7 +14,9 @@ const foodLiveTargets = document.getElementById("food-live-targets");
 
 const foodGuidanceShell = document.getElementById("food-guidance-shell");
 const foodGuidanceDayType = document.getElementById("food-guidance-day-type");
-const foodGuidanceConfidence = document.getElementById("food-guidance-confidence");
+const foodGuidanceConfidence = document.getElementById(
+  "food-guidance-confidence",
+);
 const foodGuidanceHints = document.getElementById("food-guidance-hints");
 const foodGuidanceWarnings = document.getElementById("food-guidance-warnings");
 
@@ -221,7 +223,8 @@ function renderNutritionGuidance(snapshot) {
     beginner_estimate: "Beginner estimate",
   };
   if (foodGuidanceDayType) {
-    foodGuidanceDayType.textContent = dayTypeLabels[guidance.day_type] ?? guidance.day_type;
+    foodGuidanceDayType.textContent =
+      dayTypeLabels[guidance.day_type] ?? guidance.day_type;
   }
 
   if (foodGuidanceConfidence) {
@@ -232,10 +235,14 @@ function renderNutritionGuidance(snapshot) {
   if (foodGuidanceHints) {
     const hints = [];
     if (guidance.pre_training) {
-      hints.push(`<p class="guidance-hint"><strong>Before training:</strong> ${escapeHtml(guidance.pre_training)}</p>`);
+      hints.push(
+        `<p class="guidance-hint"><strong>Before training:</strong> ${escapeHtml(guidance.pre_training)}</p>`,
+      );
     }
     if (guidance.post_training) {
-      hints.push(`<p class="guidance-hint"><strong>After training:</strong> ${escapeHtml(guidance.post_training)}</p>`);
+      hints.push(
+        `<p class="guidance-hint"><strong>After training:</strong> ${escapeHtml(guidance.post_training)}</p>`,
+      );
     }
     foodGuidanceHints.innerHTML = hints.join("");
   }
@@ -259,7 +266,10 @@ function renderNutritionGuidance(snapshot) {
 function hideNutritionGuidance() {
   if (foodGuidanceShell) foodGuidanceShell.classList.add("hidden");
   if (foodGuidanceDayType) foodGuidanceDayType.textContent = "";
-  if (foodGuidanceConfidence) { foodGuidanceConfidence.textContent = ""; foodGuidanceConfidence.className = "guidance-confidence-dot"; }
+  if (foodGuidanceConfidence) {
+    foodGuidanceConfidence.textContent = "";
+    foodGuidanceConfidence.className = "guidance-confidence-dot";
+  }
   if (foodGuidanceHints) foodGuidanceHints.innerHTML = "";
   if (foodGuidanceWarnings) foodGuidanceWarnings.innerHTML = "";
 }
