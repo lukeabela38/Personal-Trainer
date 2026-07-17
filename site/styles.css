@@ -488,6 +488,13 @@ input[type="file"] {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.food-input-suffix {
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-width: 16px;
 }
 
 .food-input,
@@ -1521,6 +1528,26 @@ input[type="file"] {
 .food-scan-missing {
   margin: 0;
   font-size: 0.85rem;
+}
+
+.food-scan-est {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(80, 200, 120, 0.06);
+  border: 1px solid rgba(80, 200, 120, 0.15);
+  border-radius: 10px;
+}
+
+.food-scan-est-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.food-scan-stat-est {
+  background: rgba(80, 200, 120, 0.1);
 }
 
 .hidden {

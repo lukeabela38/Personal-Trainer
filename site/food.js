@@ -26,6 +26,7 @@ const foodStatus = document.getElementById("food-status");
 const foodDayCount = document.getElementById("food-day-count");
 const foodList = document.getElementById("food-list");
 const foodItem = document.getElementById("food-item");
+const foodPortion = document.getElementById("food-portion");
 const foodTime = document.getElementById("food-time");
 const foodBarcode = document.getElementById("food-barcode");
 
@@ -45,6 +46,10 @@ document
 document
   .getElementById("scan-barcode")
   ?.addEventListener("click", handleScanBarcode);
+let lastScannedProduct = null;
+foodPortion?.addEventListener("input", () => {
+  if (lastScannedProduct) renderScanPreview(lastScannedProduct);
+});
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-food-timing]");
@@ -277,11 +282,13 @@ function hideNutritionGuidance() {
 function addFoodEntry() {
   const item = foodItem?.value.trim() ?? "";
   if (!item) return;
+  const rawPortion = foodPortion ? parseFloat(foodPortion.value) : NaN;
   const entry = normalizeFoodEntry({
     item,
     time: foodTime?.value || defaultFoodEntryTime(),
     barcode: foodBarcode?.value.trim() ?? "",
     timing: state.foodTiming ?? "flexible",
+    serving_g: Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0,
   });
   state.foodEntries = [...state.foodEntries, entry].slice(-50);
   persistFoodEntries(state.foodEntries);
@@ -291,6 +298,7 @@ function addFoodEntry() {
 
 function resetFoodForm(clearTiming = true) {
   if (foodItem) foodItem.value = "";
+  if (foodPortion) foodPortion.value = "";
   if (foodBarcode) foodBarcode.value = "";
   if (foodTime) foodTime.value = defaultFoodEntryTime();
   if (clearTiming) {
@@ -316,6 +324,7 @@ async function handleScanBarcode() {
     } else if (!result.name && foodHelp) {
       foodHelp.textContent = `Barcode ${result.barcode} not found in database. Type the product name manually.`;
     }
+    lastScannedProduct = result;
     renderScanPreview(result);
     foodItem?.focus();
   } else {
@@ -346,6 +355,19 @@ function renderScanPreview(product) {
     .filter(Boolean)
     .join(" · ");
   const hasNutrition = rows.length > 0;
+
+  const rawPortion = foodPortion ? parseFloat(foodPortion.value) : NaN;
+  const portion = Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0;
+  const scale = portion > 0 ? portion / 100 : 0;
+  const estRows = portion > 0
+    ? [
+        product.kcal_per_100g != null && `${Math.round(product.kcal_per_100g * scale)} kcal`,
+        product.protein_per_100g != null && `${(product.protein_per_100g * scale).toFixed(1)}g protein`,
+        product.carbs_per_100g != null && `${(product.carbs_per_100g * scale).toFixed(1)}g carbs`,
+        product.fat_per_100g != null && `${(product.fat_per_100g * scale).toFixed(1)}g fat`,
+      ].filter(Boolean)
+    : [];
+
   el.innerHTML = `
     <div class="food-scan-header">
       <strong>${escapeHtml(product.name)}</strong>
@@ -355,6 +377,19 @@ function renderScanPreview(product) {
           : ""
       }
     </div>
+    ${
+      portion > 0 && estRows.length > 0
+        ? `<div class="food-scan-est">
+            <span class="food-scan-est-label">Per ${portion}g serving</span>
+            <div class="food-scan-grid">${estRows
+              .map(
+                (r) =>
+                  `<span class="food-scan-stat food-scan-stat-est">${escapeHtml(r)}</span>`,
+              )
+              .join("")}</div>
+          </div>`
+        : ""
+    }
     ${
       hasNutrition
         ? `<div class="food-scan-grid">${rows
@@ -392,6 +427,11 @@ function renderFoodList(entries) {
           </div>
           <div class="food-entry-meta">
             <span>${escapeHtml(formatFoodTimeLabel(entry.time))}</span>
+            ${
+              entry.serving_g
+                ? `<span>${entry.serving_g}g</span>`
+                : ""
+            }
             ${
               entry.barcode
                 ? `<span>Barcode: ${escapeHtml(entry.barcode)}</span>`
@@ -484,7 +524,11 @@ function normalizeFoodEntry(raw) {
     typeof raw?.date === "string"
       ? raw.date
       : time.slice(0, 10) || new Date().toISOString().slice(0, 10);
-  return { item, timing, time, barcode, date };
+  const serving_g =
+    typeof raw?.serving_g === "number" && raw.serving_g > 0
+      ? raw.serving_g
+      : 0;
+  return { item, timing, time, barcode, date, serving_g };
 }
 
 function formatMacroTarget(value, unit) {

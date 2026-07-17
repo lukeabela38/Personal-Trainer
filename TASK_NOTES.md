@@ -634,3 +634,12 @@ Garmin auth/session caching card from the project board.
 
 - Added `.hidden { display: none; }` at the end of `site/styles.css` so that both `#food-guidance-shell` and `#food-scan-preview` properly hide when JS adds the `hidden` class.
 - `.hidden` must be defined after `.food-guidance-shell` and `.food-scan-preview` to override their `display` (same specificity, source-order wins).
+
+## 2026-07-17 Portion-Size Field
+
+- Added a `Portion` number input (`#food-portion`) to the food entry form, between Item and When, with a "g" suffix label.
+- Entries now store `serving_g` (number, 0 when omitted) in localStorage.
+- Entry list shows `150g` etc. when a portion is set; hides the portion line when absent.
+- Scan preview dynamically computes estimated macros (kcal, protein, carbs, fat) from scanned per-100g data × entered portion, with a green-tinted "Per Xg serving" section that re-renders on portion input change.
+- Added CSS: `.food-input-suffix`, `.food-scan-est`, `.food-scan-est-label`, `.food-scan-stat-est`.
+- All portion entries persist in localStorage alongside existing entry data; no data migration needed for existing entries (default to `serving_g: 0`).
