@@ -27,6 +27,21 @@ class Macros(TypedDict):
     protein_g: int
     carbs_g: int
     fat_g: int
+    fiber_g: int
+
+
+NutritionDayType = Literal["normal", "fuel_heavy", "fuel_light", "repair", "beginner_estimate"]
+
+
+class NutritionGuidance(TypedDict):
+    day_type: NutritionDayType
+    targets: Macros
+    budget: Macros
+    pre_training: str
+    post_training: str
+    confidence: Confidence
+    warnings: list[str]
+    fallback_used: bool
 
 
 class CheckInQuestion(TypedDict):
