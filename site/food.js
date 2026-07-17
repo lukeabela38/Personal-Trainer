@@ -225,7 +225,7 @@ function renderNutritionGuidance(snapshot) {
   }
 
   if (foodGuidanceConfidence) {
-    foodGuidanceConfidence.className = `guidance-confidence-badge guidance-confidence-${guidance.confidence}`;
+    foodGuidanceConfidence.className = `guidance-confidence-dot guidance-${guidance.confidence}`;
     foodGuidanceConfidence.textContent = guidance.confidence;
   }
 
@@ -259,7 +259,7 @@ function renderNutritionGuidance(snapshot) {
 function hideNutritionGuidance() {
   if (foodGuidanceShell) foodGuidanceShell.classList.add("hidden");
   if (foodGuidanceDayType) foodGuidanceDayType.textContent = "";
-  if (foodGuidanceConfidence) { foodGuidanceConfidence.textContent = ""; foodGuidanceConfidence.className = "guidance-confidence-badge"; }
+  if (foodGuidanceConfidence) { foodGuidanceConfidence.textContent = ""; foodGuidanceConfidence.className = "guidance-confidence-dot"; }
   if (foodGuidanceHints) foodGuidanceHints.innerHTML = "";
   if (foodGuidanceWarnings) foodGuidanceWarnings.innerHTML = "";
 }

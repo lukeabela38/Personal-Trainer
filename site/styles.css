@@ -688,6 +688,12 @@ input[type="file"] {
   flex-wrap: wrap;
 }
 
+.guidance-header-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .guidance-badge {
   font-size: 0.78rem;
   font-weight: 650;
@@ -698,40 +704,34 @@ input[type="file"] {
   color: var(--amber);
 }
 
-.food-guidance-confidence {
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.guidance-confidence-badge {
-  display: inline-block;
+.guidance-confidence-dot {
   font-size: 0.72rem;
-  font-weight: 650;
-  padding: 3px 10px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
   color: var(--muted);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.guidance-confidence-high {
-  background: rgba(80, 200, 120, 0.15);
-  color: #50c878;
-  border-color: rgba(80, 200, 120, 0.3);
+.guidance-confidence-dot::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
 }
 
-.guidance-confidence-medium {
-  background: rgba(240, 179, 75, 0.15);
-  color: var(--amber);
-  border-color: rgba(240, 179, 75, 0.3);
+.guidance-confidence-dot.guidance-high::before {
+  background: #50c878;
 }
 
-.guidance-confidence-low {
-  background: rgba(225, 80, 60, 0.12);
-  color: #e1543c;
-  border-color: rgba(225, 80, 60, 0.25);
+.guidance-confidence-dot.guidance-medium::before {
+  background: var(--amber);
+}
+
+.guidance-confidence-dot.guidance-low::before {
+  background: #e1543c;
 }
 
 .food-guidance-hints {
