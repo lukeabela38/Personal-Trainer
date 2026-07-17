@@ -790,6 +790,26 @@ test("speed helpers build predictions from recent runs", () => {
   assert.equal(summary.stale, false);
   assert.equal(summary.latest_useful_run.distance, "10.00 km");
   assert.equal(summary.useful_run_count, 1);
+
+  const staleSummary = speed.buildPredictionSummary(
+    [],
+    [
+      {
+        name: "Older Tempo",
+        date: "2026-06-20",
+        distance_m: 10000,
+        distance: "10.00 km",
+        duration_s: 3600,
+        duration: "1:00:00",
+        pace_s_per_km: 360,
+        pace: "6:00 /km",
+        age_days: 20,
+      },
+    ],
+    "2026-07-10",
+  );
+  assert.equal(staleSummary.stale, true);
+  assert.match(staleSummary.warning, /older than 14 days/i);
 });
 
 test("speed helpers ignore clustered same-distance anchors when fitting predictions", () => {
