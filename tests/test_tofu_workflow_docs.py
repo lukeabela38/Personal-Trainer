@@ -14,3 +14,10 @@ class TofuWorkflowDocsTests(TestCase):
         readme = Path(__file__).resolve().parents[1] / "terraform" / "README.md"
         content = readme.read_text(encoding="utf-8")
         self.assertIn("../scripts/run_tofu.sh apply -auto-approve", content)
+
+    def test_r2_backend_example_contains_required_fields(self) -> None:
+        backend = Path(__file__).resolve().parents[1] / "terraform" / "backend.r2.hcl.example"
+        content = backend.read_text(encoding="utf-8")
+        self.assertIn('bucket = "personal-trainer-terraform-state"', content)
+        self.assertIn('endpoint = "https://<ACCOUNT_ID>.r2.cloudflarestorage.com"', content)
+        self.assertIn("use_lockfile                = true", content)

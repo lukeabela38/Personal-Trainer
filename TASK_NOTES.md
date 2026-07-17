@@ -37,6 +37,8 @@ This file is for temporary task-specific findings. It can be cleared between tas
 - Dockerized OpenTofu is exposed through `terraform/Dockerfile`, the `tofu` compose service, and `scripts/run_tofu.sh`.
 - The workflow now includes `tofu apply -auto-approve` so CI exercises the full lifecycle, while the local wrapper still supports `init`, `plan`, and `apply` from Docker.
 - The scaffold is intentionally local-state-only for now; follow-up tickets can add real Cloudflare resources once the account design is confirmed.
+- The remote-state sketch uses Cloudflare R2 through OpenTofu's `s3` backend, with `terraform/backend.r2.hcl.example` and `.env.example` carrying the non-secret configuration shape.
+- `tofu init` generated `terraform/.terraform.lock.hcl`; keep that lockfile committed so provider selection stays stable.
 
 ## 2026-07-16 Python Test Wrapper
 

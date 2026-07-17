@@ -12,6 +12,15 @@ Current scope:
 Authentication should come from environment variables, not committed secrets.
 
 - `CLOUDFLARE_API_TOKEN` for Cloudflare API auth
+- `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` for the R2-backed state bucket
+
+Remote state sketch:
+
+- Copy [backend.r2.hcl.example](./backend.r2.hcl.example) to an untracked `backend.r2.hcl`
+- Export the R2 credentials and endpoint in your shell or `.env`
+- Run `../scripts/run_tofu.sh init -backend-config=backend.r2.hcl -reconfigure`
+- Follow with `../scripts/run_tofu.sh plan`
+- Use `../scripts/run_tofu.sh apply -auto-approve` only after the backend exists and the state bucket is ready
 
 Useful commands from this directory:
 

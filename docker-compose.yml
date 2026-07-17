@@ -51,6 +51,12 @@ services:
     environment:
       CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+      TF_STATE_BUCKET: ${TF_STATE_BUCKET:-}
+      TF_STATE_KEY: ${TF_STATE_KEY:-terraform.tfstate}
+      TF_STATE_ENDPOINT: ${TF_STATE_ENDPOINT:-}
+      AWS_REGION: ${AWS_REGION:-auto}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
     volumes:
       - ./:/workspace
 
