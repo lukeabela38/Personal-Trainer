@@ -64,6 +64,15 @@ jobs:
           python3 -m ruff check src tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
           python3 -m ruff check ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
           exit "$status"
+
+  javascript:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
@@ -84,9 +93,6 @@ jobs:
           commit_user_name: github-actions[bot]
           commit_user_email: github-actions[bot]@users.noreply.github.com
           file_pattern: |
-            personal_trainer/src/
-            personal_trainer/tests/
-            scripts/
             site/
             tests/
 
