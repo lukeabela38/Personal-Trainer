@@ -58,7 +58,7 @@ printf '%s\n' "$PWD | $*" >> "$DOCKER_LOG"
                         "--env CLOUDFLARE_ACCOUNT_ID=test-account --env CLOUDFLARE_API_TOKEN=test-token "
                         "--env TF_STATE_BUCKET=test-bucket --env TF_STATE_KEY=terraform.tfstate "
                         "--env TF_STATE_ENDPOINT=https://example.r2.cloudflarestorage.com "
-                        "--env AWS_ACCESS_KEY_ID=r2-access --env AWS_SECRET_ACCESS_KEY=r2-secret "
+                        "--env R2_ACCESS_KEY_ID=r2-access --env R2_SECRET_ACCESS_KEY=r2-secret "
                         "personal-trainer-tofu:latest fmt -check -recursive"
                     ),
                 ],

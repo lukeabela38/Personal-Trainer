@@ -18,6 +18,6 @@ exec docker run \
   --env TF_STATE_BUCKET="${TF_STATE_BUCKET:-}" \
   --env TF_STATE_KEY="${TF_STATE_KEY:-terraform.tfstate}" \
   --env TF_STATE_ENDPOINT="${TF_STATE_ENDPOINT:-}" \
-  --env AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID:-${AWS_ACCESS_KEY_ID:-}}" \
-  --env AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY:-${AWS_SECRET_ACCESS_KEY:-}}" \
+  --env R2_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID:-}" \
+  --env R2_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY:-}" \
   "$TOFU_IMAGE" "$@"
