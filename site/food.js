@@ -25,6 +25,8 @@ const foodHelp = document.getElementById("food-help");
 const foodStatus = document.getElementById("food-status");
 const foodDayCount = document.getElementById("food-day-count");
 const foodList = document.getElementById("food-list");
+const foodManualShell = document.getElementById("food-manual-shell");
+const foodManualMacros = document.getElementById("food-manual-macros");
 const foodItem = document.getElementById("food-item");
 const foodPortion = document.getElementById("food-portion");
 const foodTime = document.getElementById("food-time");
@@ -103,6 +105,7 @@ function renderFoodShell() {
       todayEntries.length === 1 ? "y" : "ies"
     }`;
   if (foodList) foodList.innerHTML = renderFoodList(todayEntries);
+  renderManualMacros(todayEntries);
 
   if (foodTime && !foodTime.value) {
     foodTime.value = defaultFoodEntryTime();
@@ -279,16 +282,77 @@ function hideNutritionGuidance() {
   if (foodGuidanceWarnings) foodGuidanceWarnings.innerHTML = "";
 }
 
+function renderManualMacros(todayEntries) {
+  const hasMacro = todayEntries.some(
+    (e) => e.kcal > 0 || e.protein_g > 0 || e.carbs_g > 0 || e.fat_g > 0,
+  );
+  if (!hasMacro) {
+    if (foodManualShell) foodManualShell.classList.add("hidden");
+    return;
+  }
+  if (foodManualShell) foodManualShell.classList.remove("hidden");
+  const totals = todayEntries.reduce(
+    (acc, e) => ({
+      kcal: acc.kcal + (e.kcal || 0),
+      protein_g: acc.protein_g + (e.protein_g || 0),
+      carbs_g: acc.carbs_g + (e.carbs_g || 0),
+      fat_g: acc.fat_g + (e.fat_g || 0),
+    }),
+    { kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 },
+  );
+  if (foodManualMacros) {
+    foodManualMacros.innerHTML = [
+      manualStat("Calories", totals.kcal, "kcal"),
+      manualStat("Protein", totals.protein_g, "g"),
+      manualStat("Carbs", totals.carbs_g, "g"),
+      manualStat("Fat", totals.fat_g, "g"),
+    ].join("");
+  }
+}
+
+function manualStat(label, value, unit) {
+  const display = value > 0 ? `${Math.round(value)} ${unit}` : "-";
+  return `
+    <div class="food-live-stat">
+      <span class="food-live-stat-label">${escapeHtml(label)}</span>
+      <strong class="food-live-stat-target">${escapeHtml(display)}</strong>
+      <span class="food-live-stat-current">logged</span>
+    </div>
+  `;
+}
+
+function scanProductPer100g() {
+  const el = document.getElementById("food-scan-preview");
+  if (!el || el.classList.contains("hidden")) return null;
+  const k = parseFloat(el.dataset.kcalPer100g);
+  const p = parseFloat(el.dataset.proteinPer100g);
+  const c = parseFloat(el.dataset.carbsPer100g);
+  const f = parseFloat(el.dataset.fatPer100g);
+  if (isNaN(k) && isNaN(p) && isNaN(c) && isNaN(f)) return null;
+  return { kcal_per_100g: isNaN(k) ? null : k, protein_per_100g: isNaN(p) ? null : p, carbs_per_100g: isNaN(c) ? null : c, fat_per_100g: isNaN(f) ? null : f };
+}
+
 function addFoodEntry() {
   const item = foodItem?.value.trim() ?? "";
   if (!item) return;
   const rawPortion = foodPortion ? parseFloat(foodPortion.value) : NaN;
+  const portion = Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0;
+  const product = scanProductPer100g();
+  const scale = portion > 0 && product ? portion / 100 : 0;
   const entry = normalizeFoodEntry({
     item,
     time: foodTime?.value || defaultFoodEntryTime(),
     barcode: foodBarcode?.value.trim() ?? "",
     timing: state.foodTiming ?? "flexible",
-    serving_g: Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0,
+    serving_g: portion,
+    kcal: scale > 0 && product.kcal_per_100g != null
+      ? Math.round(product.kcal_per_100g * scale) : 0,
+    protein_g: scale > 0 && product.protein_per_100g != null
+      ? Math.round(product.protein_per_100g * scale * 10) / 10 : 0,
+    carbs_g: scale > 0 && product.carbs_per_100g != null
+      ? Math.round(product.carbs_per_100g * scale * 10) / 10 : 0,
+    fat_g: scale > 0 && product.fat_per_100g != null
+      ? Math.round(product.fat_per_100g * scale * 10) / 10 : 0,
   });
   state.foodEntries = [...state.foodEntries, entry].slice(-50);
   persistFoodEntries(state.foodEntries);
@@ -341,6 +405,10 @@ function renderScanPreview(product) {
     return;
   }
   el.classList.remove("hidden");
+  el.dataset.kcalPer100g = product.kcal_per_100g ?? "";
+  el.dataset.proteinPer100g = product.protein_per_100g ?? "";
+  el.dataset.carbsPer100g = product.carbs_per_100g ?? "";
+  el.dataset.fatPer100g = product.fat_per_100g ?? "";
   const rows = [
     product.kcal_per_100g != null && `${product.kcal_per_100g} kcal`,
     product.protein_per_100g != null && `${product.protein_per_100g}g protein`,
@@ -528,7 +596,17 @@ function normalizeFoodEntry(raw) {
     typeof raw?.serving_g === "number" && raw.serving_g > 0
       ? raw.serving_g
       : 0;
-  return { item, timing, time, barcode, date, serving_g };
+  const kcal =
+    typeof raw?.kcal === "number" && raw.kcal > 0 ? raw.kcal : 0;
+  const protein_g =
+    typeof raw?.protein_g === "number" && raw.protein_g > 0
+      ? raw.protein_g
+      : 0;
+  const carbs_g =
+    typeof raw?.carbs_g === "number" && raw.carbs_g > 0 ? raw.carbs_g : 0;
+  const fat_g =
+    typeof raw?.fat_g === "number" && raw.fat_g > 0 ? raw.fat_g : 0;
+  return { item, timing, time, barcode, date, serving_g, kcal, protein_g, carbs_g, fat_g };
 }
 
 function formatMacroTarget(value, unit) {

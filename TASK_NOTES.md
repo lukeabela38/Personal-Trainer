@@ -643,3 +643,12 @@ Garmin auth/session caching card from the project board.
 - Scan preview dynamically computes estimated macros (kcal, protein, carbs, fat) from scanned per-100g data × entered portion, with a green-tinted "Per Xg serving" section that re-renders on portion input change.
 - Added CSS: `.food-input-suffix`, `.food-scan-est`, `.food-scan-est-label`, `.food-scan-stat-est`.
 - All portion entries persist in localStorage alongside existing entry data; no data migration needed for existing entries (default to `serving_g: 0`).
+
+## 2026-07-17 Manual Macro Totals
+
+- When adding a food entry with a barcode that has per-100g nutrition data and a portion > 0, the entry now stores estimated `kcal`, `protein_g`, `carbs_g`, `fat_g`.
+- Scan product data is stored as data attributes on `#food-scan-preview` (not the `lastScannedProduct` variable), so `addFoodEntry()` reads from the DOM rather than requiring module-scoped state.
+- A new "Manual food log" card appears between the guidance panel and the Food section when entries have macro data, showing summed totals for Calories, Protein, Carbs, Fat.
+- Added `#food-manual-shell` with CSS matching the guidance panel style, reusing `.food-live-grid` and `.food-live-stat` classes.
+- Added `renderManualMacros()` called from `renderFoodShell()`.
+- No macro data is stored for manually typed entries without a barcode scan — they contribute zero. This is intentional: scanning + portion is the only path with reliable nutrition data.

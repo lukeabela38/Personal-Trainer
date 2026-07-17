@@ -678,6 +678,15 @@ input[type="file"] {
 }
 
 /* Nutrition guidance shell */
+.food-manual-shell {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .food-guidance-shell {
   display: grid;
   gap: 10px;
