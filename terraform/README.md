@@ -15,8 +15,8 @@ Authentication should come from environment variables, not committed secrets.
 - `CLOUDFLARE_API_TOKEN` for Cloudflare API auth
 - `CLOUDFLARE_ACCOUNT_ID` is forwarded by `scripts/run_tofu.sh` into Terraform as `TF_VAR_cloudflare_account_id`
 - `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` for the R2-backed state bucket
-- `TF_STATE_BUCKET` and `TF_STATE_ENDPOINT` tell the wrapper which R2 bucket to use for remote state
-- In GitHub Actions, set `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, and `TF_STATE_ENDPOINT` as repository variables, then set `CLOUDFLARE_API_TOKEN`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` as repository secrets.
+- `TF_STATE_BUCKET`, `TF_STATE_KEY`, and `TF_STATE_ENDPOINT` tell the wrapper which R2 bucket and object key to use for remote state
+- In GitHub Actions, set `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, `TF_STATE_KEY`, and `TF_STATE_ENDPOINT` as repository variables, then set `CLOUDFLARE_API_TOKEN`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` as repository secrets.
 
 Remote state sketch:
 

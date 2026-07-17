@@ -12,6 +12,7 @@ class TofuWorkflowDocsTests(TestCase):
         self.assertIn("CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}", content)
         self.assertIn("CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}", content)
         self.assertIn("TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}", content)
+        self.assertIn("TF_STATE_KEY: ${{ vars.TF_STATE_KEY }}", content)
         self.assertIn("TF_STATE_ENDPOINT: ${{ vars.TF_STATE_ENDPOINT }}", content)
         self.assertIn("R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}", content)
         self.assertIn("R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}", content)
@@ -68,7 +69,10 @@ class TofuWorkflowDocsTests(TestCase):
         readme = Path(__file__).resolve().parents[1] / "README.md"
         content = readme.read_text(encoding="utf-8")
         self.assertIn("OpenTofu formatting checks", content)
-        self.assertIn("repository variables: `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, `TF_STATE_ENDPOINT`", content)
+        self.assertIn(
+            "repository variables: `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, `TF_STATE_KEY`, `TF_STATE_ENDPOINT`",
+            content,
+        )
         self.assertIn("repository secrets: `CLOUDFLARE_API_TOKEN`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`", content)
 
     def test_terraform_readme_mentions_account_mapping(self) -> None:
@@ -79,3 +83,4 @@ class TofuWorkflowDocsTests(TestCase):
         self.assertIn("CLOUDFLARE_ACCOUNT_ID", content)
         self.assertIn("TF_VAR_cloudflare_account_id", content)
         self.assertIn("TF_STATE_BUCKET", content)
+        self.assertIn("TF_STATE_KEY", content)
