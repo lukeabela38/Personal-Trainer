@@ -12,6 +12,7 @@ _PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "personal_trainer" / "src"
 if str(_PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(_PACKAGE_ROOT))
 
+from personal_trainer import build_nutrition_guidance
 from personal_trainer.recommendation import build_daily_recommendation
 from personal_trainer.snapshot import _validate_snapshot
 
@@ -19,7 +20,9 @@ from scripts.speed_report import build_report as build_speed_report
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Build the static site artifacts from one captured snapshot.")
+    parser = argparse.ArgumentParser(
+        description="Build the static site artifacts from one captured snapshot."
+    )
     parser.add_argument(
         "--snapshot",
         type=Path,
@@ -55,11 +58,15 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(snapshot_payload, indent=2),
             encoding="utf-8",
         )
-        (output_dir / "raw.json").write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+        (output_dir / "raw.json").write_text(
+            json.dumps(snapshot, indent=2), encoding="utf-8"
+        )
         exercise_catalog = _load_exercise_catalog(args.site_dir)
         (output_dir / "strength.json").write_text(
             json.dumps(
-                _build_strength_view(snapshot, page_states["strength"], exercise_catalog),
+                _build_strength_view(
+                    snapshot, page_states["strength"], exercise_catalog
+                ),
                 indent=2,
             ),
             encoding="utf-8",
@@ -71,13 +78,23 @@ def main(argv: list[str] | None = None) -> int:
                         "source": "Garmin speed data",
                         "source_mode": snapshot.get("source") or "example",
                         "snapshot_date": snapshot.get("snapshot_date"),
-                        "current_vo2max": snapshot.get("garmin", {}).get("current_vo2max"),
+                        "current_vo2max": snapshot.get("garmin", {}).get(
+                            "current_vo2max"
+                        ),
                         "vo2max_trend": snapshot.get("garmin", {}).get("vo2max_trend"),
-                        "vo2max_trend_points": snapshot.get("garmin", {}).get("vo2max_trend_points", []),
-                        "training_load_trend": snapshot.get("garmin", {}).get("training_load_trend"),
+                        "vo2max_trend_points": snapshot.get("garmin", {}).get(
+                            "vo2max_trend_points", []
+                        ),
+                        "training_load_trend": snapshot.get("garmin", {}).get(
+                            "training_load_trend"
+                        ),
                         "readiness": snapshot.get("garmin", {}).get("readiness", {}),
-                        "recent_bests": snapshot.get("garmin", {}).get("recent_bests", []),
-                        "recent_runs": snapshot.get("garmin", {}).get("recent_runs", []),
+                        "recent_bests": snapshot.get("garmin", {}).get(
+                            "recent_bests", []
+                        ),
+                        "recent_runs": snapshot.get("garmin", {}).get(
+                            "recent_runs", []
+                        ),
                     },
                     page_state=page_states["speed"],
                 ),
@@ -97,11 +114,25 @@ def _with_recommendation(snapshot: dict[str, Any]) -> dict[str, Any]:
     recommendation = snapshot.get("recommendation")
     source = snapshot.get("source") or _infer_snapshot_source(snapshot)
     if isinstance(recommendation, dict):
+        if "nutrition_guidance" not in snapshot:
+            nutrition_guidance = build_nutrition_guidance(
+                snapshot, priority=recommendation["Priority"]
+            )
+            return {
+                **snapshot,
+                "source": source,
+                "nutrition_guidance": nutrition_guidance,
+            }
         return {**snapshot, "source": source}
+    recommendation = build_daily_recommendation(snapshot)
+    nutrition_guidance = build_nutrition_guidance(
+        snapshot, priority=recommendation["Priority"]
+    )
     return {
         **snapshot,
         "source": source,
-        "recommendation": build_daily_recommendation(snapshot),
+        "recommendation": recommendation,
+        "nutrition_guidance": nutrition_guidance,
     }
 
 
@@ -164,7 +195,8 @@ def _build_page_states(snapshot: dict[str, Any]) -> dict[str, dict[str, str]]:
     return {
         "food": _build_source_page_state(
             cronometer,
-            has_data=bool(cronometer.get("today")) or bool(cronometer.get("recent_days")),
+            has_data=bool(cronometer.get("today"))
+            or bool(cronometer.get("recent_days")),
             source_label="Cronometer",
             ready_label="Macro data ready",
             stale_label="Macro data partial",
@@ -172,7 +204,8 @@ def _build_page_states(snapshot: dict[str, Any]) -> dict[str, dict[str, str]]:
         ),
         "strength": _build_source_page_state(
             hevy,
-            has_data=bool(hevy.get("recent_bests")) or bool(hevy.get("recent_workouts")),
+            has_data=bool(hevy.get("recent_bests"))
+            or bool(hevy.get("recent_workouts")),
             source_label="Hevy",
             ready_label="Strength history ready",
             stale_label="Strength history partial",
@@ -180,7 +213,8 @@ def _build_page_states(snapshot: dict[str, Any]) -> dict[str, dict[str, str]]:
         ),
         "speed": _build_source_page_state(
             garmin,
-            has_data=bool(garmin.get("recent_bests")) or bool(garmin.get("recent_runs")),
+            has_data=bool(garmin.get("recent_bests"))
+            or bool(garmin.get("recent_runs")),
             source_label="Garmin",
             ready_label="Speed history ready",
             stale_label="Speed history partial",
@@ -222,7 +256,9 @@ def _load_exercise_catalog(site_dir: Path) -> dict[str, dict[str, str]]:
     catalog = _load_json(site_dir / "history" / "exercises" / "index.json")
     entries = catalog.get("exercises", [])
     if not isinstance(entries, list):
-        raise ValueError("site/history/exercises/index.json must contain an exercises array")
+        raise ValueError(
+            "site/history/exercises/index.json must contain an exercises array"
+        )
 
     by_id: dict[str, dict[str, str]] = {}
     for entry in entries:
@@ -242,7 +278,11 @@ def _build_strength_view(
     exercise_catalog: dict[str, dict[str, str]],
 ) -> dict[str, Any]:
     hevy = snapshot.get("hevy", {})
-    recent_workouts = [workout for workout in hevy.get("recent_workouts", []) if isinstance(workout, dict)]
+    recent_workouts = [
+        workout
+        for workout in hevy.get("recent_workouts", [])
+        if isinstance(workout, dict)
+    ]
     entries = []
     for b in hevy.get("recent_bests", []):
         if not isinstance(b, dict):

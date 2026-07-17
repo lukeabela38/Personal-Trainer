@@ -670,6 +670,70 @@ input[type="file"] {
   max-width: 72ch;
 }
 
+/* Nutrition guidance shell */
+.food-guidance-shell {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.food-guidance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.guidance-badge {
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(240, 179, 75, 0.14);
+  border: 1px solid rgba(240, 179, 75, 0.25);
+  color: var(--amber);
+}
+
+.food-guidance-confidence {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.food-guidance-hints {
+  display: grid;
+  gap: 8px;
+}
+
+.guidance-hint {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.guidance-hint strong {
+  color: var(--amber);
+}
+
+.food-guidance-warnings {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.guidance-warning-chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(225, 80, 60, 0.12);
+  border: 1px solid rgba(225, 80, 60, 0.25);
+  color: #e1543c;
+}
+
 /* Check-in shell */
 .checkin-shell {
   margin-bottom: 16px;

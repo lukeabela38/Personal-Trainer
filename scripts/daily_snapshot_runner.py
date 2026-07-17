@@ -27,7 +27,11 @@ from scripts.mcp_client import load_dotenv as _load_dotenv
 
 _load_dotenv()
 
-from personal_trainer import build_daily_recommendation, build_snapshot
+from personal_trainer import (
+    build_daily_recommendation,
+    build_nutrition_guidance,
+    build_snapshot,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +43,9 @@ def _configure_logging() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     _configure_logging()
-    parser = argparse.ArgumentParser(description="Pull live sources, build a snapshot, and emit site artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Pull live sources, build a snapshot, and emit site artifacts."
+    )
     parser.add_argument("--date", help="Snapshot date in YYYY-MM-DD format")
     parser.add_argument("--timezone", default="Europe/Malta", help="Snapshot timezone")
     parser.add_argument(
@@ -93,7 +99,9 @@ def main(argv: list[str] | None = None) -> int:
             deployment_log,
             f"sources_mode: {'file' if args.sources_file is not None else 'live'}",
         )
-        sources = _load_sources(args.sources_file, args.date, args.timezone, deployment_log)
+        sources = _load_sources(
+            args.sources_file, args.date, args.timezone, deployment_log
+        )
         _validate_live_sources(
             sources,
             require_live_garmin=args.require_live_garmin or args.require_garmin_vo2max,
@@ -102,24 +110,42 @@ def main(argv: list[str] | None = None) -> int:
             _write_json(args.sources_output, sources)
             _log_line(deployment_log, f"wrote_sources: {args.sources_output}")
         _log_line(deployment_log, "building_snapshot: start")
-        snapshot = build_snapshot(sources, snapshot_date=args.date, timezone=args.timezone)
+        snapshot = build_snapshot(
+            sources, snapshot_date=args.date, timezone=args.timezone
+        )
         _log_line(deployment_log, "building_snapshot: done")
         _log_line(deployment_log, "building_recommendation: start")
         recommendation = build_daily_recommendation(snapshot)
+        nutrition_guidance = build_nutrition_guidance(
+            snapshot, priority=recommendation["Priority"]
+        )
         _log_line(deployment_log, "building_recommendation: done")
-        source_kind = "example" if args.sources_file is not None else _infer_live_source_kind(sources)
+        source_kind = (
+            "example"
+            if args.sources_file is not None
+            else _infer_live_source_kind(sources)
+        )
         _write_json(
             args.snapshot_output,
-            {**snapshot, "source": source_kind, "recommendation": recommendation},
+            {
+                **snapshot,
+                "source": source_kind,
+                "recommendation": recommendation,
+                "nutrition_guidance": nutrition_guidance,
+            },
         )
         _log_line(deployment_log, f"wrote_snapshot: {args.snapshot_output}")
         _log_line(deployment_log, "building_site_artifacts: start")
         _build_site_artifacts(args.snapshot_output, args.site_output)
-        strength_page_state = _load_strength_page_state(args.site_output / "strength.json")
+        strength_page_state = _load_strength_page_state(
+            args.site_output / "strength.json"
+        )
         _log_line(deployment_log, "building_history_artifacts: start")
         _build_history_artifacts(args.site_output, source_kind, deployment_log)
         if strength_page_state is not None:
-            _restore_strength_page_state(args.site_output / "strength.json", strength_page_state)
+            _restore_strength_page_state(
+                args.site_output / "strength.json", strength_page_state
+            )
         _log_line(deployment_log, f"wrote_site_output: {args.site_output}")
         status = "succeeded"
         _write_deploy_log(args.deploy_log_output, deployment_log, status=status)
@@ -246,7 +272,11 @@ def _run_optional_history_report(
                 "--output",
                 str(output_path),
                 *(extra_args or []),
-                *(["--catalog-output", str(catalog_output_path)] if catalog_output_path is not None else []),
+                *(
+                    ["--catalog-output", str(catalog_output_path)]
+                    if catalog_output_path is not None
+                    else []
+                ),
             ],
             check=True,
             env=_with_pythonpath(),
@@ -272,7 +302,9 @@ def _load_strength_page_state(strength_path: Path) -> dict[str, Any] | None:
     return page_state
 
 
-def _restore_strength_page_state(strength_path: Path, page_state: dict[str, str]) -> None:
+def _restore_strength_page_state(
+    strength_path: Path, page_state: dict[str, str]
+) -> None:
     if not strength_path.exists():
         return
     strength = json.loads(strength_path.read_text(encoding="utf-8"))
@@ -314,14 +346,18 @@ def _infer_live_source_kind(sources: dict[str, Any]) -> str:
     return "unavailable"
 
 
-def _validate_live_sources(sources: dict[str, Any], *, require_live_garmin: bool) -> None:
+def _validate_live_sources(
+    sources: dict[str, Any], *, require_live_garmin: bool
+) -> None:
     if not require_live_garmin:
         return
 
     garmin = sources.get("garmin")
     if not _has_garmin_coverage(garmin):
         logger.error("live snapshot missing Garmin coverage")
-        raise ValueError("live Garmin capture missing useful data after capture; refusing to publish a Pages snapshot")
+        raise ValueError(
+            "live Garmin capture missing useful data after capture; refusing to publish a Pages snapshot"
+        )
 
 
 def _has_garmin_coverage(garmin: Any) -> bool:
@@ -331,8 +367,10 @@ def _has_garmin_coverage(garmin: Any) -> bool:
         (
             garmin.get("current_vo2max") is not None,
             isinstance(garmin.get("recent_runs"), list) and bool(garmin["recent_runs"]),
-            isinstance(garmin.get("recent_activities"), list) and bool(garmin["recent_activities"]),
-            isinstance(garmin.get("recent_bests"), list) and bool(garmin["recent_bests"]),
+            isinstance(garmin.get("recent_activities"), list)
+            and bool(garmin["recent_activities"]),
+            isinstance(garmin.get("recent_bests"), list)
+            and bool(garmin["recent_bests"]),
             bool(garmin.get("readiness")),
         )
     )
@@ -343,7 +381,8 @@ def _has_hevy_coverage(hevy: Any) -> bool:
         return False
     return any(
         (
-            isinstance(hevy.get("recent_workouts"), list) and bool(hevy["recent_workouts"]),
+            isinstance(hevy.get("recent_workouts"), list)
+            and bool(hevy["recent_workouts"]),
             hevy.get("last_workout") is not None,
             isinstance(hevy.get("recent_bests"), list) and bool(hevy["recent_bests"]),
         )
@@ -368,7 +407,8 @@ def _has_cronometer_coverage(cronometer: Any) -> bool:
                     "remaining_kcal",
                 )
             ),
-            isinstance(cronometer.get("recent_days"), list) and bool(cronometer["recent_days"]),
+            isinstance(cronometer.get("recent_days"), list)
+            and bool(cronometer["recent_days"]),
             cronometer.get("fueling_status") not in (None, "unknown"),
             cronometer.get("protein_status") not in (None, "unknown"),
             cronometer.get("carb_availability") not in (None, "unknown"),

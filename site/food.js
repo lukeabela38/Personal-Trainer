@@ -12,6 +12,12 @@ const foodLiveMeta = document.getElementById("food-live-meta");
 const foodLiveStatus = document.getElementById("food-live-status");
 const foodLiveTargets = document.getElementById("food-live-targets");
 
+const foodGuidanceShell = document.getElementById("food-guidance-shell");
+const foodGuidanceDayType = document.getElementById("food-guidance-day-type");
+const foodGuidanceConfidence = document.getElementById("food-guidance-confidence");
+const foodGuidanceHints = document.getElementById("food-guidance-hints");
+const foodGuidanceWarnings = document.getElementById("food-guidance-warnings");
+
 const foodSummary = document.getElementById("food-summary");
 const foodHelp = document.getElementById("food-help");
 const foodStatus = document.getElementById("food-status");
@@ -172,6 +178,8 @@ function renderLiveSnapshotShell() {
       ),
     ].join("");
   }
+
+  renderNutritionGuidance(snapshot);
 }
 
 function renderLiveSnapshotEmpty(message) {
@@ -193,6 +201,66 @@ function renderLiveSnapshotEmpty(message) {
       </div>
     `;
   }
+  hideNutritionGuidance();
+}
+
+function renderNutritionGuidance(snapshot) {
+  const guidance = snapshot.nutrition_guidance;
+  if (!guidance) {
+    hideNutritionGuidance();
+    return;
+  }
+
+  if (foodGuidanceShell) foodGuidanceShell.classList.remove("hidden");
+
+  const dayTypeLabels = {
+    normal: "Normal day",
+    fuel_heavy: "Fuel heavy",
+    fuel_light: "Fuel light",
+    repair: "Repair day",
+    beginner_estimate: "Beginner estimate",
+  };
+  if (foodGuidanceDayType) {
+    foodGuidanceDayType.textContent = dayTypeLabels[guidance.day_type] ?? guidance.day_type;
+  }
+
+  if (foodGuidanceConfidence) {
+    foodGuidanceConfidence.textContent = `Confidence: ${guidance.confidence}`;
+  }
+
+  if (foodGuidanceHints) {
+    const hints = [];
+    if (guidance.pre_training) {
+      hints.push(`<p class="guidance-hint"><strong>Before training:</strong> ${escapeHtml(guidance.pre_training)}</p>`);
+    }
+    if (guidance.post_training) {
+      hints.push(`<p class="guidance-hint"><strong>After training:</strong> ${escapeHtml(guidance.post_training)}</p>`);
+    }
+    foodGuidanceHints.innerHTML = hints.join("");
+  }
+
+  if (foodGuidanceWarnings && Array.isArray(guidance.warnings)) {
+    const warningLabels = {
+      under_fueled: "Under-fueled",
+      recovery_poor: "Recovery poor",
+      hard_session_today: "Hard session today",
+      starter_estimate: "Starter estimate",
+    };
+    foodGuidanceWarnings.innerHTML = guidance.warnings
+      .map((w) => {
+        const label = warningLabels[w] ?? w;
+        return `<span class="guidance-warning-chip">${escapeHtml(label)}</span>`;
+      })
+      .join("");
+  }
+}
+
+function hideNutritionGuidance() {
+  if (foodGuidanceShell) foodGuidanceShell.classList.add("hidden");
+  if (foodGuidanceDayType) foodGuidanceDayType.textContent = "";
+  if (foodGuidanceConfidence) foodGuidanceConfidence.textContent = "";
+  if (foodGuidanceHints) foodGuidanceHints.innerHTML = "";
+  if (foodGuidanceWarnings) foodGuidanceWarnings.innerHTML = "";
 }
 
 function addFoodEntry() {
