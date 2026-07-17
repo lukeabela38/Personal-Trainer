@@ -47,6 +47,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Serve the existing site output without rebuilding artifacts first.",
     )
     parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Alias for --skip-build when you only want to serve the existing dist/ tree.",
+    )
+    parser.add_argument(
         "--tunnel",
         action="store_true",
         help="Start a cloudflared tunnel for mobile testing. Falls back to Docker if cloudflared is not installed locally.",
@@ -54,7 +59,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        if not args.skip_build:
+        skip_build = args.skip_build or args.fast
+        if not skip_build:
             _build_preview_artifacts(
                 site_output=args.site_output,
                 snapshot_output=args.snapshot_output,

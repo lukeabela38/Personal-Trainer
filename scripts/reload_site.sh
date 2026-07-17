@@ -52,5 +52,32 @@ kill_preview_processes() {
   fi
 }
 
+args=()
+preview_mode="live"
+for arg in "$@"; do
+  case "$arg" in
+    --fast|--serve-only)
+      preview_mode="fast"
+      ;;
+    --live)
+      if [[ "$preview_mode" != "fast" ]]; then
+        preview_mode="live"
+      fi
+      ;;
+    *)
+      args+=("$arg")
+      ;;
+  esac
+done
+
 kill_preview_processes
-exec "$SCRIPT_DIR/serve_site.sh" --live "$@"
+if [[ "$preview_mode" == "fast" ]]; then
+  if ((${#args[@]})); then
+    exec "$SCRIPT_DIR/serve_site.sh" --skip-build "${args[@]}"
+  fi
+  exec "$SCRIPT_DIR/serve_site.sh" --skip-build
+fi
+if ((${#args[@]})); then
+  exec "$SCRIPT_DIR/serve_site.sh" --live "${args[@]}"
+fi
+exec "$SCRIPT_DIR/serve_site.sh" --live

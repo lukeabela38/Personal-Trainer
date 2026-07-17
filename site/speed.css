@@ -25,6 +25,10 @@
   font-size: 1rem;
 }
 
+.speed-page .shell {
+  padding-bottom: 160px;
+}
+
 .speed-section-heading-with-action {
   align-items: flex-start;
 }
@@ -783,6 +787,118 @@
   background: rgba(255, 210, 122, 0.08);
 }
 
+.speed-run-detail-item--stacked {
+  align-items: stretch;
+}
+
+.speed-run-detail-item--stacked .speed-run-detail-value {
+  display: grid;
+  gap: 10px;
+}
+
+.speed-prediction-model-breakdown {
+  display: grid;
+  gap: 8px;
+}
+
+.speed-prediction-model-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.speed-prediction-model-row.is-selected {
+  border-color: rgba(93, 165, 255, 0.28);
+  background: rgba(93, 165, 255, 0.1);
+}
+
+.speed-prediction-model-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.speed-prediction-model-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.speed-prediction-model-meta {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.speed-prediction-model-stats {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.speed-prediction-model-stat {
+  white-space: nowrap;
+}
+
+.speed-prediction-training-paces {
+  display: grid;
+  gap: 10px;
+}
+
+.speed-prediction-training-paces-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.speed-prediction-training-paces-list {
+  display: grid;
+  gap: 8px;
+}
+
+.speed-prediction-training-paces-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.speed-prediction-training-paces-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.speed-prediction-training-paces-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.speed-prediction-training-paces-meta {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.speed-prediction-training-paces-value {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .speed-prediction-interval-value,
 .speed-prediction-trend-chip {
   font-size: 0.84rem;
@@ -873,6 +989,9 @@
     flex-direction: column;
     align-items: stretch;
   }
+  .speed-page .shell {
+    padding-bottom: 120px;
+  }
   .speed-section-heading {
     flex-direction: column;
     align-items: stretch;
@@ -903,6 +1022,14 @@
     padding: 12px 14px;
   }
   .speed-prediction-card-button {
+    text-align: left;
+  }
+  .speed-prediction-model-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+  .speed-prediction-model-stats {
+    justify-items: start;
     text-align: left;
   }
   .speed-prediction-stat {

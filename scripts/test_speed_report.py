@@ -47,7 +47,8 @@ class SpeedReportTests(unittest.TestCase):
                         "avg_heart_rate_bpm": 162,
                     }
                 ],
-            }
+            },
+            speed_predictions_enabled=True,
         )
 
         self.assertEqual(report["entries"][0]["name"], "Fastest 5K")
@@ -88,7 +89,8 @@ class SpeedReportTests(unittest.TestCase):
                         "duration": 3600,
                     }
                 ],
-            }
+            },
+            speed_predictions_enabled=True,
         )
 
         self.assertTrue(report["prediction_summary"]["stale"])

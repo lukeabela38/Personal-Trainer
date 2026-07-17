@@ -781,9 +781,65 @@ test("speed helpers build predictions from recent runs", () => {
   assert.match(predictions[2].ci_90, /^±/);
   assert.equal(predictions[2].trend, "improving");
   assert.ok(predictions[2].how_to_improve.length > 0);
+  assert.ok(Array.isArray(predictions[2].supporting_models));
+  assert.ok(predictions[2].supporting_models.length >= 1);
+  assert.ok(
+    typeof predictions[2].training_paces_summary === "string" &&
+      predictions[2].training_paces_summary.includes("Threshold"),
+  );
   assert.equal(summary.stale, false);
   assert.equal(summary.latest_useful_run.distance, "10.00 km");
   assert.equal(summary.useful_run_count, 1);
+});
+
+test("speed helpers ignore clustered same-distance anchors when fitting predictions", () => {
+  const recentRuns = [
+    {
+      name: "Slow 5K",
+      date: "2026-07-09",
+      distance_m: 5000,
+      distance: "5.00 km",
+      duration_s: 1500,
+      duration: "25:00",
+      pace_s_per_km: 300,
+      pace: "5:00 /km",
+      age_days: 1,
+    },
+    {
+      name: "Fast 5K effort",
+      date: "2026-07-08",
+      distance_m: 5000,
+      distance: "5.00 km",
+      duration_s: 1220,
+      duration: "20:20",
+      pace_s_per_km: 244,
+      pace: "4:04 /km",
+      age_days: 2,
+    },
+    {
+      name: "10K effort",
+      date: "2026-07-07",
+      distance_m: 10000,
+      distance: "10.00 km",
+      duration_s: 2550,
+      duration: "42:30",
+      pace_s_per_km: 255,
+      pace: "4:15 /km",
+      age_days: 3,
+    },
+  ];
+
+  const predictions = speed.buildPredictions(recentRuns, "2026-07-10");
+  const fiveK = predictions.find(
+    (prediction) => prediction.distance_label === "5K",
+  );
+
+  assert.equal(fiveK.source_run.name, "Fast 5K effort");
+  assert.deepEqual(
+    fiveK.calibration_points.map((point) => point.name),
+    ["Fast 5K effort", "10K effort"],
+  );
+  assert.equal(fiveK.training_paces.source_run.name, "10K effort");
 });
 
 test("speed helpers format Garmin analytics", () => {
@@ -800,23 +856,142 @@ test("speed helpers format Garmin analytics", () => {
     ci_90: "±2:10",
     trend: "improving",
     confidence: "high",
+    model: "Critical Speed",
+    source_run: {
+      name: "Tempo Run",
+      date: "2026-07-09",
+      duration: "1:00:00",
+      pace: "6:00 /km",
+      avg_heart_rate_bpm: 162,
+    },
+    calibration_points: [{ name: "Tempo Run" }, { name: "10K effort" }],
+    training_paces_summary: {
+      vdot: 43.2,
+      source_run: {
+        name: "Tempo Run",
+      },
+      bands: [
+        {
+          name: "Easy",
+          label: "5:03-6:02 /km",
+          min_fraction: 0.6,
+          max_fraction: 0.75,
+        },
+        {
+          name: "Threshold",
+          label: "4:17-4:26 /km",
+          min_fraction: 0.88,
+          max_fraction: 0.92,
+        },
+      ],
+    },
+    how_to_improve: "Add a 1K effort plus one longer run to stabilize CS.",
+    supporting_models: [
+      {
+        model: "Critical Speed",
+        predicted_time: "20:35",
+        ci_68: "±1:02",
+        ci_95: "±2:01",
+        confidence: "high",
+      },
+      {
+        model: "Calibrated Riegel",
+        predicted_time: "20:48",
+        ci_68: "±1:08",
+        ci_95: "±2:14",
+        confidence: "medium",
+      },
+      {
+        model: "Riegel extrapolation",
+        predicted_time: "21:02",
+        ci_68: "±1:14",
+        ci_95: "±2:22",
+        confidence: "medium",
+      },
+    ],
   });
+  assert.match(detail.heroMeta, /Critical Speed/);
+  assert.match(detail.heroMeta, /High confidence/);
   assert.match(detail.beforeGrid, /data-prediction-interval-select/);
-  assert.equal(detail.items.length, 3);
+  assert.ok(detail.items.length >= 6);
   assert.match(detail.items[0], /60% CI/);
   assert.match(detail.items[1], /90% CI/);
+  assert.ok(detail.items.some((item) => item.includes("Model")));
+  assert.ok(
+    detail.items.some((item) =>
+      item.includes("speed-prediction-model-breakdown"),
+    ),
+  );
+  const breakdown = detail.items.find((item) =>
+    item.includes("speed-prediction-model-breakdown"),
+  );
+  assert.ok(breakdown);
+  assert.equal((breakdown.match(/is-selected/g) ?? []).length, 1);
+  assert.ok(detail.items.some((item) => item.includes("Critical Speed")));
+  assert.ok(detail.items.some((item) => item.includes("Calibrated Riegel")));
+  assert.ok(detail.items.some((item) => item.includes("Riegel extrapolation")));
+  assert.ok(
+    detail.items.some((item) =>
+      item.includes("speed-prediction-training-paces"),
+    ),
+  );
+  assert.ok(detail.items.some((item) => item.includes("Easy")));
+  assert.ok(detail.items.some((item) => item.includes("Threshold")));
+  assert.ok(detail.items.some((item) => item.includes("How to improve")));
+  const partialDetail = speed.buildPredictionDetail({
+    distance_label: "5K",
+    predicted_time: "20:45",
+    ci_60: "±1:05",
+    ci_90: "±2:10",
+    trend: "improving",
+    confidence: "high",
+    model: "Calibrated Riegel",
+    supporting_models: [
+      {
+        model: "Calibrated Riegel",
+        predicted_time: "20:48",
+        ci_68: "±1:08",
+        ci_95: "±2:14",
+        confidence: "medium",
+      },
+      {
+        model: "Riegel extrapolation",
+        predicted_time: "21:02",
+        ci_68: "±1:14",
+        ci_95: "±2:22",
+        confidence: "medium",
+      },
+    ],
+  });
+  assert.ok(
+    partialDetail.items.some((item) => item.includes("Critical Speed")),
+  );
+  assert.ok(partialDetail.items.some((item) => item.includes("No valid fit")));
   assert.match(
     speed.buildAnalyticsNotice(
       {
         currentVo2max: null,
         vo2maxTrendPoints: [],
-        trainingLoadTrend: "",
+        trainingLoadTrend: "21",
         readiness: {},
       },
       [],
       { stale: false, warning: "" },
     ),
     /VO2 max/,
+  );
+  assert.equal(
+    speed.buildAnalyticsNotice(
+      {
+        currentVo2max: 52,
+        vo2maxTrendPoints: [{ date: "2026-07-01", vo2max: 50.5 }],
+        trainingLoadTrend: "",
+        readiness: { restingHeartRateBpm: 46, rawHrvMs: 61 },
+      },
+      [{ date: "2026-07-14", distance: "5.0 km" }],
+      { stale: false, warning: "" },
+    ),
+    "Garmin did not return training load for this snapshot. The other live analytics are shown where available.",
   );
   assert.equal(
     speed.buildCompletenessSuffix(

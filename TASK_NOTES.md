@@ -2,6 +2,11 @@
 
 This file is for temporary task-specific findings. It can be cleared between tasks.
 
+## 2026-07-16 Speed Page UI Polish
+
+- Shortened the speed-page sync/status text so the header reads less like a data dump.
+- Gave the speed page extra bottom padding so the fixed nav stops crowding the lower history cards in the live preview.
+
 ## 2026-07-16 Worktree Docs Sweep
 
 - Added worktree references to `REPO_MAP.md` and clarified in the handoff guide that the root checkout stays on `main`.
@@ -41,6 +46,21 @@ This file is for temporary task-specific findings. It can be cleared between tas
 - Speed prediction cards now act as click targets and open the shared inline detail panel.
 - The popup includes the prediction time, confidence, trend, CI ranges, model, guidance, and source-run context so the card itself stays compact.
 
+## 2026-07-16 Speed Prediction Detail Structure
+
+- The live speed payload already carries structured `supporting_models` and `training_paces.bands` data on each prediction.
+- The speed modal now renders those fields as explicit rows so the model breakdown and training paces stay readable instead of collapsing into a single summary sentence.
+
+## 2026-07-16 Critical Speed Fit Selection
+
+- The Critical Speed candidate was being discarded because the point selector kept choosing three near-identical 5K-ish anchors, which made the regression slope invalid.
+- The selector now widens to longer-distance anchors when the initial set is too clustered, so the Critical Speed row can compute real values instead of dropping out of the breakdown.
+
+## 2026-07-16 Fast Site Preview
+
+- `scripts/site_preview.py` now supports `--fast` as an alias for `--skip-build`, and `scripts/reload_site.sh --fast` exposes a kill-and-serve path that reuses the existing `dist/` tree.
+- This gives UI iteration a cheaper preview loop while keeping the full live rebuild path available for snapshot-refresh checks.
+
 ## 2026-07-16 Garmin Auth Retry
 
 - `scripts/wrappers/fetch_garmin.py` now clears a stale token store when Garmin returns a 401 during cached or password-based auth.
@@ -58,6 +78,8 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 - `scripts/wrappers/fetch_garmin_speed.py` now pages through `get_activities` in 1000-row chunks instead of relying on the date-bounded activity window.
 - The speed wrapper still keeps the configurable lookback for VO2 max and training-load trends, but the run list now comes from the entire available activity history.
+- The speed analytics banner now uses a specific message when only `training_load_trend` is missing; there is no safe fallback from `training_status` in the current Garmin payload.
+- The speed prediction modal now shows a per-model breakdown with predicted time, confidence, and interval bands for each candidate model.
 - Added a regression test that proves the paging helper makes a second Garmin request when the first page is full.
 
 ## 2026-07-14 Strength Analytics Toggle
@@ -127,6 +149,12 @@ Split food logging into its own dedicated page shell, keep the dashboard as a po
 - The speed page now has a localStorage-backed `Runs to use` selector in the history bubble, so the user can choose how many recent Garmin runs drive the rendered history and prediction set.
 - The Garmin wrapper no longer truncates the recent-run window at 10 before it reaches the page, so the selector can actually use the full captured window.
 - The browser smoke test was extended to cover the selector, but Chromium launch in this sandbox aborted with `SIGABRT`, so the end-to-end browser verification could not complete here.
+
+## 2026-07-16 Speed PB Matching Fix
+
+- `scripts/speed_report.py` now resolves Garmin personal best rows by preferring the best same-day or overall run match using both target distance and record time, before falling back to `activityId`.
+- This stops a fastest-5K record from inheriting a slower same-day workout when Garmin omits the date or points to an unhelpful activity id.
+- Added regression coverage for a date-less fastest-5K record that should resolve to the faster 5K workout rather than a slower half marathon.
 
 ## 2026-07-15 Garmin Summary Preservation
 
@@ -218,6 +246,13 @@ Follow-up for the strength UI polish branch:
 ## GitHub Agent Note
 
 - `gh` can be authenticated locally but still fail against `api.github.com` in this environment.
+
+## 2026-07-16 Speed Prediction Engine Split
+
+- `personal_trainer/speed_predictions.py` now owns the prediction algorithms, including the fit-based multi-model path and training-pace derivation.
+- `scripts/speed_report.py` now delegates to that shared module so the build artifact and browser payload stay aligned.
+- The speed page detail modal now reads the precomputed prediction payload instead of recomputing predictions only in JavaScript.
+- Local Python 3.9 needed a small compatibility fallback for `UTC` and a custom linear-regression helper so the new code could be verified outside the Docker 3.12 path.
 - When that happens, use the GitHub app/MCP tools for PR metadata, check runs, and workflow logs instead of blocking on `gh`.
 - Keep `gh auth status` as the quick local auth sanity check, but treat MCP as the reliable fallback for GitHub Actions inspection here.
 
@@ -538,3 +573,21 @@ Garmin auth/session caching card from the project board.
 
 - Added a dedicated CI site-smoke job that builds the deploy artifact path in Docker from example source payloads, serves the generated `dist`, and runs Playwright against the built site.
 - Garmin wrapper logging now emits concise payload summaries for cached, password, MCP, and empty fallback paths so auth-related failures are easier to triage without dumping payloads.
+
+## 2026-07-16 Speed Prediction Detail
+
+- The speed prediction detail modal now marks only the actual selected model row as selected, instead of every row that happens to have data.
+- Missing model rows now say `No valid fit`, which is clearer than the previous `Unavailable` label.
+- `scripts/reload_site.sh` now guards empty extra args before `exec`, so the live preview restart path works reliably again.
+
+## 2026-07-16 Speed Prediction Stability
+
+- Speed predictions now collapse near-duplicate distance anchors into 500m buckets before fitting, which prevents clustered 5K efforts from producing degenerate critical-speed results.
+- Source-run selection now prefers the fastest eligible effort instead of the nearest eligible run, and VDOT/training paces now anchor from a 10K-style effort instead of the longest run.
+- Added regression tests in both the Python speed model and the browser helper to lock in the clustered-anchor behavior.
+
+## 2026-07-17 Speed Prediction Feature Flag
+
+- Added a repo-owned `PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED` environment flag that defaults speed predictions off while keeping the rest of the speed page live.
+- `scripts/speed_report.py` now emits `feature_flags.speed_predictions` in `speed.json`, and `site/speed.js` hides the prediction cards when the flag is false.
+- Updated the speed report, contract, and artifact tests to exercise both the enabled and disabled paths explicitly.

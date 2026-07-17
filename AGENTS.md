@@ -94,6 +94,9 @@ Then inspect only the named files.
 # Requires cloudflared (brew install cloudflared) or falls back to Docker
 ./scripts/serve_site.sh --live --tunnel
 
+# Fast preview for UI-only iteration against an existing dist/
+./scripts/reload_site.sh --fast
+
 # Portable Docker-only equivalent:
 docker compose up site -d                           # serve dist/ on port 4173
 docker compose up tunnel -d                          # cloudflared tunnel to localhost
@@ -112,6 +115,7 @@ docker compose run --rm app sh -c "python3 -m unittest discover -s tests -v"
 
 # Serve the static site locally
 ./scripts/serve_site.sh
+./scripts/reload_site.sh --fast                     # kill stale preview and serve existing dist/ without rebuild
 
 # Worktree workflow for parallel cards
 ./scripts/worktree.sh new <issue-number> [branch-slug]
