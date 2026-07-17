@@ -178,7 +178,9 @@ def _manual_recovery_poor(manual: dict[str, Any]) -> bool:
 
 
 def _remaining_budget(targets: Macros, source_today: dict[str, Any]) -> Macros:
-    calories_remaining = _remaining_int(source_today.get("remaining_kcal"), targets["calories"], source_today.get("calories_consumed"))
+    calories_remaining = _remaining_int(
+        source_today.get("remaining_kcal"), targets["calories"], source_today.get("calories_consumed")
+    )
     protein_remaining = _remaining_macro(targets["protein_g"], source_today.get("protein_g"))
     carbs_remaining = _remaining_macro(targets["carbs_g"], source_today.get("carbs_g"))
     fat_remaining = _remaining_macro(targets["fat_g"], source_today.get("fat_g"))
