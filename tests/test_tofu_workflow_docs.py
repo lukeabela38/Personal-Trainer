@@ -74,6 +74,8 @@ class TofuWorkflowDocsTests(TestCase):
     def test_terraform_readme_mentions_account_mapping(self) -> None:
         readme = Path(__file__).resolve().parents[1] / "terraform" / "README.md"
         content = readme.read_text(encoding="utf-8")
+        self.assertIn("R2-backed remote state by default when the required bucket and credentials are present", content)
+        self.assertIn("local OpenTofu fallback only when remote state is not configured", content)
         self.assertIn("CLOUDFLARE_ACCOUNT_ID", content)
         self.assertIn("TF_VAR_cloudflare_account_id", content)
         self.assertIn("TF_STATE_BUCKET", content)

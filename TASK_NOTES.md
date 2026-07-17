@@ -60,6 +60,7 @@ This file is for temporary task-specific findings. It can be cleared between tas
 - `terraform/pages.tf` now contains the first concrete Cloudflare resource: `cloudflare_pages_project.site`.
 - Remote state is wired through generated ignored files: `scripts/run_tofu.sh` writes `terraform/backend.auto.tf` plus `terraform/backend.r2.hcl` when the R2 state env vars are present, and maps the R2 access key pair into `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` for the OpenTofu S3 backend.
 - `.github/workflows/terraform.yml` now reads `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, and `TF_STATE_ENDPOINT` from repo variables and `CLOUDFLARE_API_TOKEN`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` from repo secrets.
+- Remote state is the intended default path for OpenTofu in this repo; the local backend only remains as a fallback when the R2 variables are absent.
 
 ## 2026-07-16 Python Test Wrapper
 

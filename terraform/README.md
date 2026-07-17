@@ -5,7 +5,8 @@ This directory is the IaC foundation for future Cloudflare-managed resources.
 Current scope:
 
 - provider pinning for Cloudflare
-- local OpenTofu state only
+- R2-backed remote state by default when the required bucket and credentials are present
+- local OpenTofu fallback only when remote state is not configured
 - empty scaffold files for future Pages, Workers, KV, DNS, and secrets work
 - CI checks for format, validate, plan, and security scanning
 
