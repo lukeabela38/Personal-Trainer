@@ -10,6 +10,7 @@ This document defines a staged approach to monitoring Cloudflare resource usage 
 |---|---|---|---|
 | GitHub Pages | Live (deployed via `pages.yml`) | 1 GB storage, 100 GB/month bandwidth, 350 builds/month | None (GitHub Free) |
 | Cloudflare R2 (env/state bucket) | Exists (created manually or via tofu) | 10 GB storage, 1M Class A ops/month, 10M Class B ops/month, free egress | Low — state object is a few KB, touched per CI run |
+| Cloudflare Workers (webhook + weather) | Deployed (#203) | 100,000 requests/day, 10ms CPU time/request, 1GB outbound transfer/mo | Low — <100 req/day expected from Hevy webhook |
 | Cloudflare account / provider | Registered, provider pinned in `terraform/` | N/A | N/A |
 
 ### Resources in the pipeline
@@ -17,9 +18,8 @@ This document defines a staged approach to monitoring Cloudflare resource usage 
 These will be added by future cards. Each comes with its own free-tier envelope and failure modes.
 
 | Resource | Blocked by | Free-tier envelope | Failure mode |
-|---|---|---|---|
+|---|---|---|---|---|
 | Cloudflare Pages project (`terraform/pages.tf`) | #202 (hosting migration) | Unlimited requests, 500 builds/month, 1 concurrent build | Build minutes exhaustion, request spike |
-| Cloudflare Workers | #203 | 100,000 requests/day, 10ms CPU time/request | Daily request cap (Error 1027), CPU timeout |
 | Cloudflare KV | #204 | 100,000 reads/day, 1,000 writes/day, 1 GB storage | Operation cap, storage growth |
 | Cloudflare DNS | Domain finalization | Unlimited queries | N/A |
 
@@ -46,7 +46,8 @@ The plan is three layers. Each layer is independently useful; later layers add a
 |---|---|---|
 | Account-level spend | Dashboard → **Billing → Billable Usage** | Total usage-based spend across all products. Free accounts see $0 if within limits. |
 | R2 | Dashboard → **R2 → [bucket name] → Usage** | Storage (GB), Class A operations, Class B operations. Billable usage widget now in sidebar. |
-| Workers (future) | Dashboard → **Workers & Pages → Overview** | Request count, CPU time, Dynamic Worker count. |
+| Workers (account-level) | Dashboard → **Workers & Pages → Overview** | Total request count, CPU time, Dynamic Worker count across all Workers. |
+| Workers (per-Worker) | Dashboard → **Workers & Pages → [worker name]** | Per-Worker request count, CPU duration, errors, invocation metrics. |
 | Pages (future) | Dashboard → **Workers & Pages → [project]** | Build minutes, requests, bandwidth. |
 | KV (future) | Dashboard → **Workers KV → [namespace]** | Read/write operations, storage size. |
 
@@ -110,11 +111,28 @@ query getR2Usage($accountTag: string!, $date_geq: string!, $date_leq: string!) {
 }
 ```
 
-Similar queries exist for Workers (`workersInvocationsAdaptive`) and Pages (`pagesRequestsAdaptive`). The Cloudflare GraphQL API docs at `https://developers.cloudflare.com/analytics/graphql-api/` are the reference.
+**Example GraphQL query for Workers:**
+```graphql
+query getWorkersUsage($accountTag: string!, $date_geq: string!, $date_leq: string!) {
+  viewer {
+    accounts(filter: { accountTag: $accountTag }) {
+      workersInvocationsAdaptive(
+        limit: 10000
+        filter: { date_geq: $date_geq, date_leq: $date_leq }
+      ) {
+        sum { requests }
+        dimensions { scriptName }
+      }
+    }
+  }
+}
+```
+
+Similar queries exist for Pages (`pagesRequestsAdaptive`). The Cloudflare GraphQL API docs at `https://developers.cloudflare.com/analytics/graphql-api/` are the reference.
 
 **When to implement Layer 3:**
 - When R2 storage exceeds 5 GB (50% of free tier)
-- When Workers are deployed and receiving traffic
+- When Workers exceed 1,000 requests/day (1% of free tier) — currently at ~0 req/day from real traffic
 - When a budget alert fires and you need more granular data
 - The trigger is explicit, not automatic — no reason to build it before it is needed.
 
