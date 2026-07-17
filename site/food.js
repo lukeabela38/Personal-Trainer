@@ -226,7 +226,7 @@ function renderNutritionGuidance(snapshot) {
 
   if (foodGuidanceConfidence) {
     foodGuidanceConfidence.className = `guidance-confidence-dot guidance-${guidance.confidence}`;
-    foodGuidanceConfidence.textContent = guidance.confidence;
+    foodGuidanceConfidence.innerHTML = `<span class="confidence-label">${guidance.confidence} confidence</span>`;
   }
 
   if (foodGuidanceHints) {

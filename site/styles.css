@@ -705,8 +705,8 @@ input[type="file"] {
 }
 
 .guidance-confidence-dot {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 500;
   color: var(--muted);
   display: inline-flex;
   align-items: center;
