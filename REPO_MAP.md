@@ -35,6 +35,7 @@ Important files:
 
 - `snapshot.py` — `build_snapshot()` and `_validate_snapshot()` — core normalization + contract validation
 - `recommendation.py` — `build_daily_recommendation()` — rule-based decision engine
+- `nutrition.py` — shared nutrition target and guidance builder, including beginner fallback estimates
 - `live_sources.py` — loads source payloads from file or env var command
 - `contracts.py` — TypedDict definitions for Recommendation, DerivedContext, and Literal types
 - `ingestion.py` — `SourceAdapter` protocol, `collect_source_payloads()`
@@ -61,6 +62,7 @@ Purpose: Unit and integration tests for the Python package.
 Important files:
 
 - `test_snapshot.py` — snapshot normalization and contract validation tests (20+ tests)
+- `test_nutrition.py` — shared nutrition contract and fallback estimate tests
 - `test_recommendation.py` — recommendation decision logic tests
 - `test_integration.py` — snapshot-to-recommendation end-to-end flow
 - `test_live_cli.py` — live CLI entrypoint tests

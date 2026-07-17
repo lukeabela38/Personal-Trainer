@@ -12,6 +12,7 @@ if _nested_package.is_dir():
     __path__.append(str(_nested_package))
 
 from .recommendation import build_daily_recommendation
+from .nutrition import build_nutrition_guidance
 from .snapshot import build_snapshot
 
-__all__ = ["build_daily_recommendation", "build_snapshot"]
+__all__ = ["build_daily_recommendation", "build_nutrition_guidance", "build_snapshot"]
