@@ -124,6 +124,7 @@ function goToDate(dateStr) {
   state.selectedDate = dateStr;
   persistSelectedDate(dateStr);
   renderFoodShell();
+  renderLiveSnapshotShell();
 }
 
 function readSelectedDate() {
@@ -200,17 +201,19 @@ function renderLiveSnapshotShell() {
 
   const recommendation = snapshot.recommendation ?? {};
   const macros = recommendation.Macros ?? {};
-  const today = snapshot.cronometer?.today ?? {};
+  const dayData = cronometerDayForDate(snapshot, state.selectedDate) ?? {};
+  const isSnapshotDate = state.selectedDate === snapshot.snapshot_date;
 
   if (foodLiveTitle) {
-    foodLiveTitle.textContent = snapshot.snapshot_date
-      ? `Today's macros for ${snapshot.snapshot_date}`
-      : "Today's macros";
+    foodLiveTitle.textContent = isSnapshotDate && snapshot.snapshot_date
+      ? `Macros for ${snapshot.snapshot_date}`
+      : `Macros for ${state.selectedDate}`;
   }
   if (foodLiveHelp) {
-    foodLiveHelp.textContent =
-      describeLiveSnapshotDetail(snapshot) ??
-      "Live intake totals are shown first, with recommendation targets underneath.";
+    const hasData = dayData.calories_consumed != null;
+    foodLiveHelp.textContent = hasData
+      ? `Intake totals from Cronometer for ${state.selectedDate}.`
+      : `No Cronometer data available for ${state.selectedDate}.`;
   }
   if (foodLiveMeta) {
     foodLiveMeta.textContent = describeLiveSnapshotMeta(snapshot);
@@ -222,36 +225,50 @@ function renderLiveSnapshotShell() {
         : pageState.label;
   }
   if (foodLiveTargets) {
-    foodLiveTargets.innerHTML = [
-      liveStat(
-        "Calories",
-        formatMacroCurrent(today.calories_consumed, "kcal"),
-        formatMacroTarget(macros.calories, "kcal"),
-      ),
-      liveStat(
-        "Protein",
-        formatMacroCurrent(today.protein_g, "g"),
-        formatMacroTarget(macros.protein_g, "g"),
-      ),
-      liveStat(
-        "Carbs",
-        formatMacroCurrent(today.carbs_g, "g"),
-        formatMacroTarget(macros.carbs_g, "g"),
-      ),
-      liveStat(
-        "Fat",
-        formatMacroCurrent(today.fat_g, "g"),
-        formatMacroTarget(macros.fat_g, "g"),
-      ),
-      liveStat(
-        "Remaining kcal",
-        formatMacroCurrent(today.remaining_kcal, "kcal"),
-        formatMacroTarget(macros.calories, "kcal"),
-      ),
-    ].join("");
+    const hasData = dayData.calories_consumed != null;
+    if (!hasData) {
+      foodLiveTargets.innerHTML = `<div class="food-live-empty"><p class="muted">No Cronometer intake data for ${state.selectedDate}.</p></div>`;
+    } else {
+      foodLiveTargets.innerHTML = [
+        liveStat(
+          "Calories",
+          formatMacroCurrent(dayData.calories_consumed, "kcal"),
+          formatMacroTarget(macros.calories, "kcal"),
+        ),
+        liveStat(
+          "Protein",
+          formatMacroCurrent(dayData.protein_g, "g"),
+          formatMacroTarget(macros.protein_g, "g"),
+        ),
+        liveStat(
+          "Carbs",
+          formatMacroCurrent(dayData.carbs_g, "g"),
+          formatMacroTarget(macros.carbs_g, "g"),
+        ),
+        liveStat(
+          "Fat",
+          formatMacroCurrent(dayData.fat_g, "g"),
+          formatMacroTarget(macros.fat_g, "g"),
+        ),
+        liveStat(
+          "Remaining kcal",
+          formatMacroCurrent(dayData.remaining_kcal, "kcal"),
+          formatMacroTarget(macros.calories, "kcal"),
+        ),
+      ].join("");
+    }
   }
 
   renderNutritionGuidance(snapshot);
+}
+
+function cronometerDayForDate(snapshot, dateStr) {
+  if (!snapshot?.cronometer) return null;
+  if (dateStr === snapshot.snapshot_date) return snapshot.cronometer.today ?? null;
+  if (Array.isArray(snapshot.cronometer.recent_days)) {
+    return snapshot.cronometer.recent_days.find((d) => d.date === dateStr) ?? null;
+  }
+  return null;
 }
 
 function renderLiveSnapshotEmpty(message) {
