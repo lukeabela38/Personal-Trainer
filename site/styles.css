@@ -703,6 +703,37 @@ input[type="file"] {
   line-height: 1.45;
 }
 
+.guidance-confidence-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.guidance-confidence-high {
+  background: rgba(80, 200, 120, 0.15);
+  color: #50c878;
+  border-color: rgba(80, 200, 120, 0.3);
+}
+
+.guidance-confidence-medium {
+  background: rgba(240, 179, 75, 0.15);
+  color: var(--amber);
+  border-color: rgba(240, 179, 75, 0.3);
+}
+
+.guidance-confidence-low {
+  background: rgba(225, 80, 60, 0.12);
+  color: #e1543c;
+  border-color: rgba(225, 80, 60, 0.25);
+}
+
 .food-guidance-hints {
   display: grid;
   gap: 8px;
