@@ -44,8 +44,22 @@ This file is for temporary task-specific findings. It can be cleared between tas
 - The workflow now includes `tofu apply -auto-approve` so CI exercises the full lifecycle, while the local wrapper still supports `init`, `plan`, and `apply` from Docker.
 - The scaffold is intentionally local-state-only for now; follow-up tickets can add real Cloudflare resources once the account design is confirmed.
 - The remote-state sketch uses Cloudflare R2 through OpenTofu's `s3` backend, with `terraform/backend.r2.hcl.example` and `.env.example` carrying the non-secret configuration shape.
+
+## 2026-07-17 CI Lint Autofix
+
+- The shared CI workflow now runs Python and JS autofix steps in the same lint job, then conditionally auto-commits those fixes back to same-repo pull requests.
+- `tests/test_python_tests_workflow.py` now asserts the lint workflow keeps the auto-fix and auto-commit wiring in place.
+
+## 2026-07-17 Trivy Terraform Scan
+
+- Issue `#201` now records Trivy as the single IaC scanner instead of keeping separate `tfsec` / `checkov` steps.
+- `.github/workflows/security.yml` now scans `terraform/` with Trivy alongside the existing Dockerfile and image scans.
 - `tofu init` generated `terraform/.terraform.lock.hcl`; keep that lockfile committed so provider selection stays stable.
 - The Dockerized infra runner is separate from the app compose file; `scripts/run_tofu.sh` now builds and runs its own container, while the GitHub Actions `apply` job is gated by the `terraform-apply` environment.
+- `scripts/run_tofu.sh` forwards `CLOUDFLARE_ACCOUNT_ID` into `TF_VAR_cloudflare_account_id`, which lets Terraform consume the account ID from `.env` without committed tfvars files.
+- `terraform/pages.tf` now contains the first concrete Cloudflare resource: `cloudflare_pages_project.site`.
+- Remote state is wired through generated ignored files: `scripts/run_tofu.sh` writes `terraform/backend.auto.tf` plus `terraform/backend.r2.hcl` when the R2 state env vars are present, and maps the R2 access key pair into `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` for the OpenTofu S3 backend.
+- `.github/workflows/terraform.yml` now reads `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, and `TF_STATE_ENDPOINT` from repo variables and `CLOUDFLARE_API_TOKEN`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` from repo secrets.
 
 ## 2026-07-16 Python Test Wrapper
 

@@ -37,8 +37,12 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -60,6 +64,31 @@ jobs:
           python3 -m ruff check src tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
           python3 -m ruff check ../scripts ../tests 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
           exit "$status"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install JS tools
+        run: npm ci
+      - name: Apply JS formatting fixes
+        run: npm run format:js
+      - name: Apply JS lint fixes
+        run: npm run lint:js:fix
+      - name: Lint JS
+        run: npm run lint:js
+      - name: Commit lint fixes
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: apply automated lint fixes"
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+          file_pattern: |
+            personal_trainer/src/
+            personal_trainer/tests/
+            scripts/
+            site/
+            tests/
 
   unittest:
     runs-on: ubuntu-latest
@@ -97,23 +126,6 @@ jobs:
           node-version: "22"
       - name: Run frontend helper tests
         run: node --test tests/frontend/*.test.js
-
-  javascript:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-      - name: Install JS tools
-        run: npm ci
-      - name: Apply JS formatting fixes
-        run: npm run format:js
-      - name: Apply JS lint fixes
-        run: npm run lint:js:fix
-      - name: Lint JS
-        run: npm run lint:js
 
   browser-smoke:
     runs-on: ubuntu-latest

@@ -21,7 +21,7 @@ This repository documents a personal performance system using training, nutritio
 
 Prefer Docker for Python 3.12 runs. Use local Python only if Docker is unavailable.
 
-Install pre-commit once so Ruff formatting and lint checks run before commits:
+Install pre-commit once so Ruff formatting, lint checks, and OpenTofu formatting checks run before commits:
 
 ```bash
 pip install pre-commit
@@ -34,6 +34,11 @@ If you need live source credentials, unlock the repo-backed `.env` first:
 ```bash
 git-crypt unlock /path/to/git-crypt.key
 ```
+
+For GitHub Actions, keep the same Cloudflare/R2 values in repo settings instead of `.env`:
+
+- repository variables: `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, `TF_STATE_ENDPOINT`
+- repository secrets: `CLOUDFLARE_API_TOKEN`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
 
 Build the same artifact set used for Pages, then serve it locally:
 

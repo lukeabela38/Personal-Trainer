@@ -1,5 +1,5 @@
-# Cloudflare Pages resources will live here once the Pages deployment target is confirmed.
-#
-# Likely future resources:
-# - cloudflare_pages_project
-# - cloudflare_pages_domain
+resource "cloudflare_pages_project" "site" {
+  account_id        = var.cloudflare_account_id
+  name              = local.project_name
+  production_branch = "main"
+}
