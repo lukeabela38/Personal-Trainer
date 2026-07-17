@@ -35,6 +35,8 @@ If you need live source credentials, unlock the repo-backed `.env` first:
 git-crypt unlock /path/to/git-crypt.key
 ```
 
+Note: Docker Compose reads `.env` automatically, so the encrypted file must be unlocked before any `docker compose` command that loads it. If you only want the UI and not the live pipeline, use the fast preview path instead of Compose-based live commands.
+
 For GitHub Actions, keep the same Cloudflare/R2 values in repo settings instead of `.env`:
 
 - repository variables: `CLOUDFLARE_ACCOUNT_ID`, `TF_STATE_BUCKET`, `TF_STATE_KEY`, `TF_STATE_ENDPOINT`
