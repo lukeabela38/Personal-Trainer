@@ -26,6 +26,7 @@ Remote state sketch:
 - Follow with `../scripts/run_tofu.sh plan`
 - Use `../scripts/run_tofu.sh apply -auto-approve` only after the backend exists and the state bucket is ready
 - The GitHub Actions `apply` job waits on the protected `terraform-apply` environment before it starts, so there is a manual approval gate between plan and apply.
+- If you are using `docker compose` anywhere else in the repo, unlock the repo-backed encrypted `.env` first; Compose reads it automatically, which can break local runs if it is still encrypted.
 
 Useful commands from this directory:
 
