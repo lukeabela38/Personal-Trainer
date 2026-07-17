@@ -155,8 +155,8 @@ function renderSpeedView() {
     currentSpeedPayload.featureFlags?.speedPredictions,
   );
   const predictions = predictionsEnabled
-    ? currentSpeedPayload.predictions ??
-      buildPredictions(recentRuns, currentSpeedPayload.snapshotDate)
+    ? (currentSpeedPayload.predictions ??
+      buildPredictions(recentRuns, currentSpeedPayload.snapshotDate))
     : [];
   const analyticsPredictions = filterAnalyticsPredictions(predictions);
   const predictionSummary =
@@ -1233,8 +1233,8 @@ function renderPredictionTrainingPaceRow(band) {
     minFraction != null && maxFraction != null
       ? `${minFraction}%–${maxFraction}%`
       : minFraction != null
-      ? `${minFraction}%`
-      : "";
+        ? `${minFraction}%`
+        : "";
   return `
     <div class="speed-prediction-training-paces-row">
       <div class="speed-prediction-training-paces-copy">
@@ -1470,11 +1470,11 @@ export function buildPredictionSummary(
     ? [...usefulRuns].sort((a, b) =>
         String(b.date).localeCompare(String(a.date)),
       )[0]
-    : normalizedRuns[0] ?? null;
+    : (normalizedRuns[0] ?? null);
   const stale = Boolean(
     latestUsefulRun &&
-      latestUsefulRun.age_days != null &&
-      latestUsefulRun.age_days > PREDICTION_STALE_DAYS,
+    latestUsefulRun.age_days != null &&
+    latestUsefulRun.age_days > PREDICTION_STALE_DAYS,
   );
   return {
     snapshot_date: snapshotDate ?? null,
@@ -1483,8 +1483,8 @@ export function buildPredictionSummary(
     warning: stale
       ? "Predictions are based on a run older than 14 days."
       : latestUsefulRun
-      ? `Based on ${latestUsefulRun.date}.`
-      : "",
+        ? `Based on ${latestUsefulRun.date}.`
+        : "",
     useful_run_count: usefulRuns.length,
   };
 }
@@ -1511,8 +1511,8 @@ export function formatSpeedValue(recordType, value, rawValue = null) {
     rawValue == null || rawValue === ""
       ? null
       : typeof rawValue === "number"
-      ? rawValue
-      : Number(rawValue);
+        ? rawValue
+        : Number(rawValue);
   const source = Number.isFinite(rawNumeric) ? rawNumeric : numeric;
 
   if (type === "Longest Run") {
@@ -1611,8 +1611,8 @@ function normalizeRun(run, snapshotDate) {
     run.age_days != null
       ? Number(run.age_days)
       : startedAt
-      ? Math.max(0, Math.floor((snapshotDate - startedAt) / 86400000))
-      : null;
+        ? Math.max(0, Math.floor((snapshotDate - startedAt) / 86400000))
+        : null;
   const paceSeconds = durationSeconds / (distanceMeters / 1000);
   const name = String(
     run.name ?? run.activityName ?? run.title ?? run.activity_type ?? "Run",

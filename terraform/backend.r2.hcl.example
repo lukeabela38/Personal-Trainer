@@ -1,0 +1,19 @@
+# Remote state for Cloudflare R2 using OpenTofu's S3 backend.
+#
+# Copy this file to an untracked `backend.r2.hcl` before running `tofu init`.
+# Supply the credentials through environment variables, not by checking secrets
+# into git.
+
+bucket = "personal-trainer-terraform-state"
+key    = "terraform.tfstate"
+region = "auto"
+
+endpoint = "https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
+
+force_path_style            = true
+skip_credentials_validation = true
+skip_metadata_api_check     = true
+skip_region_validation      = true
+skip_requesting_account_id  = true
+skip_s3_checksum            = true
+use_path_style              = true

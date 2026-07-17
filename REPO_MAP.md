@@ -13,9 +13,12 @@
 - `docs/milestone-roadmap.md` — short milestone sequence derived from the blueprint
 - `docs/working-conventions.md` — lightweight repository working rules
 - `scripts/worktree.sh` — helper for creating, listing, and removing issue-scoped git worktrees
+- `scripts/run_tofu.sh` — Docker-backed wrapper for OpenTofu commands
+- `terraform/` — root-level OpenTofu scaffold for future Cloudflare-managed resources
 - `.env.example` — all environment variables documented
 - `pyproject.toml` (in `personal_trainer/`) — hatchling build config, entrypoints, dependencies, ruff config
 - `.github/workflows/pages.yml` — GitHub Pages deployment
+- `.github/workflows/terraform.yml` — OpenTofu fmt/validate/plan and IaC security scan
 - `.github/workflows/python-tests.yml` — CI: lint + package tests + script tests
 - `.github/workflows/pr-review.yml` — PR auto-labeler, size check, branch name check
 - `.github/labeler.yml` — path-based label rules for area labels
@@ -81,6 +84,7 @@ Purpose: Operational scripts for live data capture, site building, and reporting
 - `worktree.sh` — standard helper for creating, listing, and removing issue-scoped git worktrees
 - `strength_report.py` — standalone strength PB report from Hevy history; can also merge discovered Hevy exercises into `history/exercises/index.json`
 - `speed_report.py` — standalone speed PB report from Garmin records
+- `run_tofu.sh` — Docker-backed wrapper for running OpenTofu against `terraform/`
 - `test_strength_report.py` — tests for `strength_report.py`
 - `serve_site.sh` — build-and-serve local deploy preview
 - `live_sources_example.sh` — example shell pipeline

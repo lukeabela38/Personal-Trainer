@@ -18,6 +18,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: tofu-fmt
+        name: tofu fmt
+        entry: ./scripts/run_tofu.sh fmt -check -recursive
+        language: system
+        pass_filenames: false
+        files: ^terraform/
+
       - id: eslint
         name: eslint
         entry: npx eslint --quiet site tests

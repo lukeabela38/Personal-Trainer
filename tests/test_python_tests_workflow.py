@@ -29,6 +29,19 @@ exit "$status"
             self.assertTrue(summary_file.exists())
 
 
+class CiWorkflowLintAutomationTest(TestCase):
+    def test_lint_job_autofixes_and_commits(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        workflow_text = (repo_root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+        self.assertIn("permissions:\n      contents: write", workflow_text)
+        self.assertIn("\n  javascript:\n", workflow_text)
+        self.assertIn("Apply JS formatting fixes", workflow_text)
+        self.assertIn("Apply JS lint fixes", workflow_text)
+        self.assertIn("stefanzweifel/git-auto-commit-action@v5", workflow_text)
+        self.assertIn('commit_message: "chore: apply automated lint fixes"', workflow_text)
+
+
 class PythonTestsWrapperScriptTest(TestCase):
     def test_wrapper_runs_docker_compose_from_repo_root(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

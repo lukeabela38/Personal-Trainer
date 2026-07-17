@@ -210,7 +210,8 @@
 }
 
 .speed-analytics-strip .summary-tile {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(93, 165, 255, 0.12),
       rgba(255, 255, 255, 0.03)
@@ -289,7 +290,8 @@
   padding: 18px 18px 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.045),
       rgba(255, 255, 255, 0.02)
@@ -345,11 +347,8 @@
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.03),
-      transparent 62%
-    ),
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 62%),
     rgba(255, 255, 255, 0.02);
   box-shadow: 0 12px 32px rgba(7, 11, 20, 0.14);
 }
@@ -572,7 +571,8 @@
 
 .speed-bubble-analytics {
   border-color: rgba(93, 165, 255, 0.28);
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at top right,
       rgba(93, 165, 255, 0.1),
       transparent 34%
@@ -692,7 +692,8 @@
   margin: 10px 12px 12px;
   padding: 16px;
   border: 1px solid rgba(93, 165, 255, 0.14);
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(93, 165, 255, 0.06),
       rgba(255, 255, 255, 0.02)

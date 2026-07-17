@@ -44,6 +44,8 @@ services:
   tunnel:
     image: cloudflare/cloudflared:latest
     container_name: personal-trainer-tunnel
+    profiles:
+      - tunnel
     command: tunnel --url http://host.docker.internal:4173
     extra_hosts:
       - "host.docker.internal:host-gateway"

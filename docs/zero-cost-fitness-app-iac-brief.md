@@ -39,9 +39,14 @@ This document captures the zero-cost toolchain and infrastructure path for makin
 
 - `apps/web`
 - `apps/worker`
-- `infra/modules/*`
-- `infra/envs/dev`
-- `infra/envs/prod`
+- `terraform/`
+- `terraform/main.tf`
+- `terraform/pages.tf`
+- `terraform/workers.tf`
+- `terraform/kv.tf`
+- `terraform/dns.tf`
+- `terraform/secrets.tf`
+- `terraform/vars.tf`
 - `.github/workflows`
 - `docs/`
 
@@ -58,6 +63,7 @@ This document captures the zero-cost toolchain and infrastructure path for makin
 - Add cost-control and privacy docs specific to the chosen platform.
 - Build the smallest possible Cloudflare Pages + Worker + D1 skeleton.
 - Add IaC modules only after the platform choice is locked.
+- Keep the first pass as a root-level OpenTofu scaffold so future Cloudflare resources can be added incrementally without introducing paid infrastructure by accident.
 
 ## Notes For Future Agents
 

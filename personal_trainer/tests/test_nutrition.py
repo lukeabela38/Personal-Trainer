@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import unittest
 
-from personal_trainer import build_nutrition_guidance
 from personal_trainer.macros import build_macros
+
+import personal_trainer
+from personal_trainer import build_nutrition_guidance
 
 
 def base_snapshot() -> dict[str, object]:
@@ -37,6 +39,10 @@ def base_snapshot() -> dict[str, object]:
 
 
 class NutritionGuidanceTests(unittest.TestCase):
+    def test_package_exports_nutrition_guidance(self) -> None:
+        self.assertIn("build_nutrition_guidance", personal_trainer.__all__)
+        self.assertIs(personal_trainer.build_nutrition_guidance, build_nutrition_guidance)
+
     def test_aerobic_quality_day_is_fuel_heavy(self) -> None:
         guidance = build_nutrition_guidance(base_snapshot(), priority="aerobic_quality")
 
