@@ -36,9 +36,10 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
   - `snapshot_cli.py` — CLI that normalizes source payloads into a snapshot
   - `live_cli.py` — CLI that fetches live sources, builds snapshot, and recommends
 - Key modules:
-  - `snapshot.py` — `build_snapshot()` normalizes raw sources into the contract shape; includes validation
-  - `recommendation.py` — `build_daily_recommendation()` applies rule-based decision logic
-  - `live_sources.py` — loads per-source payloads from file or command env vars
+- `snapshot.py` — `build_snapshot()` normalizes raw sources into the contract shape; includes validation
+- `recommendation.py` — `build_daily_recommendation()` applies rule-based decision logic
+- `nutrition.py` — shared nutrition target and guidance helper used by macros and downstream food features
+- `live_sources.py` — loads per-source payloads from file or command env vars
   - `contracts.py` — typed dicts and literal types for the snapshot/recommendation contracts
   - `ingestion.py` — `SourceAdapter` protocol and `collect_source_payloads()`
   - `source_registry.py` — `CallableSourceAdapter` factory and adapter registry

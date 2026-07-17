@@ -12,18 +12,21 @@ class MacrosTests(unittest.TestCase):
         self.assertEqual(macros["protein_g"], 184)
         self.assertEqual(macros["carbs_g"], 421)
         self.assertEqual(macros["fat_g"], 75)
+        self.assertEqual(macros["fiber_g"], 37)
 
     def test_recovery_has_lowest_calories(self):
         macros = build_macros(**_DEFAULT, priority="recovery")
         self.assertEqual(macros["calories"], 2344)
         self.assertEqual(macros["protein_g"], 150)
         self.assertEqual(macros["fat_g"], 75)
+        self.assertEqual(macros["fiber_g"], 28)
 
     def test_strength_progression_has_higher_fat(self):
         macros = build_macros(**_DEFAULT, priority="strength_progression")
         self.assertEqual(macros["calories"], 2719)
         self.assertEqual(macros["protein_g"], 184)
         self.assertEqual(macros["fat_g"], 84)
+        self.assertEqual(macros["fiber_g"], 33)
 
     def test_nutrition_repair_keeps_protein_high(self):
         macros = build_macros(**_DEFAULT, priority="nutrition_repair")
@@ -31,6 +34,7 @@ class MacrosTests(unittest.TestCase):
         self.assertEqual(macros["protein_g"], 184)
         self.assertEqual(macros["carbs_g"], 228)
         self.assertEqual(macros["fat_g"], 67)
+        self.assertEqual(macros["fiber_g"], 27)
 
     def test_unknown_priority_uses_sensible_default(self):
         macros = build_macros(**_DEFAULT, priority="unknown")
