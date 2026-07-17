@@ -391,14 +391,20 @@ function scanProductPer100g() {
   const c = parseFloat(el.dataset.carbsPer100g);
   const f = parseFloat(el.dataset.fatPer100g);
   if (isNaN(k) && isNaN(p) && isNaN(c) && isNaN(f)) return null;
-  return { kcal_per_100g: isNaN(k) ? null : k, protein_per_100g: isNaN(p) ? null : p, carbs_per_100g: isNaN(c) ? null : c, fat_per_100g: isNaN(f) ? null : f };
+  return {
+    kcal_per_100g: isNaN(k) ? null : k,
+    protein_per_100g: isNaN(p) ? null : p,
+    carbs_per_100g: isNaN(c) ? null : c,
+    fat_per_100g: isNaN(f) ? null : f,
+  };
 }
 
 function addFoodEntry() {
   const item = foodItem?.value.trim() ?? "";
   if (!item) return;
   const rawPortion = foodPortion ? parseFloat(foodPortion.value) : NaN;
-  const portion = Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0;
+  const portion =
+    Number.isFinite(rawPortion) && rawPortion > 0 ? rawPortion : 0;
   const product = scanProductPer100g();
   const scale = portion > 0 && product ? portion / 100 : 0;
   const entry = normalizeFoodEntry({
@@ -407,14 +413,22 @@ function addFoodEntry() {
     barcode: foodBarcode?.value.trim() ?? "",
     timing: state.foodTiming ?? "flexible",
     serving_g: portion,
-    kcal: scale > 0 && product.kcal_per_100g != null
-      ? Math.round(product.kcal_per_100g * scale) : 0,
-    protein_g: scale > 0 && product.protein_per_100g != null
-      ? Math.round(product.protein_per_100g * scale * 10) / 10 : 0,
-    carbs_g: scale > 0 && product.carbs_per_100g != null
-      ? Math.round(product.carbs_per_100g * scale * 10) / 10 : 0,
-    fat_g: scale > 0 && product.fat_per_100g != null
-      ? Math.round(product.fat_per_100g * scale * 10) / 10 : 0,
+    kcal:
+      scale > 0 && product.kcal_per_100g != null
+        ? Math.round(product.kcal_per_100g * scale)
+        : 0,
+    protein_g:
+      scale > 0 && product.protein_per_100g != null
+        ? Math.round(product.protein_per_100g * scale * 10) / 10
+        : 0,
+    carbs_g:
+      scale > 0 && product.carbs_per_100g != null
+        ? Math.round(product.carbs_per_100g * scale * 10) / 10
+        : 0,
+    fat_g:
+      scale > 0 && product.fat_per_100g != null
+        ? Math.round(product.fat_per_100g * scale * 10) / 10
+        : 0,
   });
   state.foodEntries = [...state.foodEntries, entry].slice(-50);
   persistFoodEntries(state.foodEntries);
@@ -657,20 +671,25 @@ function normalizeFoodEntry(raw) {
       ? raw.date
       : time.slice(0, 10) || dateToLocalStr(new Date());
   const serving_g =
-    typeof raw?.serving_g === "number" && raw.serving_g > 0
-      ? raw.serving_g
-      : 0;
-  const kcal =
-    typeof raw?.kcal === "number" && raw.kcal > 0 ? raw.kcal : 0;
+    typeof raw?.serving_g === "number" && raw.serving_g > 0 ? raw.serving_g : 0;
+  const kcal = typeof raw?.kcal === "number" && raw.kcal > 0 ? raw.kcal : 0;
   const protein_g =
-    typeof raw?.protein_g === "number" && raw.protein_g > 0
-      ? raw.protein_g
-      : 0;
+    typeof raw?.protein_g === "number" && raw.protein_g > 0 ? raw.protein_g : 0;
   const carbs_g =
     typeof raw?.carbs_g === "number" && raw.carbs_g > 0 ? raw.carbs_g : 0;
-  const fat_g =
-    typeof raw?.fat_g === "number" && raw.fat_g > 0 ? raw.fat_g : 0;
-  return { item, timing, time, barcode, date, serving_g, kcal, protein_g, carbs_g, fat_g };
+  const fat_g = typeof raw?.fat_g === "number" && raw.fat_g > 0 ? raw.fat_g : 0;
+  return {
+    item,
+    timing,
+    time,
+    barcode,
+    date,
+    serving_g,
+    kcal,
+    protein_g,
+    carbs_g,
+    fat_g,
+  };
 }
 
 function formatMacroTarget(value, unit) {
