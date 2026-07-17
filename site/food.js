@@ -55,6 +55,13 @@ document
 document
   .getElementById("scan-barcode")
   ?.addEventListener("click", handleScanBarcode);
+foodList?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action='delete-entry']");
+  if (btn) {
+    const id = btn.dataset.entryId;
+    if (id) deleteFoodEntry(id);
+  }
+});
 let lastScannedProduct = null;
 foodPortion?.addEventListener("input", () => {
   if (lastScannedProduct) renderScanPreview(lastScannedProduct);
@@ -453,6 +460,13 @@ function addFoodEntry() {
   renderFoodShell();
 }
 
+function deleteFoodEntry(id) {
+  state.foodEntries = state.foodEntries.filter((e) => e.id !== id);
+  persistFoodEntries(state.foodEntries);
+  renderFoodShell();
+  renderLiveSnapshotShell();
+}
+
 function resetFoodForm(clearTiming = true) {
   if (foodItem) foodItem.value = "";
   if (foodPortion) foodPortion.value = "";
@@ -576,8 +590,8 @@ function renderFoodList(entries) {
   if (!entries.length) {
     return `
       <div class="food-empty">
-        <p class="muted">No entries today.</p>
-        <p class="muted">Add your first meal or snack to start building a timing history.</p>
+        <p class="muted">No entries for ${state.selectedDate}.</p>
+        <p class="muted">Add a meal or snack above to log it for this day.</p>
       </div>
     `;
   }
@@ -587,7 +601,7 @@ function renderFoodList(entries) {
     .reverse()
     .map(
       (entry) => `
-        <div class="food-entry">
+        <div class="food-entry" data-entry-id="${escapeHtml(entry.id)}">
           <div class="food-entry-main">
             <strong>${escapeHtml(entry.item)}</strong>
             <span>${escapeHtml(formatFoodTimingLabel(entry.timing))}</span>
@@ -601,6 +615,14 @@ function renderFoodList(entries) {
                 : ""
             }
           </div>
+          <button
+            class="button secondary food-entry-delete"
+            data-action="delete-entry"
+            data-entry-id="${escapeHtml(entry.id)}"
+            title="Delete entry"
+          >
+            &times;
+          </button>
         </div>
       `,
     )
@@ -696,6 +718,7 @@ function normalizeFoodEntry(raw) {
     typeof raw?.carbs_g === "number" && raw.carbs_g > 0 ? raw.carbs_g : 0;
   const fat_g = typeof raw?.fat_g === "number" && raw.fat_g > 0 ? raw.fat_g : 0;
   return {
+    id: raw.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     item,
     timing,
     time,
