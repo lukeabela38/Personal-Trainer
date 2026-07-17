@@ -629,3 +629,8 @@ Garmin auth/session caching card from the project board.
 - Added a repo-owned `PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED` environment flag that defaults speed predictions off while keeping the rest of the speed page live.
 - `scripts/speed_report.py` now emits `feature_flags.speed_predictions` in `speed.json`, and `site/speed.js` hides the prediction cards when the flag is false.
 - Updated the speed report, contract, and artifact tests to exercise both the enabled and disabled paths explicitly.
+
+## 2026-07-17 `.hidden` CSS Fix
+
+- Added `.hidden { display: none; }` at the end of `site/styles.css` so that both `#food-guidance-shell` and `#food-scan-preview` properly hide when JS adds the `hidden` class.
+- `.hidden` must be defined after `.food-guidance-shell` and `.food-scan-preview` to override their `display` (same specificity, source-order wins).
