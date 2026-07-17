@@ -36,13 +36,16 @@ jobs:
         run: tofu fmt -check -recursive
 
       - name: Init
-        run: tofu init -backend=false
+        run: tofu init -backend=false -input=false
 
       - name: Validate
         run: tofu validate
 
       - name: Plan
         run: tofu plan -input=false -lock=false -no-color
+
+      - name: Apply
+        run: tofu apply -auto-approve -input=false -lock=false -no-color
 
       - name: Security scan
         run: |

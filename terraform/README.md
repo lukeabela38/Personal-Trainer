@@ -20,6 +20,9 @@ Useful commands from this directory:
 ../scripts/run_tofu.sh init -backend=false
 ../scripts/run_tofu.sh validate
 ../scripts/run_tofu.sh plan
+../scripts/run_tofu.sh apply -auto-approve
 ```
 
 The wrapper uses the `tofu` Docker service defined in `docker-compose.yml`, so the same flow works on any machine with Docker installed.
+
+If you want to keep all Terraform/OpenTofu commands rooted at the repo top level instead, the wrapper also works from there because it always runs against `/workspace/terraform` in the container.
