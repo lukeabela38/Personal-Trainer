@@ -21,16 +21,9 @@ EOF
 
 slugify() {
   local value="$1"
-  value="${value,,}"
-  value="${value// /-}"
-  value="${value//_/-}"
-  value="${value//[^a-z0-9.-]/-}"
-  while [[ "$value" == *"--"* ]]; do
-    value="${value//--/-}"
-  done
-  value="${value#-}"
-  value="${value%-}"
-  printf '%s' "$value"
+  printf '%s' "$value" \
+    | tr '[:upper:] _' '[:lower:]-' \
+    | sed -E 's/[^a-z0-9.-]+/-/g; s/-+/-/g; s/^-+//; s/-+$//'
 }
 
 cmd_new() {
@@ -48,10 +41,10 @@ cmd_new() {
   dir="${WORKTREE_PARENT}/issue-${issue}"
   mkdir -p "$WORKTREE_PARENT"
 
-  git -C "$REPO_ROOT" worktree add "$dir" -b "$branch"
-
-  cd "$dir"
-  python3 -m pip install -e personal_trainer/
+  git -c filter.git-crypt.smudge=cat -c filter.git-crypt.clean=cat -c filter.git-crypt.required=false \
+    -C "$REPO_ROOT" worktree add --no-checkout "$dir" -b "$branch"
+  git -c filter.git-crypt.smudge=cat -c filter.git-crypt.clean=cat -c filter.git-crypt.required=false \
+    -C "$dir" reset --hard HEAD
 
   printf 'Worktree ready: %s (branch: %s)\n' "$dir" "$branch"
 }
