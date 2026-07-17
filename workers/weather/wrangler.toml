@@ -3,3 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-03-10"
 
 workers_dev = true
+
+# KV namespace: cache weather API responses (30 min TTL).
+# After `tofu apply`, copy the namespace ID from terraform output `cached_weather_kv_id`.
+[[kv_namespaces]]
+binding = "CACHED_WEATHER"
+id = "FILL_ME"
