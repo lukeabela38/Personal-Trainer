@@ -32,11 +32,18 @@ const foodPortion = document.getElementById("food-portion");
 const foodTime = document.getElementById("food-time");
 const foodBarcode = document.getElementById("food-barcode");
 
+const foodDayLabel = document.getElementById("food-day-label");
+const foodDayDisplay = document.getElementById("food-day-display");
+const foodDayPicker = document.getElementById("food-day-picker");
+const foodDayPrev = document.getElementById("food-day-prev");
+const foodDayNext = document.getElementById("food-day-next");
+
 const state = {
   liveSnapshot: null,
   liveStatus: "Loading live snapshot",
   foodEntries: readFoodEntries(),
   foodTiming: readFoodTiming(),
+  selectedDate: readSelectedDate(),
 };
 
 document
@@ -52,6 +59,12 @@ let lastScannedProduct = null;
 foodPortion?.addEventListener("input", () => {
   if (lastScannedProduct) renderScanPreview(lastScannedProduct);
 });
+foodDayPrev?.addEventListener("click", () => shiftDate(-1));
+foodDayNext?.addEventListener("click", () => shiftDate(1));
+foodDayPicker?.addEventListener("change", () => {
+  if (foodDayPicker.value) goToDate(foodDayPicker.value);
+});
+foodDayDisplay?.addEventListener("click", () => foodDayPicker?.showPicker());
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-food-timing]");
@@ -82,30 +95,79 @@ async function loadLiveSnapshot() {
   renderLiveSnapshotShell();
 }
 
+function dateToLocalStr(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function todayISO() {
+  return dateToLocalStr(new Date());
+}
+
+function formatDateNavLabel(dateStr) {
+  if (dateStr === todayISO()) return "Today";
+  const d = new Date(dateStr + "T00:00:00");
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (dateStr === dateToLocalStr(yesterday)) return "Yesterday";
+  const opts = { weekday: "short", month: "short", day: "numeric" };
+  return d.toLocaleDateString(undefined, opts);
+}
+
+function shiftDate(delta) {
+  const d = new Date(state.selectedDate + "T00:00:00");
+  d.setDate(d.getDate() + delta);
+  goToDate(dateToLocalStr(d));
+}
+
+function goToDate(dateStr) {
+  state.selectedDate = dateStr;
+  persistSelectedDate(dateStr);
+  renderFoodShell();
+}
+
+function readSelectedDate() {
+  try {
+    const raw = localStorage.getItem("personal-trainer:selected-date");
+    if (raw) return raw;
+  } catch {}
+  return todayISO();
+}
+
+function persistSelectedDate(date) {
+  try {
+    localStorage.setItem("personal-trainer:selected-date", date);
+  } catch {}
+}
+
 function renderFoodShell() {
   const entries = state.foodEntries ?? [];
-  const today = new Date().toISOString().slice(0, 10);
-  const todayEntries = entries.filter((entry) => entry.date === today);
-  const latest = todayEntries[todayEntries.length - 1];
+  const date = state.selectedDate;
+  const dayEntries = entries.filter((entry) => entry.date === date);
+  const latest = dayEntries[dayEntries.length - 1];
+  const isToday = date === todayISO();
   const summary = latest
-    ? `${todayEntries.length} logged today`
-    : "0 entries today";
+    ? `${dayEntries.length} logged${isToday ? " today" : ""}`
+    : "0 entries";
   const help = latest
     ? `Latest: ${latest.item} · ${formatFoodTimingLabel(
         latest.timing,
       )} · ${formatFoodTimeLabel(latest.time)}`
     : "Log meals and snacks as you go. Add a time and timing tag so the app can later reason about fuel before, during, or after training.";
 
+  if (foodDayLabel) foodDayLabel.textContent = formatDateNavLabel(date);
+  if (foodDayDisplay) foodDayDisplay.textContent = date;
+  if (foodDayPicker) foodDayPicker.value = date;
   if (foodSummary)
     foodSummary.textContent = latest ? latest.item : "No food logged yet";
   if (foodHelp) foodHelp.textContent = help;
   if (foodStatus) foodStatus.textContent = summary;
   if (foodDayCount)
-    foodDayCount.textContent = `${todayEntries.length} entr${
-      todayEntries.length === 1 ? "y" : "ies"
+    foodDayCount.textContent = `${dayEntries.length} entr${
+      dayEntries.length === 1 ? "y" : "ies"
     }`;
-  if (foodList) foodList.innerHTML = renderFoodList(todayEntries);
-  renderManualMacros(todayEntries);
+  if (foodList) foodList.innerHTML = renderFoodList(dayEntries);
+  renderManualMacros(dayEntries);
 
   if (foodTime && !foodTime.value) {
     foodTime.value = defaultFoodEntryTime();
@@ -593,7 +655,7 @@ function normalizeFoodEntry(raw) {
   const date =
     typeof raw?.date === "string"
       ? raw.date
-      : time.slice(0, 10) || new Date().toISOString().slice(0, 10);
+      : time.slice(0, 10) || dateToLocalStr(new Date());
   const serving_g =
     typeof raw?.serving_g === "number" && raw.serving_g > 0
       ? raw.serving_g

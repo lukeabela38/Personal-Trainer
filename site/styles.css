@@ -628,6 +628,38 @@ input[type="file"] {
   letter-spacing: -0.02em;
 }
 
+.food-day-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.food-day-btn {
+  padding: 4px 10px;
+  font-size: 1rem;
+  line-height: 1;
+  min-height: 0;
+}
+
+.food-day-display {
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 0;
+  min-width: 90px;
+  text-align: center;
+}
+
+.food-day-display:hover {
+  color: var(--text);
+}
+
+.food-day-picker {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .food-log {
   display: grid;
   gap: 10px;

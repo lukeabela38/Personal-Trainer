@@ -209,15 +209,21 @@
 
         <div class="food-day-header">
           <div>
-            <p class="label">Today</p>
+            <p class="label" id="food-day-label">Today</p>
             <h3 class="food-day-title">Logged food for the day</h3>
           </div>
-          <span class="rec-badge" id="food-day-count">0 entries</span>
+          <div class="food-day-nav">
+            <button id="food-day-prev" class="button secondary food-day-btn" type="button">&larr;</button>
+            <span id="food-day-display" class="food-day-display"></span>
+            <button id="food-day-next" class="button secondary food-day-btn" type="button">&rarr;</button>
+            <input id="food-day-picker" class="food-day-picker" type="date" hidden />
+            <span class="rec-badge" id="food-day-count">0 entries</span>
+          </div>
         </div>
 
         <div id="food-list" class="food-log"></div>
       </section>
     </main>
-    <script type="module" src="./food.js?v=5"></script>
+    <script type="module" src="./food.js?v=6"></script>
   </body>
 </html>
