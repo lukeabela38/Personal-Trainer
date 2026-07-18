@@ -756,7 +756,8 @@ input[type="file"] {
 
 .food-entry-meta {
   display: flex;
-  gap: 10px;  flex-wrap: wrap;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .food-empty {

@@ -219,9 +219,10 @@ function renderLiveSnapshotShell() {
   const isSnapshotDate = state.selectedDate === snapshot.snapshot_date;
 
   if (foodLiveTitle) {
-    foodLiveTitle.textContent = isSnapshotDate && snapshot.snapshot_date
-      ? `Macros for ${snapshot.snapshot_date}`
-      : `Macros for ${state.selectedDate}`;
+    foodLiveTitle.textContent =
+      isSnapshotDate && snapshot.snapshot_date
+        ? `Macros for ${snapshot.snapshot_date}`
+        : `Macros for ${state.selectedDate}`;
   }
   if (foodLiveHelp) {
     const hasData = dayData.calories_consumed != null;
@@ -278,9 +279,12 @@ function renderLiveSnapshotShell() {
 
 function cronometerDayForDate(snapshot, dateStr) {
   if (!snapshot?.cronometer) return null;
-  if (dateStr === snapshot.snapshot_date) return snapshot.cronometer.today ?? null;
+  if (dateStr === snapshot.snapshot_date)
+    return snapshot.cronometer.today ?? null;
   if (Array.isArray(snapshot.cronometer.recent_days)) {
-    return snapshot.cronometer.recent_days.find((d) => d.date === dateStr) ?? null;
+    return (
+      snapshot.cronometer.recent_days.find((d) => d.date === dateStr) ?? null
+    );
   }
   return null;
 }
@@ -463,7 +467,9 @@ function addFoodEntry() {
         : 0,
   });
   if (state.editingEntryId) {
-    const idx = state.foodEntries.findIndex((e) => e.id === state.editingEntryId);
+    const idx = state.foodEntries.findIndex(
+      (e) => e.id === state.editingEntryId,
+    );
     if (idx !== -1) state.foodEntries[idx] = entry;
   } else {
     state.foodEntries = [...state.foodEntries, entry].slice(-50);
@@ -491,7 +497,10 @@ function editFoodEntry(id) {
   if (foodBarcode) foodBarcode.value = entry.barcode || "";
   state.foodTiming = entry.timing || "flexible";
   document.querySelectorAll("[data-food-timing]").forEach((btn) => {
-    btn.classList.toggle("is-active", btn.dataset.foodTiming === state.foodTiming);
+    btn.classList.toggle(
+      "is-active",
+      btn.dataset.foodTiming === state.foodTiming,
+    );
   });
   if (addButton) addButton.textContent = "Update entry";
   foodItem?.focus();
@@ -764,7 +773,9 @@ function normalizeFoodEntry(raw) {
     typeof raw?.carbs_g === "number" && raw.carbs_g > 0 ? raw.carbs_g : 0;
   const fat_g = typeof raw?.fat_g === "number" && raw.fat_g > 0 ? raw.fat_g : 0;
   return {
-    id: raw.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id:
+      raw.id ||
+      Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     item,
     timing,
     time,
