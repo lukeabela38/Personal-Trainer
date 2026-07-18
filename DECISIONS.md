@@ -188,3 +188,29 @@ Implications:
 
 - CI will rewrite files in the ephemeral runner before linting them.
 - Contributors still SHOULD format locally before pushing, but formatting-only drift will no longer block the PR by itself.
+
+## 2026-07-17 — Local-First, Zero-Cost Architecture
+
+Decision:
+
+- **Static site hosted on Cloudflare Pages** — no server-rendered pages. Everything is prebuilt HTML/JS that reads data from IndexedDB and renders client-side.
+- **Local data store** — user data lives in IndexedDB on-device, not in the cloud. The only cloud persistence is KV for dedup keys and auth tokens.
+- **Sync via polling + manual refresh** — no push notifications for v1. The PWA polls a KV flag or the user refreshes manually. The existing CI pipeline continues producing static artifacts.
+- **Two Workers, no D1** — webhook receiver (validates HMAC, deduplicates, stores "new data" flag in KV) and weather proxy (caches API responses in KV). D1 deferred until cross-device sync is needed.
+- **Worker proxies for API keys** — Hevy/Garmin/weather API tokens stay in Worker secrets. The PWA calls the Worker, which calls the external API. This keeps tokens private and works around CORS.
+- **Webhook on-ramp: pollable flag** — Hevy → Worker → validates HMAC + dedup → writes "new data available" flag to KV with timestamp. PWA polls the Worker for this flag. On seeing it, PWA fetches the latest static artifact from Pages. (No D1, no CI rebuild, no push notification.)
+
+Reason:
+
+- Maximizes free tier usage of every Cloudflare product: Workers (100k req/day), KV (1k writes/day), Pages (unlimited requests).
+- Avoids paid tier services (push notifications require a push service, D1 adds schema migration overhead).
+- Local-first gives full offline capability for free.
+- Worker proxy is the only way to keep API keys private when the browser can't call the source API directly due to CORS.
+
+Implications:
+
+- #167 (Hevy webhook) implements the pollable-flag pattern: Worker stores a KV key, PWA polls for it.
+- #252 (SQLite schema) is still useful locally — IndexedDB and SQLite are different stores. The SQLite schema informs the IndexedDB structure but isn't a prerequisite for #167.
+- #195 (weather proxy) uses KV caching as designed in #204.
+- D1 (#253) is deferred. Cross-device sync or server-side queries would justify it later.
+- The static site build pipeline (CI → Pages) continues unchanged — it produces the initial data the PWA imports on first load.
