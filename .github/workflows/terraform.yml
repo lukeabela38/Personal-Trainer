@@ -23,6 +23,7 @@ env:
   TF_STATE_ENDPOINT: ${{ vars.TF_STATE_ENDPOINT }}
   R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
   R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
 
 jobs:
   plan:

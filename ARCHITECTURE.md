@@ -106,6 +106,23 @@ A daily runner script (`scripts/daily_snapshot_runner.py`) chains source capture
 - **Cronometer** — accessed via MCP server (`cronometer-api-mcp`)
 - **GitHub Pages** — deployment target for the static site
 
+## Infrastructure & Monitoring
+
+### Cloudflare IaC (OpenTofu)
+
+- Location: `terraform/`
+- Resources managed: Cloudflare provider pinning, R2-backed remote state, budget alert (`notifications.tf`), scaffold files for future Pages/Workers/KV/DNS
+- CI: `.github/workflows/terraform.yml` — format, validate, plan on PR; apply on push to `main`
+- All Cloudflare resources are defined in HCL and managed through OpenTofu; the `terraform/` directory is the canonical inventory of "things that could cost money."
+
+### Cost/Usage Monitoring
+
+A staged approach defined in `docs/cloudflare-usage-monitoring.md`:
+
+1. **Layer 1 (done):** Dashboard reference table in `terraform/README.md` — documents where to inspect each resource's usage in the Cloudflare dashboard.
+2. **Layer 2 (done):** Budget alert via `terraform/notifications.tf` — `cloudflare_notification_policy` with `alert_type = "billing_usage_alert"` at $1 threshold, emails `ALERT_EMAIL`.
+3. **Layer 3 (deferred):** Scheduled GraphQL cron via GitHub Actions for automated usage reporting. Tracked in [#248](https://github.com/lukeabela38/Personal-Trainer/issues/248). Implement only when a billable resource (Workers, Pages, R2 > 5 GB) is in active use.
+
 ## Target Direction
 
 The current architecture is intentionally simple, but the target shape is:

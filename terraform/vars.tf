@@ -18,3 +18,10 @@ variable "cloudflare_zone_name" {
   default     = null
   nullable    = true
 }
+
+variable "alert_email" {
+  description = "Email address for Cloudflare budget alert notifications."
+  type        = string
+  nullable    = true
+  default     = null
+}
