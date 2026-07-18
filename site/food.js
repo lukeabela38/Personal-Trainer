@@ -522,6 +522,10 @@ async function handleScanBarcode() {
     if (result.name && foodItem) {
       foodItem.value = result.name;
     }
+    if (result.name && foodPortion && !foodPortion.value) {
+      foodPortion.value = "100";
+      foodPortion.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     if (result.detail && foodHelp) {
       foodHelp.textContent = `Found: ${result.name} · ${result.detail}`;
     } else if (!result.name && foodHelp) {
