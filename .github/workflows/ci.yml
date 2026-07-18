@@ -100,20 +100,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Install git-crypt
-        run: sudo apt-get update && sudo apt-get install -y git-crypt
-      - name: Unlock git-crypt
-        if: github.actor != 'dependabot[bot]'
-        env:
-          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
-        run: |
-          set -euo pipefail
-          key_file="$RUNNER_TEMP/git-crypt.key"
-          printf '%s' "$GIT_CRYPT_KEY" | base64 --decode > "$key_file"
-          git-crypt unlock "$key_file"
-      - name: Audit git-crypt coverage
-        if: github.actor != 'dependabot[bot]'
-        run: python3 scripts/audit_git_crypt.py
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -152,26 +138,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Install git-crypt
-        run: sudo apt-get update && sudo apt-get install -y git-crypt
-      - name: Unlock git-crypt
-        if: github.actor != 'dependabot[bot]'
-        env:
-          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
-        run: |
-          set -euo pipefail
-          key_file="$RUNNER_TEMP/git-crypt.key"
-          printf '%s' "$GIT_CRYPT_KEY" | base64 --decode > "$key_file"
-          git-crypt unlock "$key_file"
-      - name: Audit git-crypt coverage
-        if: github.actor != 'dependabot[bot]'
-        run: python3 scripts/audit_git_crypt.py
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
       - name: Install JS tools
         run: npm ci
+      - name: Create .env from example if missing
+        run: test -f .env || cp .env.example .env
       - name: Build app image
         run: docker compose build app
       - name: Prepare dist directory

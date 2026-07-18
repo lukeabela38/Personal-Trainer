@@ -138,16 +138,29 @@
 
         <div id="freshness-bar"></div>
 
-        <section class="card food-cta" id="food-cta" aria-label="Food logging">
-          <div class="food-cta-copy">
-            <p class="label">Food</p>
-            <h2 class="food-cta-title">Dedicated food logging page</h2>
-            <p class="food-cta-text">
-              Log meals, scan barcodes, and tag timing around training without
-              crowding the dashboard.
-            </p>
+        <section class="card" aria-label="Food logging" id="food-dash">
+          <div
+            class="food-shell-header"
+            style="border-bottom: 0; margin-bottom: 0"
+          >
+            <div>
+              <p class="label">Food</p>
+              <h2 id="food-summary" class="food-title">No food logged yet</h2>
+              <p id="food-help" class="food-help">
+                Log meals, scan barcodes, and tag timing around training.
+              </p>
+            </div>
+            <span class="rec-badge" id="food-status">0 entries today</span>
           </div>
-          <div class="food-cta-actions">
+          <div id="food-list" class="food-log" style="margin-top: 10px"></div>
+          <div
+            style="
+              margin-top: 12px;
+              display: flex;
+              gap: 8px;
+              align-items: center;
+            "
+          >
             <span class="rec-badge">Saved locally</span>
             <a class="button" href="./food.html">Open food logging</a>
           </div>

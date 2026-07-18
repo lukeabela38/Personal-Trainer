@@ -73,15 +73,7 @@ document
 document.getElementById("load-history").addEventListener("click", loadHistory);
 refreshHevyButton?.addEventListener("click", handleHevyRefresh);
 setHevyKeyButton?.addEventListener("click", handleHevySetKey);
-document
-  .getElementById("add-food-entry")
-  ?.addEventListener("click", addFoodEntry);
-document
-  .getElementById("reset-food-form")
-  ?.addEventListener("click", resetFoodForm);
-document
-  .getElementById("scan-barcode")
-  ?.addEventListener("click", handleScanBarcode);
+
 if (sessionTime)
   sessionTime.addEventListener("change", handleSessionTimeChange);
 window.addEventListener("error", (event) => {
@@ -1280,14 +1272,6 @@ try {
 } catch {}
 
 document.addEventListener("click", (e) => {
-  const foodTimingButton = e.target.closest("[data-food-timing]");
-  if (foodTimingButton) {
-    state.foodTiming = foodTimingButton.dataset.foodTiming ?? "flexible";
-    persistFoodTiming(state.foodTiming);
-    renderFoodShell();
-    return;
-  }
-
   const modeButton = e.target.closest("[data-session-mode]");
   if (modeButton) {
     updateSessionContext({ mode: modeButton.dataset.sessionMode ?? "none" });
