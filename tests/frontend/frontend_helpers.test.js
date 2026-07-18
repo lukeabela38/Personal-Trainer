@@ -509,7 +509,7 @@ test("food page renders the live nutrition snapshot summary", async () => {
   };
 
   globalThis.localStorage = {
-    getItem: () => null,
+    getItem: (key) => key === "personal-trainer:selected-date" ? "2026-07-13" : null,
     setItem() {},
     removeItem() {},
   };
