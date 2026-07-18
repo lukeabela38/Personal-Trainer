@@ -801,19 +801,6 @@ function describeLiveSnapshot(snapshot) {
   return "Live data unavailable";
 }
 
-function describeLiveSnapshotDetail(snapshot) {
-  if (snapshot?.source === "live" && hasLiveSnapshotData(snapshot)) {
-    return "Targets and intake come from the live daily snapshot.";
-  }
-  if (snapshot?.source === "live") {
-    return "The live snapshot loaded, but the nutrition block is incomplete.";
-  }
-  if (hasLiveSnapshotData(snapshot)) {
-    return "Some live data exists, but this snapshot is not marked as live.";
-  }
-  return null;
-}
-
 function describeLiveSnapshotMeta(snapshot) {
   const recentDays = Array.isArray(snapshot?.cronometer?.recent_days)
     ? snapshot.cronometer.recent_days

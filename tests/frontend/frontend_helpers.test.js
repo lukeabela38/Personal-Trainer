@@ -524,7 +524,7 @@ test("food page renders the live nutrition snapshot summary", async () => {
 
     assert.equal(
       elementCache.get("food-live-title").textContent,
-      "Today's macros for 2026-07-13",
+      "Macros for 2026-07-13",
     );
     assert.equal(
       elementCache.get("food-live-meta").textContent,
