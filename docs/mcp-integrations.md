@@ -169,7 +169,7 @@ The GitHub Actions workflows unlock the repo-backed encrypted `.env` file with o
 
 - `GIT_CRYPT_KEY`
 
-That key is the base64-encoded `git-crypt export-key` output. After unlock, the workflows read the same `.env` file used locally.
+The workflows read the same `.env` file used locally.
 
 ## Live Data Wrappers
 
@@ -205,11 +205,7 @@ Reads check-in data from `PERSONAL_TRAINER_MANUAL_COMMAND` (shell command emitti
 
 ### Environment Variables
 
-The canonical `.env` lives in the repo as an encrypted file. Unlock it with `git-crypt` before running live commands locally. `.env.example` remains the readable reference for the file structure:
-
-```bash
-git-crypt unlock /path/to/git-crypt.key
-```
+The `.env` file lives in your local checkout (gitignored). Copy `.env.example` to `.env` and fill in your credentials before running live commands locally.
 
 `.env` is auto-loaded by `scripts/mcp_client.py` on import — no shell sourcing needed. Variables already set in your environment take precedence.
 

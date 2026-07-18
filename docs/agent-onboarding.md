@@ -187,7 +187,7 @@ Also prefer `proc.stdout.read(65536)` + manual `b"\n"` splitting over `readline(
 
 Wrappers that support direct API access (Garmin with `GARMIN_EMAIL`/`GARMIN_PASSWORD` in the encrypted `.env`) must also handle the case when those credentials are absent or expired:
 
-- Unlock the repo-backed `.env` with `git-crypt` before running local live commands
+- Copy `.env.example` to `.env` and fill in credentials before running local live commands
 - Verify `.env` loading: `import scripts.mcp_client` should populate `os.environ` from `.env`
 - Test with and without credentials: the wrapper should fall back gracefully
 - Garmin Connect returns HTTP 429 after repeated logins. If the direct path fails, fall back to MCP mode automatically

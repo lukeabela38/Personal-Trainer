@@ -53,8 +53,8 @@ fi
             self.assertEqual(
                 git_log.read_text(encoding="utf-8").splitlines(),
                 [
-                    f"{resolved_cwd} | -c filter.git-crypt.smudge=cat -c filter.git-crypt.clean=cat -c filter.git-crypt.required=false -C {repo_root} worktree add --no-checkout {worktree_dir / 'issue-226'} -b feature/issue-226",
-                    f"{resolved_cwd} | -c filter.git-crypt.smudge=cat -c filter.git-crypt.clean=cat -c filter.git-crypt.required=false -C {worktree_dir / 'issue-226'} reset --hard HEAD",
+                    f"{resolved_cwd} | -C {repo_root} worktree add --no-checkout {worktree_dir / 'issue-226'} -b feature/issue-226",
+                    f"{resolved_cwd} | -C {worktree_dir / 'issue-226'} reset --hard HEAD",
                 ],
             )
             self.assertFalse((tmp_path / "python.log").exists())

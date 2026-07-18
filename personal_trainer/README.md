@@ -26,7 +26,7 @@ PYTHONPATH=src python3 -m personal_trainer.cli /tmp/snapshot.json
 PYTHONPATH=src python3 -m personal_trainer.live_cli
 ```
 
-This reads source exports from `PERSONAL_TRAINER_SOURCES_FILE` when set, otherwise `personal_trainer/examples/sources-ready.json`, and prints the assembled snapshot plus recommendation as JSON. If you want the command to pull from a live wrapper, unlock the repo-backed `.env` first with `git-crypt`, then set `PERSONAL_TRAINER_SOURCES_COMMAND` to a command that prints a JSON object with `garmin`, `hevy`, `cronometer`, and `manual_context` keys.
+This reads source exports from `PERSONAL_TRAINER_SOURCES_FILE` when set, otherwise `personal_trainer/examples/sources-ready.json`, and prints the assembled snapshot plus recommendation as JSON. If you want the command to pull from a live wrapper, copy `.env.example` to `.env` and fill in your credentials, then set `PERSONAL_TRAINER_SOURCES_COMMAND` to a command that prints a JSON object with `garmin`, `hevy`, `cronometer`, and `manual_context` keys.
 
 ## Run Tests
 

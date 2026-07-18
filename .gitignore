@@ -30,3 +30,4 @@ playwright-report/
 /terraform/*_override.tf.json
 /terraform/backend.auto.tf
 /terraform/backend.r2.hcl
+.env

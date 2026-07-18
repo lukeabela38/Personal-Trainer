@@ -15,7 +15,7 @@ This repository documents a personal performance system using training, nutritio
 - `personal_trainer/src/personal_trainer/` contains normalization, recommendation, and live-data seam code.
 - `site/` contains the static browser UI, including the main snapshot viewer and dedicated `/strength` and `/speed` pages.
 - `.github/workflows/pages.yml` publishes the static site to GitHub Pages.
-- The repo-backed `.env` is encrypted with `git-crypt`; unlock it locally before running live source commands or the daily pipeline.
+- Copy `.env.example` to `.env` and fill in your values before running live source commands or the daily pipeline.
 
 ## Local Run
 
@@ -29,13 +29,13 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-If you need live source credentials, unlock the repo-backed `.env` first:
+If you need live source credentials, copy the example template and fill in your values:
 
 ```bash
-git-crypt unlock /path/to/git-crypt.key
+cp .env.example .env
 ```
 
-Note: Docker Compose reads `.env` automatically, so the encrypted file must be unlocked before any `docker compose` command that loads it. If you only want the UI and not the live pipeline, use the fast preview path instead of Compose-based live commands.
+Note: Docker Compose reads `.env` automatically, so it must exist before any `docker compose` command that loads it. If you only want the UI and not the live pipeline, use the fast preview path instead of Compose-based live commands.
 
 For GitHub Actions, keep the same Cloudflare/R2 values in repo settings instead of `.env`:
 
@@ -111,7 +111,7 @@ Open:
 - [Daily recommendation contract](docs/daily-recommendation-contract.md)
 - [Data snapshot contract](docs/data-snapshot-contract.md)
 - [MCP integrations](docs/mcp-integrations.md)
-- [git-crypt rotation](docs/git-crypt-rotation.md)
+
 - [Handoff guide](docs/handoff-guide.md)
 - [Agent onboarding](docs/agent-onboarding.md)
 - [Project board execution order](docs/board-execution-order.md)

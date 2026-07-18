@@ -28,7 +28,7 @@ This repository builds a personal performance system for Luke.
 - [Live input boundary](./live-input-boundary.md)
 - [Daily recommendation contract](./daily-recommendation-contract.md)
 - [MCP integrations](./mcp-integrations.md)
-- [git-crypt rotation](./git-crypt-rotation.md)
+
 - [Repository README](../README.md)
 - [Agent onboarding](./agent-onboarding.md)
 - [Project board execution order](./board-execution-order.md)
@@ -51,7 +51,7 @@ This repository builds a personal performance system for Luke.
 - `scripts/build_site_artifacts.py` copies the site shell and emits `dist/data/snapshot.json`, `dist/raw.json`, `dist/strength.json`, and `dist/speed.json` from one snapshot. Treat the entire `dist/` tree as generated build output, not committed source artifacts.
 - `scripts/daily_snapshot_runner.py` captures live sources, normalizes the snapshot, and writes the site bundle.
 - `scripts/daily_snapshot_runner.py` writes the computed recommendation into `dist/snapshot.json`, and `scripts/build_site_artifacts.py` preserves that recommendation if it is already present so the published snapshot and UI stay aligned.
-- The canonical repo config lives in an encrypted `.env` file managed with `git-crypt`.
+- The canonical repo config lives in a `.env` file (copy `.env.example` to get started).
 - GitHub Actions unlocks that file with one repo secret (`GIT_CRYPT_KEY`) before running tests or Pages deploys.
 - `./scripts/serve_site.sh` now builds the deploy-style `dist/` bundle before serving it locally; add `--live` to preview the live daily pipeline if your secrets are unlocked.
 - `./scripts/reload_site.sh --fast` is the quick UI-iteration path: it kills the old preview and serves the existing `dist/` tree without rerunning live source capture.

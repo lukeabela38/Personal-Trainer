@@ -41,10 +41,8 @@ cmd_new() {
   dir="${WORKTREE_PARENT}/issue-${issue}"
   mkdir -p "$WORKTREE_PARENT"
 
-  git -c filter.git-crypt.smudge=cat -c filter.git-crypt.clean=cat -c filter.git-crypt.required=false \
-    -C "$REPO_ROOT" worktree add --no-checkout "$dir" -b "$branch"
-  git -c filter.git-crypt.smudge=cat -c filter.git-crypt.clean=cat -c filter.git-crypt.required=false \
-    -C "$dir" reset --hard HEAD
+  git -C "$REPO_ROOT" worktree add --no-checkout "$dir" -b "$branch"
+  git -C "$dir" reset --hard HEAD
 
   printf 'Worktree ready: %s (branch: %s)\n' "$dir" "$branch"
 }

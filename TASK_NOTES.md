@@ -4,7 +4,7 @@ This file is for temporary task-specific findings. It can be cleared between tas
 
 ## 2026-07-17 Worktree Helper Git-Crypt Fix
 
-- `scripts/worktree.sh` now bootstraps fresh issue worktrees with `git worktree add --no-checkout` and a git-crypt filter bypass, then restores the tree with `git reset --hard HEAD`.
+- `scripts/worktree.sh` bootstraps fresh issue worktrees with `git worktree add --no-checkout`, then restores the tree with `git reset --hard HEAD`.
 - The helper now stops after creating the worktree, which keeps the bootstrap independent of host Python, Docker, and the worktree's encrypted `.env` state.
 - Portable slug cleanup now avoids Bash 4-only `${value,,}` syntax and works on the host shell.
 
