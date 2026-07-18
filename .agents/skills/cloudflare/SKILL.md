@@ -2,11 +2,19 @@
 name: cloudflare
 description: Comprehensive Cloudflare platform skill covering Workers, Pages, storage (KV, D1, R2), AI (Workers AI, Vectorize, Agents SDK), feature flags (Flagship), networking (Tunnel, Spectrum), security (WAF, DDoS), and infrastructure-as-code (Terraform, Pulumi). Use for any Cloudflare development task. Biases towards retrieval from Cloudflare docs over pre-trained knowledge.
 references:
-  - workers
-  - pages
+  - bindings
+  - cron-triggers
   - d1
-  - durable-objects
-  - workers-ai
+  - graphql-api
+  - kv
+  - observability
+  - pages
+  - pages-functions
+  - r2
+  - static-assets
+  - terraform
+  - tunnel
+  - workers
 ---
 
 # Cloudflare Platform Skill
@@ -246,3 +254,11 @@ Need IaC? → pulumi/ (Pulumi), terraform/ (Terraform), or api/ (REST API)
 | Static Assets | `references/static-assets/` |
 | Bindings | `references/bindings/` |
 | Cache Reserve | `references/cache-reserve/` |
+
+## Personal Trainer Reference Scope
+
+This repository intentionally vendors only the following Cloudflare reference areas:
+
+`bindings`, `cron-triggers`, `d1`, `graphql-api`, `kv`, `observability`, `pages`, `pages-functions`, `r2`, `static-assets`, `terraform`, `tunnel`, and `workers`.
+
+The full upstream product catalog is not vendored. For products outside this list, retrieve current official Cloudflare documentation rather than assuming a local reference exists. Wrangler guidance is maintained separately in the sibling `wrangler` skill.

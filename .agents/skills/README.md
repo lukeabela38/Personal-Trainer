@@ -17,3 +17,4 @@ These project-scoped skills are shared by agents that support the Agent Skills l
 - `frontend-design` is intentionally adapted in its `SKILL.md` for this repository. Keep the upstream guidance recognizable and make repository-specific changes explicit.
 - Prefer the existing Playwright MCP and browser smoke suite for UI verification. Do not add a parallel browser-testing skill unless the current workflow has a demonstrated gap.
 - Re-evaluate upstream revisions before updating these files. Record the new commit in this document.
+- The Cloudflare reference bundle is intentionally limited to `bindings`, `cron-triggers`, `d1`, `graphql-api`, `kv`, `observability`, `pages`, `pages-functions`, `r2`, `static-assets`, `terraform`, `tunnel`, and `workers`. Other products should use current official documentation instead of adding the entire upstream catalog to this repository.
