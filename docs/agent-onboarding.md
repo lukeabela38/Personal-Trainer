@@ -38,6 +38,17 @@ Agents should optimize for small, independent cards that can be completed withou
 - `.github/workflows/security.yml` runs the weekly Trivy security scan and uploads SARIF to GitHub Security.
 - `scripts/worktree.sh` creates, lists, and removes issue-scoped git worktrees for parallel cards.
 
+## Agent Skills
+
+Project-scoped skills live under `.agents/skills/` so Codex and OpenCode can share the same reviewed guidance where their skill discovery supports that layout.
+
+- `cloudflare` — Cloudflare platform architecture and current-document retrieval for the Workers, Pages, D1, KV, R2, and IaC workstream.
+- `wrangler` — Wrangler CLI, configuration, binding, and deployment guidance.
+- `web-perf` — static-site performance and Core Web Vitals review.
+- `frontend-design` — intentional visual design guidance adapted for this repository's vanilla HTML/CSS/JavaScript site and existing Playwright smoke suite.
+
+These skills provide instructions, not permission to deploy or mutate external services. Retrieve current Cloudflare documentation before relying on limits, pricing, API signatures, or CLI flags. Keep upstream revisions and repository-specific adaptations recorded in `.agents/skills/README.md`.
+
 ## Board Strategy
 
 Use Project 7 as the work queue for multiple agents.
