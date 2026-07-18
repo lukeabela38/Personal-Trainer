@@ -146,7 +146,7 @@
         </div>
 
         <div class="food-shell-grid">
-          <label class="food-field">
+          <label class="food-field food-field-wide">
             <span class="food-label">Item</span>
             <input
               id="food-item"
@@ -173,7 +173,7 @@
             <span class="food-label">When</span>
             <input id="food-time" class="food-input" type="datetime-local" />
           </label>
-          <label class="food-field">
+          <label class="food-field food-field-wide">
             <span class="food-label">Barcode</span>
             <div class="food-input-row">
               <input
@@ -190,6 +190,7 @@
                 Scan barcode
               </button>
             </div>
+            <div id="food-scan-preview" class="food-scan-preview hidden"></div>
           </label>
           <div class="food-field food-field-wide">
             <span class="food-label">Timing</span>
@@ -233,8 +234,6 @@
             </button>
           </div>
         </div>
-
-        <div id="food-scan-preview" class="food-scan-preview hidden"></div>
 
         <div id="food-list" class="food-log"></div>
       </section>

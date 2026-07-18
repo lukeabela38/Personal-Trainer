@@ -54,6 +54,14 @@ body {
   padding: 32px 0 56px;
 }
 
+.shell > .card + .card {
+  margin-top: 20px;
+}
+
+.shell > .card + .card {
+  margin-top: 20px;
+}
+
 .hero {
   display: flex;
   justify-content: space-between;
@@ -1575,66 +1583,68 @@ input[type="file"] {
 }
 
 .food-scan-preview {
-  margin: 16px 0;
-  padding: 16px;
-  background: var(--panel);
+  margin-top: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
   border-radius: 12px;
 }
 
 .food-scan-header {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .food-scan-header strong {
-  display: block;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   color: var(--accent);
 }
 
 .food-scan-sub {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--muted);
-  margin-top: 2px;
 }
 
 .food-scan-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .food-scan-stat {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
-  padding: 6px 10px;
+  gap: 3px;
+  padding: 4px 8px;
   background: var(--panel-strong);
-  border-radius: 8px;
-  font-size: 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
 }
 
 .food-scan-unit {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--muted);
 }
 
 .food-scan-missing {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .food-scan-est {
-  margin-bottom: 12px;
-  padding: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
   background: rgba(80, 200, 120, 0.06);
   border: 1px solid rgba(80, 200, 120, 0.15);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .food-scan-est-label {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent);
   margin-bottom: 6px;
