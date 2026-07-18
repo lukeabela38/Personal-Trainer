@@ -629,3 +629,37 @@ Garmin auth/session caching card from the project board.
 - Added a repo-owned `PERSONAL_TRAINER_SPEED_PREDICTIONS_ENABLED` environment flag that defaults speed predictions off while keeping the rest of the speed page live.
 - `scripts/speed_report.py` now emits `feature_flags.speed_predictions` in `speed.json`, and `site/speed.js` hides the prediction cards when the flag is false.
 - Updated the speed report, contract, and artifact tests to exercise both the enabled and disabled paths explicitly.
+
+## 2026-07-17 `.hidden` CSS Fix
+
+- Added `.hidden { display: none; }` at the end of `site/styles.css` so that both `#food-guidance-shell` and `#food-scan-preview` properly hide when JS adds the `hidden` class.
+- `.hidden` must be defined after `.food-guidance-shell` and `.food-scan-preview` to override their `display` (same specificity, source-order wins).
+
+## 2026-07-17 Portion-Size Field
+
+- Added a `Portion` number input (`#food-portion`) to the food entry form, between Item and When, with a "g" suffix label.
+- Entries now store `serving_g` (number, 0 when omitted) in localStorage.
+- Entry list shows `150g` etc. when a portion is set; hides the portion line when absent.
+- Scan preview dynamically computes estimated macros (kcal, protein, carbs, fat) from scanned per-100g data × entered portion, with a green-tinted "Per Xg serving" section that re-renders on portion input change.
+- Added CSS: `.food-input-suffix`, `.food-scan-est`, `.food-scan-est-label`, `.food-scan-stat-est`.
+- All portion entries persist in localStorage alongside existing entry data; no data migration needed for existing entries (default to `serving_g: 0`).
+
+## 2026-07-17 Manual Macro Totals
+
+- When adding a food entry with a barcode that has per-100g nutrition data and a portion > 0, the entry now stores estimated `kcal`, `protein_g`, `carbs_g`, `fat_g`.
+- Scan product data is stored as data attributes on `#food-scan-preview` (not the `lastScannedProduct` variable), so `addFoodEntry()` reads from the DOM rather than requiring module-scoped state.
+- A new "Manual food log" card appears between the guidance panel and the Food section when entries have macro data, showing summed totals for Calories, Protein, Carbs, Fat.
+- Added `#food-manual-shell` with CSS matching the guidance panel style, reusing `.food-live-grid` and `.food-live-stat` classes.
+- Added `renderManualMacros()` called from `renderFoodShell()`.
+- No macro data is stored for manually typed entries without a barcode scan — they contribute zero. This is intentional: scanning + portion is the only path with reliable nutrition data.
+
+## 2026-07-17 Multi-Day History
+
+- Replaced the static "Today" header with a date navigation bar: left arrow (←), date display (clickable to open date picker), right arrow (→), entry count badge.
+- Added `state.selectedDate` (defaults to today, persisted in localStorage as `personal-trainer:selected-date`).
+- `renderFoodShell()` now filters entries by `selectedDate` instead of hardcoded `today`.
+- Label shows "Today", "Yesterday", or formatted date (e.g. "Wed, Jul 15") depending on the selected date.
+- Added `dateToLocalStr()` helper to format dates in the local timezone — fixes a timezone bug where `toISOString().slice(0,10)` could return the wrong date when the browser is in UTC+ timezone.
+- Added CSS: `.food-day-nav`, `.food-day-btn`, `.food-day-display`, `.food-day-picker`.
+- `shiftDate(delta)` supports navigation by ±1 day; `goToDate()` sets and persists the date.
+- Existing entries from past days remain accessible. No data migration needed.

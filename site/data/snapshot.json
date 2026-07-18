@@ -396,6 +396,28 @@
       }
     }
   },
+  "nutrition_guidance": {
+    "day_type": "repair",
+    "targets": {
+      "calories": 2344,
+      "protein_g": 150,
+      "carbs_g": 267,
+      "fat_g": 75,
+      "fiber_g": 28
+    },
+    "budget": {
+      "calories": 1000,
+      "protein_g": 20,
+      "carbs_g": 87,
+      "fat_g": 25,
+      "fiber_g": 3
+    },
+    "pre_training": "close the calorie, protein, or carbohydrate gap before adding stress",
+    "post_training": "refuel within 30-60 minutes and protect protein",
+    "confidence": "medium",
+    "warnings": ["under_fueled", "recovery_poor"],
+    "fallback_used": false
+  },
   "recommendation": {
     "Priority": "recovery",
     "Session": "rest, mobility, or an easy walk depending on soreness",

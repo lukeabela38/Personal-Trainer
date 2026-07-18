@@ -49,11 +49,7 @@
         </div>
       </header>
 
-      <section
-        class="card food-shell"
-        id="food-shell"
-        aria-label="Food logging"
-      >
+      <section class="card" aria-label="Macros and history">
         <div
           class="food-live-shell"
           id="food-live-shell"
@@ -77,8 +73,66 @@
           </div>
 
           <div id="food-live-targets" class="food-live-grid"></div>
+
+          <div id="food-guidance-shell" class="food-guidance-shell hidden">
+            <div class="food-guidance-header">
+              <span class="label">Guidance</span>
+              <span class="guidance-header-end">
+                <span id="food-guidance-day-type" class="guidance-badge"></span>
+                <span
+                  id="food-guidance-confidence"
+                  class="guidance-confidence-dot"
+                ></span>
+              </span>
+            </div>
+            <div id="food-guidance-hints" class="food-guidance-hints"></div>
+            <div
+              id="food-guidance-warnings"
+              class="food-guidance-warnings"
+            ></div>
+          </div>
         </div>
 
+        <div id="food-manual-shell" class="food-manual-shell hidden">
+          <div class="food-shell-header">
+            <p class="label">Manual food log</p>
+          </div>
+          <div id="food-manual-macros" class="food-live-grid"></div>
+        </div>
+
+        <div class="food-day-header">
+          <div>
+            <p class="label" id="food-day-label">Today</p>
+            <h3 class="food-day-title">Logged food for the day</h3>
+          </div>
+          <div class="food-day-nav">
+            <button
+              id="food-day-prev"
+              class="button secondary food-day-btn"
+              type="button"
+            >
+              &larr;
+            </button>
+            <span id="food-day-display" class="food-day-display"></span>
+            <button
+              id="food-day-next"
+              class="button secondary food-day-btn"
+              type="button"
+            >
+              &rarr;
+            </button>
+            <input
+              id="food-day-picker"
+              class="food-day-picker"
+              type="date"
+              hidden
+            />
+            <span class="rec-badge" id="food-day-count">0 entries</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Food logger">
         <div class="food-shell-header">
           <div>
             <p class="label">Food</p>
@@ -88,11 +142,11 @@
               app can later reason about fuel before, during, or after training.
             </p>
           </div>
-          <span class="rec-badge" id="food-status">0 entries today</span>
+          <span class="rec-badge" id="food-status">0 entries</span>
         </div>
 
         <div class="food-shell-grid">
-          <label class="food-field">
+          <label class="food-field food-field-wide">
             <span class="food-label">Item</span>
             <input
               id="food-item"
@@ -102,10 +156,24 @@
             />
           </label>
           <label class="food-field">
+            <span class="food-label">Portion</span>
+            <div class="food-input-row">
+              <input
+                id="food-portion"
+                class="food-input"
+                type="number"
+                placeholder="100"
+                step="10"
+                min="0"
+              />
+              <span class="food-input-suffix">g</span>
+            </div>
+          </label>
+          <label class="food-field">
             <span class="food-label">When</span>
             <input id="food-time" class="food-input" type="datetime-local" />
           </label>
-          <label class="food-field">
+          <label class="food-field food-field-wide">
             <span class="food-label">Barcode</span>
             <div class="food-input-row">
               <input
@@ -122,6 +190,7 @@
                 Scan barcode
               </button>
             </div>
+            <div id="food-scan-preview" class="food-scan-preview hidden"></div>
           </label>
           <div class="food-field food-field-wide">
             <span class="food-label">Timing</span>
@@ -166,19 +235,9 @@
           </div>
         </div>
 
-        <div id="food-scan-preview" class="food-scan-preview hidden"></div>
-
-        <div class="food-day-header">
-          <div>
-            <p class="label">Today</p>
-            <h3 class="food-day-title">Logged food for the day</h3>
-          </div>
-          <span class="rec-badge" id="food-day-count">0 entries</span>
-        </div>
-
         <div id="food-list" class="food-log"></div>
       </section>
     </main>
-    <script type="module" src="./food.js?v=5"></script>
+    <script type="module" src="./food.js?v=10"></script>
   </body>
 </html>

@@ -311,7 +311,30 @@
   "cronometer": {
     "freshness": "missing",
     "today": {},
-    "recent_days": [],
+    "recent_days": [
+      {
+        "date": "2026-06-30",
+        "calories_consumed": 2100,
+        "calories_target": 2600,
+        "protein_g": 145,
+        "carbs_g": 220,
+        "fat_g": 65,
+        "fiber_g": 28,
+        "remaining_kcal": 500,
+        "log_completeness": "complete"
+      },
+      {
+        "date": "2026-07-01",
+        "calories_consumed": 1800,
+        "calories_target": 2600,
+        "protein_g": 120,
+        "carbs_g": 190,
+        "fat_g": 55,
+        "fiber_g": 22,
+        "remaining_kcal": 800,
+        "log_completeness": "complete"
+      }
+    ],
     "fueling_status": "unknown",
     "protein_status": "unknown",
     "carb_availability": "unknown",

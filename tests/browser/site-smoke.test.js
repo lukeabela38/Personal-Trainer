@@ -4,11 +4,11 @@ const pages = [
   {
     path: "/index.html",
     title: "Dashboard",
-    ready: "#food-cta",
+    ready: "#food-dash",
     checks: [
       "#freshness-bar .section-panel",
       "text=Each source is tracked independently.",
-      "#food-cta",
+      "#food-dash",
       "#session-shell",
       "#status-banner",
       "#import-status",
@@ -18,9 +18,8 @@ const pages = [
   {
     path: "/food.html",
     title: "Food",
-    ready: "#food-shell",
+    ready: "#food-live-shell",
     checks: [
-      "#food-shell",
       "#food-live-shell",
       "#food-live-meta",
       "#food-status",
