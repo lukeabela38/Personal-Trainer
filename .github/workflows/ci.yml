@@ -87,7 +87,7 @@ jobs:
         run: npm run lint:js
       - name: Commit lint fixes
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore: apply automated lint fixes"
           commit_user_name: github-actions[bot]
